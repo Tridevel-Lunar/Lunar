@@ -1,0 +1,679 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+
+// Seeded pseudo-random generator — same output on server and client
+function seededRand(seed: number) {
+  const x = Math.sin(seed + 1) * 10000;
+  return x - Math.floor(x);
+}
+import * as THREE from "three";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface Case {
+  id: number;
+  tag: string;
+  title: string;
+  subtitle: string;
+  concept: string;
+  benefit: string;
+  application: string;
+  color: string; // accent hex
+  sceneType: "laser" | "satellite" | "orbit";
+}
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
+const CASES: Case[] = [
+  {
+    id: 1,
+    tag: "OPTICAL COMMS",
+    title: "Deep Space Optical Communication",
+    subtitle: "DSOC · NASA / JPL",
+    concept:
+      "ส่งข้อมูลผ่านเลเซอร์อินฟราเรดแทนคลื่นวิทยุ เพิ่มแบนด์วิดท์ได้มากกว่า 100 เท่า ทดสอบครั้งแรกบนยาน Psyche ระยะทาง 226 ล้านกิโลเมตร",
+    benefit:
+      "สตรีมวิดีโอ HD จากดาวอังคารได้แบบเรียลไทม์ · รองรับข้อมูลวิทยาศาสตร์ขนาดใหญ่จากยานสำรวจดาวเคราะห์",
+    application:
+      "ประยุกต์ใช้บนโลก: เครือข่ายอินเทอร์เน็ตผ่านดาวเทียม LEO ความหน่วงต่ำ ครอบคลุมพื้นที่ห่างไกลของไทย",
+    color: "#00e5ff",
+    sceneType: "laser",
+  },
+  {
+    id: 2,
+    tag: "EARTH OBSERVATION",
+    title: "Hyperspectral Satellite Imaging",
+    subtitle: "SAR · Synthetic Aperture Radar",
+    concept:
+      "ดาวเทียมถ่ายภาพด้วยคลื่นแม่เหล็กไฟฟ้าหลายร้อยช่วงความยาวคลื่นพร้อมกัน มองเห็นองค์ประกอบเคมีของพื้นดิน พืชพันธุ์ และมหาสมุทรจากอวกาศ",
+    benefit:
+      "ตรวจจับโรคระบาดในพืชก่อนตาเห็น · ติดตามคุณภาพน้ำ · คาดการณ์ผลผลิตการเกษตรล่วงหน้า 3 เดือน",
+    application:
+      "ประยุกต์ใช้ในไทย: วิเคราะห์สุขภาพข้าวในนาทั่วประเทศ แจ้งเตือนเกษตรกรผ่าน LINE ก่อนเกิดความเสียหาย",
+    color: "#39ff87",
+    sceneType: "satellite",
+  },
+  {
+    id: 3,
+    tag: "SPACE PROPULSION",
+    title: "Ion Thruster Propulsion",
+    subtitle: "Hall-Effect · Electric Propulsion",
+    concept:
+      "เร่งอนุภาคซีนอนด้วยสนามแม่เหล็กไฟฟ้าแทนการเผาไหม้สารเคมี ใช้เชื้อเพลิงน้อยกว่า 10 เท่า แต่ให้ thrust ต่อเนื่องได้นานปี",
+    benefit:
+      "ยานสำรวจวงโคจรไกลขึ้น น้ำหนักน้อยลง · ดาวเทียมรุ่นใหม่ปรับวงโคจรได้ตลอดอายุการใช้งาน 15 ปี",
+    application:
+      "ประยุกต์ใช้: ระบบขับเคลื่อนสำหรับดาวเทียม THEOS-3 ของไทย รุ่นถัดไป ลดต้นทุนปล่อยและยืดอายุใช้งาน",
+    color: "#ff6b35",
+    sceneType: "orbit",
+  },
+];
+
+// ─── Three.js Scenes ──────────────────────────────────────────────────────────
+
+function LaserScene({ color }: { color: string }) {
+  const mountRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = mountRef.current;
+    if (!el) return;
+    const w = el.clientWidth, h = el.clientHeight;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    el.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 1000);
+    camera.position.set(0, 0, 5);
+
+    // Stars
+    const starsGeo = new THREE.BufferGeometry();
+    const starPos = new Float32Array(600 * 3);
+    for (let i = 0; i < 600 * 3; i++) starPos[i] = (Math.random() - 0.5) * 30;
+    starsGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
+    scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.04, transparent: true, opacity: 0.7 })));
+
+    // Source planet
+    const src = new THREE.Mesh(new THREE.SphereGeometry(0.4, 32, 32), new THREE.MeshStandardMaterial({ color: 0x1a1a2e, emissive: 0x0a0a1a, metalness: 0.8, roughness: 0.3 }));
+    src.position.set(-2.5, 0, 0);
+    scene.add(src);
+
+    // Target planet
+    const tgt = new THREE.Mesh(new THREE.SphereGeometry(0.28, 32, 32), new THREE.MeshStandardMaterial({ color: 0x16213e, emissive: new THREE.Color(color).multiplyScalar(0.15), metalness: 0.7 }));
+    tgt.position.set(2.5, 0, 0);
+    scene.add(tgt);
+
+    // Laser beam
+    const laserMat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.9, linewidth: 2 });
+    const laserGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-2.1, 0, 0), new THREE.Vector3(2.1, 0, 0)]);
+    const laser = new THREE.Line(laserGeo, laserMat);
+    scene.add(laser);
+
+    // Glow particles along laser
+    const dotGeo = new THREE.BufferGeometry();
+    const dotCount = 40;
+    const dotPos = new Float32Array(dotCount * 3);
+    dotGeo.setAttribute("position", new THREE.BufferAttribute(dotPos, 3));
+    const dots = new THREE.Points(dotGeo, new THREE.PointsMaterial({ color, size: 0.06, transparent: true, opacity: 0.85 }));
+    scene.add(dots);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+    const pLight = new THREE.PointLight(color, 2, 10);
+    pLight.position.set(0, 2, 2);
+    scene.add(pLight);
+
+    let t = 0;
+    const animate = () => {
+      t += 0.016;
+      src.rotation.y += 0.005;
+      tgt.rotation.y -= 0.007;
+      laser.material.opacity = 0.5 + 0.4 * Math.sin(t * 3);
+
+      // Move dots along laser
+      const dp = dotGeo.attributes.position as THREE.BufferAttribute;
+      for (let i = 0; i < dotCount; i++) {
+        const frac = ((i / dotCount + t * 0.4) % 1);
+        dp.setXYZ(i, -2.1 + frac * 4.2, (Math.random() - 0.5) * 0.05, (Math.random() - 0.5) * 0.05);
+      }
+      dp.needsUpdate = true;
+      renderer.render(scene, camera);
+    };
+    const id = setInterval(animate, 16);
+    return () => { clearInterval(id); renderer.dispose(); el.removeChild(renderer.domElement); };
+  }, [color]);
+  return <div ref={mountRef} style={{ width: "100%", height: "100%" }} />;
+}
+
+function SatelliteScene({ color }: { color: string }) {
+  const mountRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = mountRef.current;
+    if (!el) return;
+    const w = el.clientWidth, h = el.clientHeight;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    el.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 500);
+    camera.position.set(0, 3, 7);
+    camera.lookAt(0, 0, 0);
+
+    // Stars
+    const starsGeo = new THREE.BufferGeometry();
+    const sp = new Float32Array(800 * 3);
+    for (let i = 0; i < 800 * 3; i++) sp[i] = (Math.random() - 0.5) * 60;
+    starsGeo.setAttribute("position", new THREE.BufferAttribute(sp, 3));
+    scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, transparent: true, opacity: 0.6 })));
+
+    // Earth
+    const earth = new THREE.Mesh(
+      new THREE.SphereGeometry(1.6, 48, 48),
+      new THREE.MeshStandardMaterial({ color: 0x1a3a5c, emissive: 0x051020, roughness: 0.7, metalness: 0.1 })
+    );
+    scene.add(earth);
+
+    // Scan lines on earth
+    for (let i = 0; i < 5; i++) {
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(1.62, 0.005, 8, 80),
+        new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(0.6), transparent: true, opacity: 0.4 })
+      );
+      ring.rotation.x = Math.PI / 2 + (i - 2) * 0.3;
+      scene.add(ring);
+    }
+
+    // Satellite body
+    const satGroup = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.4), new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 0.9, roughness: 0.2 }));
+    satGroup.add(body);
+    // Solar panels
+    [-1, 1].forEach(side => {
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.01, 0.22), new THREE.MeshStandardMaterial({ color: 0x1a1aff, emissive: 0x000033, metalness: 0.5 }));
+      panel.position.x = side * 0.4;
+      satGroup.add(panel);
+    });
+    // Scan beam cone
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(0.5, 1.2, 16, 1, true),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.12, side: THREE.DoubleSide, wireframe: false })
+    );
+    cone.rotation.x = Math.PI;
+    cone.position.y = -0.8;
+    satGroup.add(cone);
+    scene.add(satGroup);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+    const sun = new THREE.DirectionalLight(0xfff5e0, 1.5);
+    sun.position.set(5, 5, 5);
+    scene.add(sun);
+    const accentLight = new THREE.PointLight(color, 1.5, 12);
+    accentLight.position.set(0, 4, 2);
+    scene.add(accentLight);
+
+    let t = 0;
+    const animate = () => {
+      t += 0.016;
+      earth.rotation.y += 0.002;
+      const r = 2.8;
+      satGroup.position.set(Math.cos(t * 0.4) * r, Math.sin(t * 0.15) * 0.5, Math.sin(t * 0.4) * r);
+      satGroup.lookAt(earth.position);
+      renderer.render(scene, camera);
+    };
+    const id = setInterval(animate, 16);
+    return () => { clearInterval(id); renderer.dispose(); el.removeChild(renderer.domElement); };
+  }, [color]);
+  return <div ref={mountRef} style={{ width: "100%", height: "100%" }} />;
+}
+
+function OrbitScene({ color }: { color: string }) {
+  const mountRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = mountRef.current;
+    if (!el) return;
+    const w = el.clientWidth, h = el.clientHeight;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    el.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 500);
+    camera.position.set(0, 2, 7);
+    camera.lookAt(0, 0, 0);
+
+    // Stars
+    const starsGeo = new THREE.BufferGeometry();
+    const sp = new Float32Array(700 * 3);
+    for (let i = 0; i < 700 * 3; i++) sp[i] = (Math.random() - 0.5) * 50;
+    starsGeo.setAttribute("position", new THREE.BufferAttribute(sp, 3));
+    scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, opacity: 0.65, transparent: true })));
+
+    // Central asteroid/planet
+    const planet = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(0.9, 1),
+      new THREE.MeshStandardMaterial({ color: 0x3d2b1f, roughness: 0.9, metalness: 0.2 })
+    );
+    scene.add(planet);
+
+    // Ion thruster exhaust particles
+    const exhaustGeo = new THREE.BufferGeometry();
+    const exCount = 80;
+    const exPos = new Float32Array(exCount * 3);
+    exhaustGeo.setAttribute("position", new THREE.BufferAttribute(exPos, 3));
+    const exhaust = new THREE.Points(exhaustGeo, new THREE.PointsMaterial({ color, size: 0.05, transparent: true, opacity: 0.8 }));
+    scene.add(exhaust);
+
+    // Orbiting spacecraft group
+    const craftGroup = new THREE.Group();
+    const craftBody = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.06, 0.1, 0.35, 8),
+      new THREE.MeshStandardMaterial({ color: 0xd4d4d4, metalness: 0.95, roughness: 0.15 })
+    );
+    craftGroup.add(craftBody);
+    // Thruster nozzle
+    const nozzle = new THREE.Mesh(
+      new THREE.ConeGeometry(0.06, 0.12, 8),
+      new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 1 })
+    );
+    nozzle.position.y = -0.23;
+    nozzle.rotation.x = Math.PI;
+    craftGroup.add(nozzle);
+    scene.add(craftGroup);
+
+    // Orbit ring
+    const orbitCurve = new THREE.EllipseCurve(0, 0, 2.5, 2.0, 0, Math.PI * 2, false, 0);
+    const orbitPts = orbitCurve.getPoints(80).map(p => new THREE.Vector3(p.x, 0, p.y));
+    const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPts);
+    scene.add(new THREE.Line(orbitGeo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.25 })));
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+    const sun = new THREE.DirectionalLight(0xfff8e0, 2);
+    sun.position.set(8, 5, 3);
+    scene.add(sun);
+
+    let t = 0;
+    const animate = () => {
+      t += 0.016;
+      planet.rotation.y += 0.003;
+      planet.rotation.x += 0.001;
+
+      const angle = t * 0.35;
+      const rx = 2.5, rz = 2.0;
+      const cx = Math.cos(angle) * rx;
+      const cz = Math.sin(angle) * rz;
+      craftGroup.position.set(cx, 0, cz);
+      craftGroup.lookAt(0, 0, 0);
+      craftGroup.rotateY(Math.PI);
+
+      // Exhaust trail behind craft
+      const ep = exhaustGeo.attributes.position as THREE.BufferAttribute;
+      for (let i = 0; i < exCount; i++) {
+        const backAngle = angle - (i / exCount) * 0.8;
+        const spread = (i / exCount) * 0.25;
+        ep.setXYZ(i,
+          Math.cos(backAngle) * rx + (Math.random() - 0.5) * spread,
+          (Math.random() - 0.5) * spread,
+          Math.sin(backAngle) * rz + (Math.random() - 0.5) * spread
+        );
+      }
+      ep.needsUpdate = true;
+      exhaust.material.opacity = 0.5 + 0.3 * Math.sin(t * 5);
+
+      renderer.render(scene, camera);
+    };
+    const id = setInterval(animate, 16);
+    return () => { clearInterval(id); renderer.dispose(); el.removeChild(renderer.domElement); };
+  }, [color]);
+  return <div ref={mountRef} style={{ width: "100%", height: "100%" }} />;
+}
+
+// ─── Modal ─────────────────────────────────────────────────────────────────────
+function CaseModal({ c, onClose }: { c: Case; onClose: () => void }) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  const SceneComponent = c.sceneType === "laser" ? LaserScene : c.sceneType === "satellite" ? SatelliteScene : OrbitScene;
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 999,
+      background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: "20px", animation: "fadeIn 0.3s ease"
+    }} onClick={onClose}>
+      <div style={{
+        background: "linear-gradient(135deg, #060e1a 0%, #0a1628 50%, #060e1a 100%)",
+        border: `1px solid ${c.color}40`,
+        borderRadius: "16px", maxWidth: "860px", width: "100%",
+        overflow: "hidden", position: "relative",
+        boxShadow: `0 0 60px ${c.color}20, 0 0 120px ${c.color}10`,
+        animation: "slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"
+      }} onClick={e => e.stopPropagation()}>
+
+        {/* Close */}
+        <button onClick={onClose} style={{
+          position: "absolute", top: 16, right: 16, zIndex: 10,
+          background: "rgba(255,255,255,0.08)", border: "none", color: "#fff",
+          width: 36, height: 36, borderRadius: "50%", cursor: "pointer",
+          fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center"
+        }}>×</button>
+
+        {/* 3D Scene */}
+        <div style={{ height: 300, background: "#020810", position: "relative" }}>
+          <SceneComponent color={c.color} />
+          <div style={{
+            position: "absolute", bottom: 0, left: 0, right: 0, height: 80,
+            background: "linear-gradient(transparent, #060e1a)"
+          }} />
+          <div style={{
+            position: "absolute", top: 20, left: 24,
+            background: `${c.color}20`, border: `1px solid ${c.color}60`,
+            padding: "4px 12px", borderRadius: 4,
+            fontSize: 11, letterSpacing: "0.12em", color: c.color, fontFamily: "'Orbitron', sans-serif"
+          }}>{c.tag}</div>
+        </div>
+
+        {/* Content */}
+        <div style={{ padding: "28px 32px 32px" }}>
+          <h2 style={{
+            fontSize: "clamp(18px,2.5vw,26px)", fontFamily: "'Orbitron', sans-serif",
+            fontWeight: 600, color: "#fff", margin: "0 0 4px",
+            lineHeight: 1.3
+          }}>{c.title}</h2>
+          <p style={{ fontSize: 12, color: `${c.color}cc`, letterSpacing: "0.1em", margin: "0 0 24px", fontFamily: "'Orbitron', sans-serif" }}>{c.subtitle}</p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+            {[
+              { label: "CONCEPT", icon: "◈", text: c.concept },
+              { label: "BENEFIT", icon: "◉", text: c.benefit },
+              { label: "APPLICATION", icon: "◎", text: c.application },
+            ].map(item => (
+              <div key={item.label} style={{
+                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 10, padding: "16px"
+              }}>
+                <div style={{ fontSize: 10, letterSpacing: "0.15em", color: c.color, marginBottom: 10, fontFamily: "'Orbitron', sans-serif", display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 14 }}>{item.icon}</span>{item.label}
+                </div>
+                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.65, margin: 0, fontFamily: "'Sarabun', sans-serif" }}>{item.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Case Card ─────────────────────────────────────────────────────────────────
+function CaseCard({ c, index, onClick }: { c: Case; index: number; onClick: () => void }) {
+  const isLeft = index % 2 === 0;
+  const [hovered, setHovered] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) setVisible(true); }, { threshold: 0.2 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+
+  const SceneComponent = c.sceneType === "laser" ? LaserScene : c.sceneType === "satellite" ? SatelliteScene : OrbitScene;
+
+  return (
+    <div ref={ref} style={{
+      display: "flex", flexDirection: isLeft ? "row" : "row-reverse",
+      gap: "clamp(20px,4vw,60px)", alignItems: "center",
+      marginBottom: "clamp(60px,8vw,100px)",
+      opacity: visible ? 1 : 0,
+      transform: visible ? "translateY(0)" : `translateY(40px)`,
+      transition: `opacity 0.8s ease ${index * 0.15}s, transform 0.8s cubic-bezier(0.16,1,0.3,1) ${index * 0.15}s`,
+    }}>
+      {/* 3D Preview Card */}
+      <div style={{
+        flex: "0 0 clamp(260px,40%,440px)",
+        height: "clamp(240px,30vw,340px)",
+        borderRadius: 14,
+        overflow: "hidden",
+        position: "relative",
+        border: `1px solid ${hovered ? c.color + "70" : c.color + "25"}`,
+        transition: "border-color 0.4s, box-shadow 0.4s",
+        boxShadow: hovered ? `0 0 40px ${c.color}30, 0 20px 60px rgba(0,0,0,0.5)` : "0 10px 40px rgba(0,0,0,0.4)",
+        cursor: "pointer",
+      }} onClick={onClick} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+        <div style={{ width: "100%", height: "100%", background: "#020810" }}>
+          <SceneComponent color={c.color} />
+        </div>
+        {/* Overlay hint */}
+        <div style={{
+          position: "absolute", inset: 0,
+          background: hovered ? "rgba(0,0,0,0.15)" : "rgba(0,0,0,0.0)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "background 0.3s",
+        }}>
+          <div style={{
+            background: `${c.color}20`, border: `1px solid ${c.color}80`,
+            borderRadius: 24, padding: "8px 20px",
+            fontSize: 11, letterSpacing: "0.15em", color: c.color,
+            fontFamily: "'Orbitron', sans-serif",
+            opacity: hovered ? 1 : 0, transform: hovered ? "scale(1)" : "scale(0.9)",
+            transition: "opacity 0.3s, transform 0.3s",
+          }}>EXPLORE →</div>
+        </div>
+        {/* Tag */}
+        <div style={{
+          position: "absolute", top: 14, left: 14,
+          background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)",
+          border: `1px solid ${c.color}50`, borderRadius: 4,
+          padding: "3px 10px", fontSize: 9, letterSpacing: "0.14em",
+          color: c.color, fontFamily: "'Orbitron', sans-serif"
+        }}>{c.tag}</div>
+        {/* Number */}
+        <div style={{
+          position: "absolute", bottom: 14, right: 16,
+          fontSize: 48, fontFamily: "'Orbitron', sans-serif", fontWeight: 900,
+          color: `${c.color}15`, lineHeight: 1, userSelect: "none"
+        }}>0{c.id}</div>
+      </div>
+
+      {/* Text Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 10, letterSpacing: "0.18em", color: c.color,
+          marginBottom: 12, fontFamily: "'Orbitron', sans-serif",
+          display: "flex", alignItems: "center", gap: 10
+        }}>
+          <div style={{ width: 24, height: 1, background: c.color, opacity: 0.7 }} />
+          {c.tag}
+        </div>
+
+        <h3 style={{
+          fontSize: "clamp(20px,2.5vw,32px)", fontFamily: "'Orbitron', sans-serif",
+          fontWeight: 700, color: "#fff", margin: "0 0 8px", lineHeight: 1.25,
+        }}>{c.title}</h3>
+
+        <p style={{ fontSize: 11, color: `${c.color}aa`, margin: "0 0 18px", fontFamily: "'Orbitron', sans-serif", letterSpacing: "0.1em" }}>{c.subtitle}</p>
+
+        <p style={{
+          fontSize: "clamp(13px,1.3vw,15px)", color: "rgba(255,255,255,0.6)",
+          lineHeight: 1.7, margin: "0 0 24px", fontFamily: "'Sarabun', sans-serif",
+          maxWidth: 420,
+        }}>{c.concept}</p>
+
+        {/* Quick benefit pill */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
+          {c.benefit.split(" · ").slice(0, 2).map((b, i) => (
+            <span key={i} style={{
+              background: `${c.color}10`, border: `1px solid ${c.color}30`,
+              borderRadius: 20, padding: "5px 14px",
+              fontSize: 11, color: `${c.color}cc`, fontFamily: "'Sarabun', sans-serif"
+            }}>{b}</span>
+          ))}
+        </div>
+
+        <button onClick={onClick} style={{
+          background: "transparent", border: `1px solid ${c.color}60`,
+          color: c.color, padding: "10px 28px", borderRadius: 6,
+          fontFamily: "'Orbitron', sans-serif", fontSize: 11,
+          letterSpacing: "0.12em", cursor: "pointer",
+          transition: "all 0.3s",
+          position: "relative", overflow: "hidden",
+        }}
+          onMouseEnter={e => {
+            (e.target as HTMLElement).style.background = `${c.color}20`;
+            (e.target as HTMLElement).style.borderColor = c.color;
+            (e.target as HTMLElement).style.boxShadow = `0 0 20px ${c.color}40`;
+          }}
+          onMouseLeave={e => {
+            (e.target as HTMLElement).style.background = "transparent";
+            (e.target as HTMLElement).style.borderColor = `${c.color}60`;
+            (e.target as HTMLElement).style.boxShadow = "none";
+          }}
+        >
+          EXPLORE CASE →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── Star Field (client-only, avoids SSR/hydration mismatch on numeric styles) ──
+function StarField() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) return null;
+
+  const stars = Array.from({ length: 80 }, (_, i) => ({
+    w: `${(seededRand(i * 7 + 0) * 2 + 1).toFixed(2)}px`,
+    h: `${(seededRand(i * 7 + 1) * 2 + 1).toFixed(2)}px`,
+    l: `${(seededRand(i * 7 + 2) * 100).toFixed(4)}%`,
+    t: `${(seededRand(i * 7 + 3) * 100).toFixed(4)}%`,
+    o:  +(seededRand(i * 7 + 4) * 0.6 + 0.1).toFixed(4),
+    dur: `${(2 + seededRand(i * 7 + 5) * 4).toFixed(3)}s`,
+    del: `${(seededRand(i * 7 + 6) * 4).toFixed(3)}s`,
+  }));
+
+  return (
+    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+      {stars.map((s, i) => (
+        <div key={i} style={{
+          position: "absolute",
+          width: s.w,
+          height: s.h,
+          background: "#fff",
+          borderRadius: "50%",
+          left: s.l,
+          top: s.t,
+          opacity: s.o,
+          animation: `twinkle ${s.dur} ease-in-out ${s.del} infinite`,
+        }} />
+      ))}
+    </div>
+  );
+}
+
+// ─── WhySpace Page ─────────────────────────────────────────────────────────────
+export default function WhySpace() {
+  const [activeCase, setActiveCase] = useState<Case | null>(null);
+
+  return (
+    <>
+      <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Sarabun:wght@300;400;500&display=swap" rel="stylesheet" />
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px) } to { opacity: 1; transform: translateY(0) } }
+        @keyframes float { 0%,100% { transform: translateY(0px) } 50% { transform: translateY(-12px) } }
+        @keyframes twinkle { 0%,100% { opacity: 0.3 } 50% { opacity: 1 } }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #020810; }
+        ::-webkit-scrollbar-thumb { background: #1a3a5c; border-radius: 3px; }
+      `}</style>
+
+      <div style={{
+        minHeight: "100vh",
+        background: "linear-gradient(180deg, #020810 0%, #040d1e 40%, #020810 100%)",
+        color: "#fff",
+        overflow: "hidden",
+        position: "relative",
+      }}>
+        {/* Background star field — client only */}
+        <StarField />
+
+        {/* Scanline effect */}
+        <div style={{
+          position: "fixed", inset: 0, pointerEvents: "none", zIndex: 1,
+          background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.008) 2px, rgba(0,229,255,0.008) 4px)",
+        }} />
+
+        <div style={{ position: "relative", zIndex: 2 }}>
+          {/* Header Section */}
+          <div style={{
+            textAlign: "center",
+            padding: "clamp(60px,8vw,100px) 20px clamp(50px,6vw,80px)",
+            maxWidth: 800, margin: "0 auto",
+          }}>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 12,
+              background: "rgba(0,229,255,0.08)", border: "1px solid rgba(0,229,255,0.25)",
+              borderRadius: 24, padding: "6px 20px", marginBottom: 32,
+              animation: "fadeIn 1s ease"
+            }}>
+              <div style={{ width: 6, height: 6, background: "#00e5ff", borderRadius: "50%", boxShadow: "0 0 10px #00e5ff" }} />
+              <span style={{ fontSize: 11, letterSpacing: "0.2em", color: "#00e5ff", fontFamily: "'Orbitron', sans-serif" }}>REAL WORLD APPLICATIONS</span>
+            </div>
+
+            <h1 style={{
+              fontSize: "clamp(32px,5vw,60px)", fontFamily: "'Orbitron', sans-serif",
+              fontWeight: 900, lineHeight: 1.15, marginBottom: 20,
+              background: "linear-gradient(135deg, #ffffff 0%, #a8d8ea 50%, #00e5ff 100%)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+              animation: "slideUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both"
+            }}>
+              WHY SPACE<br />TECHNOLOGY?
+            </h1>
+
+            <p style={{
+              fontSize: "clamp(14px,1.6vw,18px)", color: "rgba(255,255,255,0.55)",
+              lineHeight: 1.8, fontFamily: "'Sarabun', sans-serif",
+              animation: "slideUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.35s both",
+              maxWidth: 560, margin: "0 auto"
+            }}>
+              เทคโนโลยีอวกาศไม่ใช่แค่ความฝัน — มันคือโครงสร้างพื้นฐานของโลกยุคต่อไป<br />
+              สำรวจ 3 กรณีศึกษาที่กำลังเปลี่ยนชีวิตมนุษย์อยู่ตอนนี้
+            </p>
+
+            {/* Divider */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 16,
+              marginTop: 48, justifyContent: "center",
+              animation: "slideUp 0.8s ease 0.5s both"
+            }}>
+              <div style={{ flex: 1, maxWidth: 80, height: 1, background: "linear-gradient(90deg, transparent, rgba(0,229,255,0.4))" }} />
+              <div style={{ width: 8, height: 8, border: "1px solid #00e5ff", transform: "rotate(45deg)", opacity: 0.6 }} />
+              <div style={{ flex: 1, maxWidth: 80, height: 1, background: "linear-gradient(90deg, rgba(0,229,255,0.4), transparent)" }} />
+            </div>
+          </div>
+
+          {/* Cases */}
+          <div style={{
+            maxWidth: 1180, margin: "0 auto",
+            padding: "0 clamp(20px,5vw,60px) clamp(80px,10vw,120px)",
+          }}>
+            {CASES.map((c, i) => (
+              <CaseCard key={c.id} c={c} index={i} onClick={() => setActiveCase(c)} />
+            ))}
+          </div>
+        </div>
+
+        {/* Modal */}
+        {activeCase && <CaseModal c={activeCase} onClose={() => setActiveCase(null)} />}
+      </div>
+    </>
+  );
+}
