@@ -595,7 +595,7 @@ export default function WhySpace() {
         ::-webkit-scrollbar-thumb { background: #1a3a5c; border-radius: 3px; }
       `}</style>
 
-      <div style={{
+      <div id="why-space" style={{
         minHeight: "100vh",
         background: "linear-gradient(180deg, #020810 0%, #040d1e 40%, #020810 100%)",
         color: "#fff",

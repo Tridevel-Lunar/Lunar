@@ -189,10 +189,9 @@ function ModuleCard({
 }
 export default function PlatformSection() {
   const [activeId, setActiveId] = useState<ModuleId>("learn");
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
   return (
     <section
+      id="platform"
       style={{
         position: "relative",
         background: "#030812",
