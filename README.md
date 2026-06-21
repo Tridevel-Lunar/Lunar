@@ -14,7 +14,7 @@ Open http://localhost:3000
 - npm 9+
 
 ## Tech Stack
-- Next.js 16 (App Router + Turbopack)
+- Next.js 16.2.9 (App Router + Turbopack)
 - Tailwind CSS v4
 - TypeScript
 - Canvas API animations (no extra dependencies)

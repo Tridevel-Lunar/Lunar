@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 
+const NAV_LINKS = [
+  { label: "WHY SPACE", href: "#why-space" },
+  { label: "RESEARCH", href: "#research" },
+  { label: "PLATFORM", href: "#platform" },
+  { label: "JOIN US", href: "#join-us" },
+] as const;
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
 
@@ -37,10 +44,10 @@ export default function Navbar() {
       </span>
 
       <ul style={{ display: "flex", gap: "2.5rem", listStyle: "none" }}>
-        {["WHY SPACE", "RESEARCH", "PLATFORM", "JOIN US"].map((item, i) => (
-          <li key={i}>
+        {NAV_LINKS.map((item) => (
+          <li key={item.href}>
             <a
-              href={`#${item.toLowerCase().replace(" ", "-")}`}
+              href={item.href}
               className="font-mono"
               style={{
                 fontSize: "0.72rem",
@@ -52,7 +59,7 @@ export default function Navbar() {
               onMouseEnter={e => (e.currentTarget.style.color = "#00e5ff")}
               onMouseLeave={e => (e.currentTarget.style.color = "rgba(232,237,245,0.5)")}
             >
-              {item}
+              {item.label}
             </a>
           </li>
         ))}
