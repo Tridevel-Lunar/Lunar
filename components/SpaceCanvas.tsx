@@ -1,7 +1,7 @@
 "use client";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Stars, Float } from "@react-three/drei";
-import { Suspense, useRef, useState, useEffect } from "react";
+import { Suspense, useRef, useEffect } from "react";
 import * as THREE from "three";
 
 function Moon() {
@@ -31,22 +31,22 @@ function Moon() {
 }
 
 function CameraRig() {
-  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const mouse = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      setMouse({
+      mouse.current = {
         x: (e.clientX / window.innerWidth - 0.5) * 2,
         y: (e.clientY / window.innerHeight - 0.5) * 2,
-      });
+      };
     };
     window.addEventListener("mousemove", handler);
     return () => window.removeEventListener("mousemove", handler);
   }, []);
 
   useFrame((state) => {
-    state.camera.position.x += (mouse.x * 0.3 - state.camera.position.x) * 0.05;
-    state.camera.position.y += (-mouse.y * 0.3 - state.camera.position.y) * 0.05;
+    state.camera.position.x += (mouse.current.x * 0.3 - state.camera.position.x) * 0.05;
+    state.camera.position.y += (-mouse.current.y * 0.3 - state.camera.position.y) * 0.05;
     state.camera.lookAt(0, 0, 0);
   });
 

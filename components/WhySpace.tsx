@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { runThreeLoop, disposeScene } from "./why-space/useThreeScene";
 
 // Seeded pseudo-random generator — same output on server and client
 function seededRand(seed: number) {
@@ -122,23 +123,28 @@ function LaserScene({ color }: { color: string }) {
     scene.add(pLight);
 
     let t = 0;
-    const animate = () => {
-      t += 0.016;
-      src.rotation.y += 0.005;
-      tgt.rotation.y -= 0.007;
-      laser.material.opacity = 0.5 + 0.4 * Math.sin(t * 3);
+    const stopLoop = runThreeLoop(
+      el,
+      (delta) => {
+        t += delta;
+        src.rotation.y += 0.005;
+        tgt.rotation.y -= 0.007;
+        (laser.material as THREE.LineBasicMaterial).opacity = 0.5 + 0.4 * Math.sin(t * 3);
 
-      // Move dots along laser
-      const dp = dotGeo.attributes.position as THREE.BufferAttribute;
-      for (let i = 0; i < dotCount; i++) {
-        const frac = ((i / dotCount + t * 0.4) % 1);
-        dp.setXYZ(i, -2.1 + frac * 4.2, (Math.random() - 0.5) * 0.05, (Math.random() - 0.5) * 0.05);
-      }
-      dp.needsUpdate = true;
-      renderer.render(scene, camera);
+        const dp = dotGeo.attributes.position as THREE.BufferAttribute;
+        for (let i = 0; i < dotCount; i++) {
+          const frac = ((i / dotCount + t * 0.4) % 1);
+          dp.setXYZ(i, -2.1 + frac * 4.2, (Math.random() - 0.5) * 0.05, (Math.random() - 0.5) * 0.05);
+        }
+        dp.needsUpdate = true;
+      },
+      () => renderer.render(scene, camera),
+    );
+    return () => {
+      stopLoop();
+      disposeScene(scene, renderer);
+      if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement);
     };
-    const id = setInterval(animate, 16);
-    return () => { clearInterval(id); renderer.dispose(); el.removeChild(renderer.domElement); };
   }, [color]);
   return <div ref={mountRef} style={{ width: "100%", height: "100%" }} />;
 }
@@ -212,16 +218,22 @@ function SatelliteScene({ color }: { color: string }) {
     scene.add(accentLight);
 
     let t = 0;
-    const animate = () => {
-      t += 0.016;
-      earth.rotation.y += 0.002;
-      const r = 2.8;
-      satGroup.position.set(Math.cos(t * 0.4) * r, Math.sin(t * 0.15) * 0.5, Math.sin(t * 0.4) * r);
-      satGroup.lookAt(earth.position);
-      renderer.render(scene, camera);
+    const stopLoop = runThreeLoop(
+      el,
+      (delta) => {
+        t += delta;
+        earth.rotation.y += 0.002;
+        const r = 2.8;
+        satGroup.position.set(Math.cos(t * 0.4) * r, Math.sin(t * 0.15) * 0.5, Math.sin(t * 0.4) * r);
+        satGroup.lookAt(earth.position);
+      },
+      () => renderer.render(scene, camera),
+    );
+    return () => {
+      stopLoop();
+      disposeScene(scene, renderer);
+      if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement);
     };
-    const id = setInterval(animate, 16);
-    return () => { clearInterval(id); renderer.dispose(); el.removeChild(renderer.domElement); };
   }, [color]);
   return <div ref={mountRef} style={{ width: "100%", height: "100%" }} />;
 }
@@ -293,37 +305,41 @@ function OrbitScene({ color }: { color: string }) {
     scene.add(sun);
 
     let t = 0;
-    const animate = () => {
-      t += 0.016;
-      planet.rotation.y += 0.003;
-      planet.rotation.x += 0.001;
+    const stopLoop = runThreeLoop(
+      el,
+      (delta) => {
+        t += delta;
+        planet.rotation.y += 0.003;
+        planet.rotation.x += 0.001;
 
-      const angle = t * 0.35;
-      const rx = 2.5, rz = 2.0;
-      const cx = Math.cos(angle) * rx;
-      const cz = Math.sin(angle) * rz;
-      craftGroup.position.set(cx, 0, cz);
-      craftGroup.lookAt(0, 0, 0);
-      craftGroup.rotateY(Math.PI);
+        const angle = t * 0.35;
+        const rx = 2.5, rz = 2.0;
+        const cx = Math.cos(angle) * rx;
+        const cz = Math.sin(angle) * rz;
+        craftGroup.position.set(cx, 0, cz);
+        craftGroup.lookAt(0, 0, 0);
+        craftGroup.rotateY(Math.PI);
 
-      // Exhaust trail behind craft
-      const ep = exhaustGeo.attributes.position as THREE.BufferAttribute;
-      for (let i = 0; i < exCount; i++) {
-        const backAngle = angle - (i / exCount) * 0.8;
-        const spread = (i / exCount) * 0.25;
-        ep.setXYZ(i,
-          Math.cos(backAngle) * rx + (Math.random() - 0.5) * spread,
-          (Math.random() - 0.5) * spread,
-          Math.sin(backAngle) * rz + (Math.random() - 0.5) * spread
-        );
-      }
-      ep.needsUpdate = true;
-      exhaust.material.opacity = 0.5 + 0.3 * Math.sin(t * 5);
-
-      renderer.render(scene, camera);
+        const ep = exhaustGeo.attributes.position as THREE.BufferAttribute;
+        for (let i = 0; i < exCount; i++) {
+          const backAngle = angle - (i / exCount) * 0.8;
+          const spread = (i / exCount) * 0.25;
+          ep.setXYZ(i,
+            Math.cos(backAngle) * rx + (Math.random() - 0.5) * spread,
+            (Math.random() - 0.5) * spread,
+            Math.sin(backAngle) * rz + (Math.random() - 0.5) * spread
+          );
+        }
+        ep.needsUpdate = true;
+        (exhaust.material as THREE.PointsMaterial).opacity = 0.5 + 0.3 * Math.sin(t * 5);
+      },
+      () => renderer.render(scene, camera),
+    );
+    return () => {
+      stopLoop();
+      disposeScene(scene, renderer);
+      if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement);
     };
-    const id = setInterval(animate, 16);
-    return () => { clearInterval(id); renderer.dispose(); el.removeChild(renderer.domElement); };
   }, [color]);
   return <div ref={mountRef} style={{ width: "100%", height: "100%" }} />;
 }
@@ -414,10 +430,16 @@ function CaseCard({ c, index, onClick }: { c: Case; index: number; onClick: () =
   const isLeft = index % 2 === 0;
   const [hovered, setHovered] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [sceneActive, setSceneActive] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const obs = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) setVisible(true); }, { threshold: 0.2 });
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setVisible(true);
+        setSceneActive(true);
+      }
+    }, { threshold: 0.2 });
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
   }, []);
@@ -446,7 +468,7 @@ function CaseCard({ c, index, onClick }: { c: Case; index: number; onClick: () =
         cursor: "pointer",
       }} onClick={onClick} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
         <div style={{ width: "100%", height: "100%", background: "#020810" }}>
-          <SceneComponent color={c.color} />
+          {sceneActive && <SceneComponent color={c.color} />}
         </div>
         {/* Overlay hint */}
         <div style={{
@@ -544,8 +566,11 @@ function CaseCard({ c, index, onClick }: { c: Case; index: number; onClick: () =
 
 // ─── Star Field (client-only, avoids SSR/hydration mismatch on numeric styles) ──
 function StarField() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   if (!mounted) return null;
 
   const stars = Array.from({ length: 80 }, (_, i) => ({

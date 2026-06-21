@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import StarField from "./StarField";
+import dynamic from "next/dynamic";
+import { useState } from "react";
+
+const StarField = dynamic(() => import("./StarField"), { ssr: false });
 type ModuleId = "learn" | "build" | "launch";
 interface ModuleData {
   id: ModuleId;
@@ -206,7 +208,7 @@ export default function PlatformSection() {
         rel="stylesheet"
       />
       {/* Star background */}
-      {mounted && <StarField />}
+      <StarField />
       {/* Vignette */}
       <div
         aria-hidden
