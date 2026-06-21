@@ -12,7 +12,7 @@ npm install
 npm run dev
 ```
 
-หรือจาก `Lunar/` root: `docker compose -f compose.dev.yaml up --build`  
+หรือจาก `Lunar/` root: `docker compose up --build`  
 Docker: [../docs/docker-dev.md](../docs/docker-dev.md)
 
 ## Requirements

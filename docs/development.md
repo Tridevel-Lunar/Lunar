@@ -2,7 +2,7 @@
 
 Next.js 16 — web app, landing page และ UI การเรียนรู้
 
-**Product context:** [concept.md](concept.md)  
+**Product context:** [concept.md](concept.md) · [functional-spec.md](functional-spec.md)  
 **Tech stack (เต็ม):** [stack.md](stack.md)  
 **Stack:** Next.js 16, React 19, Tailwind CSS v4, TypeScript, Three.js / R3F — วางแผนเพิ่ม Shadcn/ui, Framer Motion, Blockly
 
@@ -19,7 +19,7 @@ npm run lint
 ### Docker (จาก `Lunar/` root)
 
 ```bash
-docker compose -f compose.dev.yaml up --build
+docker compose up --build
 ```
 
 ดู [../../docs/docker-dev.md](../../docs/docker-dev.md)
@@ -127,6 +127,13 @@ npm run lint
 ```
 
 ยังไม่มี test runner — ถ้าเพิ่ม ใช้ Vitest + React Testing Library, colocate `*.test.tsx`
+
+## Git
+
+- Dev บน **`develop`** — ห้าม push ตรงไป **`main`**
+- งานใหญ่: `feature/*` จาก `develop` → PR กลับ `develop`
+- Release: PR **`develop` → `main`**
+- รายละเอียด: [../../docs/git-workflow.md](../../docs/git-workflow.md)
 
 ## Boundaries
 
