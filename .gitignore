@@ -4,4 +4,3 @@ node_modules/
 .env
 *.tsbuildinfo
 Dockerfile.dev
-.dockerignore
