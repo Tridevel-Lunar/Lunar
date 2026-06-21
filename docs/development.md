@@ -10,7 +10,8 @@ Next.js 16 — web app, landing page และ UI การเรียนรู
 
 ```bash
 npm install
-npm run dev      # http://localhost:3000 (Turbopack)
+npm run dev          # http://localhost:3000 (Turbopack — รันนอก Docker)
+npm run dev:docker   # webpack + polling — ใช้ใน Docker compose
 npm run build
 npm run start
 npm run lint
@@ -23,6 +24,8 @@ docker compose up --build
 ```
 
 ดู [../../docs/docker-dev.md](../../docs/docker-dev.md)
+
+**Env:** `cp .env.example .env.local` — ต้องมี `NEXT_PUBLIC_API_URL=http://localhost:8000` (หรือรัน `../../scripts/setup-env.ps1` จาก root)
 
 **Requirements:** Node.js 18.17+, npm 9+
 
@@ -126,7 +129,7 @@ const SpaceCanvas = dynamic(() => import("./SpaceCanvas"), { ssr: false });
 npm run lint
 ```
 
-ยังไม่มี test runner — ถ้าเพิ่ม ใช้ Vitest + React Testing Library, colocate `*.test.tsx`
+Frontend ยังไม่มี unit test runner — auth/API ทดสอบผ่าน backend **pytest** (`cd ../backend && pytest`) หรือ manual ที่ `/register` + Swagger `/docs`
 
 ## Git
 

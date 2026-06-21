@@ -18,7 +18,8 @@
 | **Next.js 16** (React) | ใช้อยู่ | Framework หลัก — App Router, Turbopack |
 | **Tailwind CSS v4** | ใช้อยู่ | จัดสไตล์หน้าเว็บ |
 | **Shadcn/ui** | วางแผน | คอมโพเนนต์พื้นฐาน (Button, Dialog, Form ฯลฯ) |
-| **Framer Motion** | วางแผน | แอนิเมชัน — section transitions, hover effects |
+| **Framer Motion** | ใช้อยู่ | แอนิเมชัน auth — card entrance, ปุ่ม, error message |
+| **react-icons** | ใช้อยู่ | ไอคอนทั่วไป (auth ใช้ inline SVG สำหรับ Google logo) |
 
 ## 3D & Assets
 
