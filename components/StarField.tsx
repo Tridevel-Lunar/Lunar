@@ -85,7 +85,7 @@ export default function StarField() {
     <div
       ref={mountRef}
       aria-hidden
-      style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+      className="pointer-events-none absolute inset-0"
     />
   );
 }
