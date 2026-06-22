@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 const StarField = dynamic(() => import("./StarField"), { ssr: false });
 
@@ -122,13 +122,27 @@ function ModuleCard({
 
 export default function PlatformSection() {
   const [activeId, setActiveId] = useState<ModuleId>("learn");
+  const sectionRef = useRef<HTMLElement>(null);
+  const [starsActive, setStarsActive] = useState(false);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => setStarsActive(entry.isIntersecting),
+      { rootMargin: "120px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   return (
     <section
+      ref={sectionRef}
       id="platform"
       className="relative min-h-screen overflow-hidden bg-bg px-6 py-32 text-text"
     >
-      <StarField />
+      {starsActive && <StarField />}
 
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(3,8,18,0.6)_70%,#030812_100%)]"

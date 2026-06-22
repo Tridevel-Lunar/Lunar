@@ -1,29 +1,62 @@
 "use client";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Stars, Float } from "@react-three/drei";
-import { Suspense, useRef, useEffect } from "react";
+import { Suspense, useEffect, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
+
+function useCanvasActive(containerRef: RefObject<HTMLDivElement | null>) {
+  const [active, setActive] = useState(true);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    let inView = true;
+    let pageVisible = !document.hidden;
+
+    const sync = () => setActive(inView && pageVisible);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        inView = entry.isIntersecting;
+        sync();
+      },
+      { rootMargin: "0px" },
+    );
+    observer.observe(el);
+
+    const onVisibility = () => {
+      pageVisible = !document.hidden;
+      sync();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [containerRef]);
+
+  return active;
+}
 
 function Moon() {
   const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame((_, delta) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.05;
-    }
+    if (meshRef.current) meshRef.current.rotation.y += delta * 0.05;
   });
 
   return (
     <Float speed={1.2} rotationIntensity={0.3} floatIntensity={0.8}>
       <mesh ref={meshRef} position={[2.5, 0.3, 0]}>
-        <sphereGeometry args={[1.3, 128, 128]} />
+        <sphereGeometry args={[1.3, 48, 48]} />
         <meshStandardMaterial
           color="#c8ccd4"
           roughness={1}
           metalness={0.05}
           emissive="#1a2540"
           emissiveIntensity={0.15}
-          bumpScale={0.05}
         />
       </mesh>
     </Float>
@@ -40,7 +73,7 @@ function CameraRig() {
         y: (e.clientY / window.innerHeight - 0.5) * 2,
       };
     };
-    window.addEventListener("mousemove", handler);
+    window.addEventListener("mousemove", handler, { passive: true });
     return () => window.removeEventListener("mousemove", handler);
   }, []);
 
@@ -60,68 +93,39 @@ function Nebula() {
   });
   return (
     <mesh ref={ref} position={[-3, -1, -5]}>
-      <sphereGeometry args={[3, 32, 32]} />
-      <meshBasicMaterial
-        color="#00e5ff"
-        transparent
-        opacity={0.04}
-        side={THREE.BackSide}
-      />
+      <sphereGeometry args={[3, 24, 24]} />
+      <meshBasicMaterial color="#00e5ff" transparent opacity={0.04} side={THREE.BackSide} />
     </mesh>
   );
 }
 
 export default function SpaceCanvas() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const active = useCanvasActive(containerRef);
+
   return (
-    <Canvas
-      camera={{ position: [0, 0, 6], fov: 55 }}
-      gl={{ antialias: true, alpha: false }}
-      className="bg-bg"
-    >
-      <Suspense fallback={null}>
-        {/* Lighting */}
-        <ambientLight intensity={0.15} />
-        <directionalLight
-          position={[-5, 3, 5]}
-          intensity={1.2}
-          color="#ffffff"
-        />
-        <pointLight
-          position={[5, -2, 3]}
-          intensity={2}
-          color="#00e5ff"
-          distance={15}
-        />
-        <pointLight
-          position={[-8, 5, -5]}
-          intensity={1.5}
-          color="#4a6fff"
-          distance={20}
-        />
+    <div ref={containerRef} className="h-full w-full">
+      <Canvas
+        camera={{ position: [0, 0, 6], fov: 55 }}
+        dpr={[1, 1.5]}
+        frameloop={active ? "always" : "never"}
+        gl={{ antialias: false, alpha: false, powerPreference: "low-power" }}
+        className="bg-bg"
+      >
+        <Suspense fallback={null}>
+          <ambientLight intensity={0.15} />
+          <directionalLight position={[-5, 3, 5]} intensity={1.2} color="#ffffff" />
+          <pointLight position={[5, -2, 3]} intensity={2} color="#00e5ff" distance={15} />
 
-        {/* Starfield */}
-        <Stars
-          radius={120}
-          depth={60}
-          count={6000}
-          factor={4}
-          saturation={0}
-          fade
-          speed={0.5}
-        />
+          <Stars radius={120} depth={60} count={2500} factor={4} saturation={0} fade speed={0.5} />
 
-        {/* Moon */}
-        <Moon />
+          <Moon />
+          <Nebula />
+          <CameraRig />
 
-        {/* Distant nebula glow */}
-        <Nebula />
-
-        {/* Mouse parallax */}
-        <CameraRig />
-
-        {/* Fog for depth */}
-        <fog attach="fog" args={["#030812", 8, 25]} />
-      </Suspense>
-    </Canvas>
+          <fog attach="fog" args={["#030812", 8, 25]} />
+        </Suspense>
+      </Canvas>
+    </div>
   );
 }

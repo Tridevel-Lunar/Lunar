@@ -133,8 +133,9 @@ function LaserScene({ color }: { color: string }) {
 
         const dp = dotGeo.attributes.position as THREE.BufferAttribute;
         for (let i = 0; i < dotCount; i++) {
-          const frac = ((i / dotCount + t * 0.4) % 1);
-          dp.setXYZ(i, -2.1 + frac * 4.2, (Math.random() - 0.5) * 0.05, (Math.random() - 0.5) * 0.05);
+          const frac = (i / dotCount + t * 0.4) % 1;
+          const wobble = Math.sin(t * 4 + i) * 0.025;
+          dp.setXYZ(i, -2.1 + frac * 4.2, wobble, Math.cos(t * 3 + i) * 0.025);
         }
         dp.needsUpdate = true;
       },
@@ -324,10 +325,12 @@ function OrbitScene({ color }: { color: string }) {
         for (let i = 0; i < exCount; i++) {
           const backAngle = angle - (i / exCount) * 0.8;
           const spread = (i / exCount) * 0.25;
-          ep.setXYZ(i,
-            Math.cos(backAngle) * rx + (Math.random() - 0.5) * spread,
-            (Math.random() - 0.5) * spread,
-            Math.sin(backAngle) * rz + (Math.random() - 0.5) * spread
+          const jitter = Math.sin(t * 6 + i * 0.7) * spread * 0.35;
+          ep.setXYZ(
+            i,
+            Math.cos(backAngle) * rx + jitter,
+            Math.cos(t * 5 + i) * spread * 0.25,
+            Math.sin(backAngle) * rz + jitter,
           );
         }
         ep.needsUpdate = true;
@@ -435,11 +438,9 @@ function CaseCard({ c, index, onClick }: { c: Case; index: number; onClick: () =
 
   useEffect(() => {
     const obs = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setVisible(true);
-        setSceneActive(true);
-      }
-    }, { threshold: 0.2 });
+      if (entry.isIntersecting) setVisible(true);
+      setSceneActive(entry.isIntersecting);
+    }, { threshold: 0.15, rootMargin: "80px" });
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
   }, []);
