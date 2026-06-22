@@ -1,4 +1,5 @@
 "use client";
+
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
@@ -12,99 +13,32 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section
-      style={{
-        position: "relative",
-        minHeight: "100vh",
-        overflow: "hidden",
-        background: "#030812",
-        color: "#e8edf5",
-      }}
-    >
-      {/* 3D Background */}
-      <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
+    <section className="relative min-h-screen overflow-hidden bg-bg text-text">
+      <div className="absolute inset-0 z-[1]">
         <SpaceCanvas />
       </div>
 
-      {/* Vignette + bottom fade for legibility */}
       <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 2,
-          background:
-            "radial-gradient(ellipse at center, transparent 40%, rgba(3,8,18,0.6) 100%), linear-gradient(to bottom, transparent 60%, rgba(3,8,18,0.9) 100%)",
-          pointerEvents: "none",
-        }}
+        className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(3,8,18,0.6)_100%),linear-gradient(to_bottom,transparent_60%,rgba(3,8,18,0.9)_100%)]"
+        aria-hidden
       />
 
-      {/* Content */}
       <div
-        style={{
-          position: "relative",
-          zIndex: 3,
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          textAlign: "center",
-          padding: "6rem 1.5rem",
-          opacity: visible ? 1 : 0,
-          transform: visible ? "translateY(0)" : "translateY(16px)",
-          transition: "opacity 1.2s ease, transform 1.2s ease",
-          pointerEvents: "none",
-        }}
+        className={`relative z-[3] flex min-h-screen flex-col items-center justify-center px-6 py-24 text-center transition-[opacity,transform] duration-[1.2s] ease-out pointer-events-none ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
       >
-        <div
-          className="font-mono"
-          style={{
-            fontSize: "0.75rem",
-            letterSpacing: "0.35em",
-            color: "rgba(0,229,255,0.8)",
-            marginBottom: "2rem",
-            textTransform: "uppercase",
-          }}
-        >
+        <div className="font-mono mb-8 text-[0.75rem] tracking-[0.35em] text-cyan/80 uppercase">
           Thailand Deep Tech Space Program
         </div>
 
-        <h1
-          style={{
-            fontSize: "clamp(4rem, 14vw, 9rem)",
-            fontWeight: 200,
-            letterSpacing: "0.18em",
-            lineHeight: 1,
-            margin: 0,
-            color: "#e8edf5",
-            textShadow: "0 0 40px rgba(0,229,255,0.25)",
-          }}
-        >
+        <h1 className="m-0 text-[clamp(4rem,14vw,9rem)] leading-none font-extralight tracking-[0.18em] text-text shadow-[0_0_40px_rgba(0,229,255,0.25)]">
           LUNAR
         </h1>
 
-        <p
-          style={{
-            marginTop: "2rem",
-            maxWidth: "640px",
-            fontSize: "1.05rem",
-            lineHeight: 1.7,
-            color: "rgba(232,237,245,0.7)",
-          }}
-        >
+        <p className="mt-8 max-w-[640px] text-[1.05rem] leading-relaxed text-text/70">
           แพลตฟอร์มเรียนรู้เทคโนโลยีอวกาศสำหรับคนไทย
         </p>
 
-        <div
-          style={{
-            marginTop: "3rem",
-            display: "flex",
-            gap: "1rem",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            pointerEvents: "auto",
-          }}
-        >
+        <div className="pointer-events-auto mt-12 flex flex-wrap justify-center gap-4">
           <PrimaryBtn label="เริ่มเรียนรู้" />
           <SecondaryBtn label="เกี่ยวกับเรา" />
         </div>
@@ -114,25 +48,10 @@ export default function HeroSection() {
 }
 
 function PrimaryBtn({ label }: { label: string }) {
-  const [hov, setHov] = useState(false);
   return (
     <button
-      className="font-mono"
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        padding: "0.9rem 2.4rem",
-        background: hov ? "#00e5ff" : "rgba(0,229,255,0.1)",
-        border: "1px solid rgba(0,229,255,0.5)",
-        color: hov ? "#030812" : "#00e5ff",
-        fontSize: "0.82rem",
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        cursor: "pointer",
-        transition: "all 0.3s ease",
-        boxShadow: hov ? "0 0 30px rgba(0,229,255,0.4)" : "none",
-        backdropFilter: "blur(8px)",
-      }}
+      type="button"
+      className="font-mono cursor-pointer border border-cyan/50 bg-cyan/10 px-10 py-3.5 text-[0.82rem] tracking-[0.12em] text-cyan uppercase backdrop-blur-sm transition-all hover:bg-cyan hover:text-bg hover:shadow-[0_0_30px_rgba(0,229,255,0.4)]"
     >
       {label}
     </button>
@@ -140,24 +59,10 @@ function PrimaryBtn({ label }: { label: string }) {
 }
 
 function SecondaryBtn({ label }: { label: string }) {
-  const [hov, setHov] = useState(false);
   return (
     <button
-      className="font-mono"
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        padding: "0.9rem 2.4rem",
-        background: "rgba(232,237,245,0.03)",
-        border: "1px solid rgba(232,237,245,0.18)",
-        color: hov ? "#e8edf5" : "rgba(232,237,245,0.6)",
-        fontSize: "0.82rem",
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        cursor: "pointer",
-        transition: "all 0.3s ease",
-        backdropFilter: "blur(8px)",
-      }}
+      type="button"
+      className="font-mono cursor-pointer border border-text/18 bg-text/[0.03] px-10 py-3.5 text-[0.82rem] tracking-[0.12em] text-text/60 uppercase backdrop-blur-sm transition-all hover:text-text"
     >
       {label}
     </button>
