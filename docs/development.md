@@ -10,17 +10,19 @@ Next.js 16 — web app, landing page และ UI การเรียนรู
 
 ```bash
 npm install
-npm run dev          # http://localhost:3000 (Turbopack — รันนอก Docker)
-npm run dev:docker   # webpack + polling — ใช้ใน Docker compose
+npm run dev          # Turbopack — http://localhost:3000
 npm run build
 npm run start
 npm run lint
 ```
 
-### Docker (จาก `Lunar/` root)
+### Backend stack (จาก `Lunar/` root)
+
+Frontend รันบนเครื่อง — backend + PostgreSQL ใช้ Docker:
 
 ```bash
-docker compose up --build
+docker compose up --build    # terminal แรก
+cd frontend && npm run dev     # terminal ที่สอง
 ```
 
 ดู [../../docs/docker-dev.md](../../docs/docker-dev.md)

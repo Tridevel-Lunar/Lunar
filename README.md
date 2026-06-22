@@ -9,11 +9,10 @@
 
 ```bash
 npm install
-npm run dev
+npm run dev          # Turbopack — http://localhost:3000
 ```
 
-หรือจาก `Lunar/` root: `docker compose up --build`  
-Docker: [../docs/docker-dev.md](../docs/docker-dev.md)
+Backend + PostgreSQL รันใน Docker จาก workspace root (`docker compose up --build`) — ดู [../docs/docker-dev.md](../docs/docker-dev.md)
 
 ## Requirements
 
