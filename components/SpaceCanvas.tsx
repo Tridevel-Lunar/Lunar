@@ -1,8 +1,13 @@
 "use client";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Stars, Float } from "@react-three/drei";
+import { Stars, Float, useTexture } from "@react-three/drei";
 import { Suspense, useEffect, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
+
+const MOON_COLOR_MAP = "/lroc_color_poles_2k.png";
+const MOON_BUMP_MAP = "/ldem_4_uint.png";
+
+useTexture.preload([MOON_COLOR_MAP, MOON_BUMP_MAP]);
 
 function useCanvasActive(containerRef: RefObject<HTMLDivElement | null>) {
   const [active, setActive] = useState(true);
@@ -42,6 +47,14 @@ function useCanvasActive(containerRef: RefObject<HTMLDivElement | null>) {
 
 function Moon() {
   const meshRef = useRef<THREE.Mesh>(null);
+  const [colorMap, bumpMap] = useTexture([MOON_COLOR_MAP, MOON_BUMP_MAP]);
+
+  useEffect(() => {
+    colorMap.colorSpace = THREE.SRGBColorSpace;
+    bumpMap.colorSpace = THREE.NoColorSpace;
+    colorMap.anisotropy = 4;
+    bumpMap.anisotropy = 4;
+  }, [colorMap, bumpMap]);
 
   useFrame((_, delta) => {
     if (meshRef.current) meshRef.current.rotation.y += delta * 0.05;
@@ -49,14 +62,16 @@ function Moon() {
 
   return (
     <Float speed={1.2} rotationIntensity={0.3} floatIntensity={0.8}>
-      <mesh ref={meshRef} position={[2.5, 0.3, 0]}>
+      <mesh ref={meshRef} position={[2.5, 0.3, 0]} rotation={[0, 1.2, 0.08]}>
         <sphereGeometry args={[1.3, 48, 48]} />
         <meshStandardMaterial
-          color="#c8ccd4"
-          roughness={1}
-          metalness={0.05}
-          emissive="#1a2540"
-          emissiveIntensity={0.15}
+          map={colorMap}
+          bumpMap={bumpMap}
+          bumpScale={0.035}
+          roughness={0.92}
+          metalness={0.04}
+          emissive="#0a1020"
+          emissiveIntensity={0.06}
         />
       </mesh>
     </Float>

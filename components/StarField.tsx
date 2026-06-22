@@ -61,7 +61,7 @@ export default function StarField() {
     const stopLoop = runThreeLoop(
       el,
       (delta) => {
-        t += delta * 0.6;
+        t += delta * 0.05;
         stars.rotation.y = t;
         stars.rotation.x = Math.sin(t * 0.5) * 0.08;
       },
