@@ -30,7 +30,7 @@ export default function HeroSection() {
           Thailand Deep Tech Space Program
         </div>
 
-        <h1 className="m-0 text-[clamp(4rem,14vw,9rem)] leading-none font-extralight tracking-[0.18em] text-text shadow-[0_0_40px_rgba(0,229,255,0.25)]">
+        <h1 className="text-glow-cyan-lg m-0 text-[clamp(4rem,14vw,9rem)] leading-none font-extralight tracking-[0.18em] text-text">
           LUNAR
         </h1>
 

@@ -626,7 +626,7 @@ export default function WhySpace() {
       <div className="relative z-[2]">
         <div className="mx-auto max-w-[800px] px-5 py-[clamp(60px,8vw,100px)] pb-[clamp(50px,6vw,80px)] text-center">
           <div className="mb-8 inline-flex animate-fade-in items-center gap-3 rounded-3xl border border-cyan/25 bg-cyan/8 px-5 py-1.5">
-            <div className="h-1.5 w-1.5 rounded-full bg-cyan shadow-[0_0_10px_#00e5ff]" />
+            <div className="glow-dot-cyan-sm h-1.5 w-1.5 rounded-full bg-cyan" />
             <span className="font-display text-[11px] tracking-[0.2em] text-cyan">
               REAL WORLD APPLICATIONS
             </span>

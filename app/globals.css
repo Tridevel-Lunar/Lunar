@@ -74,6 +74,30 @@
   clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
 }
 
+@utility text-glow-cyan-sm {
+  text-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+}
+
+@utility text-glow-cyan {
+  text-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+}
+
+@utility text-glow-cyan-lg {
+  text-shadow: 0 0 40px rgba(0, 229, 255, 0.25);
+}
+
+@utility text-glow-cyan-link {
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.5);
+}
+
+@utility glow-dot-cyan {
+  box-shadow: 0 0 12px #00e5ff;
+}
+
+@utility glow-dot-cyan-sm {
+  box-shadow: 0 0 10px #00e5ff;
+}
+
 @keyframes auth-glow-pulse {
   0%,
   100% {

@@ -111,7 +111,7 @@ export default function LoginForm() {
 
       <p className="mt-5 text-[0.85rem] text-muted">
         ยังไม่มีบัญชี?{" "}
-        <Link href="/register" className="text-cyan no-underline transition-[text-shadow] hover:shadow-[0_0_12px_rgba(0,229,255,0.5)]">
+        <Link href="/register" className="text-cyan no-underline transition-[text-shadow] hover:text-glow-cyan-link">
           สมัครสมาชิก
         </Link>
       </p>

@@ -126,7 +126,7 @@ export default function RegisterPage() {
 
       <p className="mt-5 text-[0.85rem] text-muted">
         มีบัญชีแล้ว?{" "}
-        <Link href="/login" className="text-cyan no-underline transition-[text-shadow] hover:shadow-[0_0_12px_rgba(0,229,255,0.5)]">
+        <Link href="/login" className="text-cyan no-underline transition-[text-shadow] hover:text-glow-cyan-link">
           เข้าสู่ระบบ
         </Link>
       </p>

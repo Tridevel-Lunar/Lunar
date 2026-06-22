@@ -138,7 +138,7 @@ export default function PlatformSection() {
       <div className="relative z-[1] mx-auto max-w-[1200px]">
         <div className="mb-20 text-center">
           <div className="font-ui-mono mb-7 inline-flex items-center gap-2.5 text-[0.72rem] tracking-[0.3em] text-cyan/85">
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan shadow-[0_0_12px_#00e5ff]" />
+            <span className="glow-dot-cyan h-1.5 w-1.5 rounded-full bg-cyan" />
             PLATFORM
           </div>
           <h2 className="font-section-thai m-0 mb-5 text-[clamp(2.4rem,5vw,3.6rem)] leading-[1.15] font-light tracking-tight text-text">

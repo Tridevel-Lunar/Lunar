@@ -57,7 +57,7 @@ export default function Navbar() {
     >
       <Link
         href="/"
-        className="font-en text-[1.25rem] font-extrabold tracking-[0.35em] text-cyan no-underline shadow-[0_0_20px_rgba(0,229,255,0.5)]"
+        className="font-en text-glow-cyan text-[1.25rem] font-extrabold tracking-[0.35em] text-cyan no-underline"
       >
         LUNAR
       </Link>

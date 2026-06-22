@@ -16,7 +16,7 @@ export default function ResearchSection() {
       <div className="mx-auto max-w-[1200px]">
         <div className="mb-16 text-center">
           <div className="font-mono mb-7 inline-flex items-center gap-2.5 text-[0.72rem] tracking-[0.3em] text-cyan/85">
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan shadow-[0_0_12px_#00e5ff]" />
+            <span className="glow-dot-cyan h-1.5 w-1.5 rounded-full bg-cyan" />
             RESEARCH
           </div>
           <h2 className="mb-5 text-[clamp(2.4rem,5vw,3.6rem)] leading-[1.15] font-light tracking-tight text-text">
