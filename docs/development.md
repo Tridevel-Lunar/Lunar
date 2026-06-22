@@ -71,14 +71,22 @@ frontend/
 - **Section components** — แต่ละ section ของ landing อยู่ใน `components/<Section>.tsx`
 - **`page.tsx` บาง** — compose sections เท่านั้น
 - **Canvas / WebGL** — `"use client"` + `dynamic(..., { ssr: false })` สำหรับ browser-only (ดู `HeroSection` → `SpaceCanvas`)
-- **Styling** — Tailwind v4 ใน `globals.css`; theme tokens ใน `:root`
+- **Styling** — Tailwind v4 utilities เป็นหลัก; `@theme` tokens ใน `globals.css`; CSS เฉพาะ pseudo-element / keyframes
 
 ## Code Style
 
 - Import ด้วย `@/` (`@/components/Navbar`)
 - Functional components; `"use client"` เมื่อจำเป็นเท่านั้น
-- สีจาก CSS variables (`--bg`, `--cyan`, `--teal`, `--amber`, `--text`, `--muted`)
-- Fonts: `Noto Sans Thai` (body), `Syne` (`.font-en`), `Space Mono` (`.font-mono`)
+- สีจาก Tailwind theme (`bg-bg`, `text-cyan`, `text-muted` ฯลฯ) หรือ CSS variables (`--bg`, `--cyan`)
+- Fonts (semantic utilities ใน `@theme`):
+  - `font-thai` — Noto Sans Thai (body)
+  - `font-en` — Syne (Navbar, Hero, Footer, Join, Research, auth logo)
+  - `font-mono` — Space Mono (labels, CTAs, auth primary btn)
+  - `font-display` — Orbitron (WhySpace headings)
+  - `font-section-thai` — Sarabun (WhySpace / Platform ย่อหน้าไทย)
+  - `font-platform` — Space Grotesk (Platform headings EN)
+  - `font-ui-mono` — ui-monospace (Platform labels — ไม่ใช่ Space Mono)
+- หลีกเลี่ยง inline `style={{}}` ใหม่ — ยกเว้น Three.js, dynamic accent colors (`--accent`), runtime animation duration
 - ข้อความ UI ภาษา**ไทย**; ชื่อ component/code ภาษา**อังกฤษ**
 - ชื่อ product: **Space**, **Arena**, **Studio**, **LAIKA**
 
