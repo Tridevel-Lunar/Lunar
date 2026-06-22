@@ -4,6 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "LUNAR — Space Technology Learning Platform",
   description: "Learn space technology — from satellites to rocket propulsion — built for Thai students and space enthusiasts.",
+  icons: "icon.png"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
