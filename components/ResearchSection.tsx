@@ -12,104 +12,31 @@ const TOPICS = [
 
 export default function ResearchSection() {
   return (
-    <section
-      id="research"
-      style={{
-        position: "relative",
-        background: "#030812",
-        color: "#e8edf5",
-        padding: "8rem 1.5rem",
-        overflow: "hidden",
-      }}
-    >
-      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: "4rem" }}>
-          <div
-            className="font-mono"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.6rem",
-              fontSize: "0.72rem",
-              letterSpacing: "0.3em",
-              color: "rgba(0,229,255,0.85)",
-              marginBottom: "1.75rem",
-            }}
-          >
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                background: "#00e5ff",
-                borderRadius: "50%",
-                boxShadow: "0 0 12px #00e5ff",
-              }}
-            />
+    <section id="research" className="relative overflow-hidden bg-bg px-6 py-32 text-text">
+      <div className="mx-auto max-w-[1200px]">
+        <div className="mb-16 text-center">
+          <div className="font-mono mb-7 inline-flex items-center gap-2.5 text-[0.72rem] tracking-[0.3em] text-cyan/85">
+            <span className="glow-dot-cyan h-1.5 w-1.5 rounded-full bg-cyan" />
             RESEARCH
           </div>
-          <h2
-            style={{
-              fontSize: "clamp(2.4rem, 5vw, 3.6rem)",
-              fontWeight: 300,
-              letterSpacing: "-0.01em",
-              color: "#e8edf5",
-              margin: "0 0 1.25rem 0",
-              lineHeight: 1.15,
-            }}
-          >
+          <h2 className="mb-5 text-[clamp(2.4rem,5vw,3.6rem)] leading-[1.15] font-light tracking-tight text-text">
             หัวข้อวิจัย
           </h2>
-          <p
-            style={{
-              fontSize: "1.05rem",
-              fontWeight: 300,
-              color: "rgba(232,237,245,0.5)",
-              maxWidth: 560,
-              margin: "0 auto",
-              lineHeight: 1.7,
-            }}
-          >
+          <p className="mx-auto max-w-[560px] text-[1.05rem] leading-relaxed font-light text-text/50">
             สำรวจเทคโนโลยีอวกาศเชิงลึกที่กำลังพัฒนาในโปรแกรม LUNAR
           </p>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-            gap: "1.25rem",
-          }}
-        >
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-5">
           {TOPICS.map((topic) => (
             <div
               key={topic.title}
-              style={{
-                padding: "1.75rem 1.5rem",
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(0,229,255,0.12)",
-                borderRadius: 2,
-                transition: "border-color 0.3s",
-              }}
+              className="rounded-sm border border-cyan/12 bg-white/[0.02] p-6 transition-[border-color] hover:border-cyan/25"
             >
-              <h3
-                className="font-en"
-                style={{
-                  fontWeight: 700,
-                  fontSize: "1.05rem",
-                  color: "#e8edf5",
-                  margin: "0 0 0.75rem 0",
-                }}
-              >
+              <h3 className="font-en mb-3 text-[1.05rem] font-bold text-text">
                 {topic.title}
               </h3>
-              <p
-                style={{
-                  fontSize: "0.9rem",
-                  lineHeight: 1.65,
-                  color: "rgba(232,237,245,0.5)",
-                  margin: 0,
-                }}
-              >
+              <p className="m-0 text-[0.9rem] leading-relaxed text-text/50">
                 {topic.description}
               </p>
             </div>

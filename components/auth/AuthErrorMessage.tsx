@@ -13,7 +13,7 @@ export default function AuthErrorMessage({ message }: AuthErrorMessageProps) {
     <AnimatePresence mode="wait">
       <motion.p
         key={message}
-        className="auth-error"
+        className="mb-4 text-[0.85rem] text-[#ff6b6b]"
         role="alert"
         initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -12 }}
         animate={reduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}

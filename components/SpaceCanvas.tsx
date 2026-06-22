@@ -76,7 +76,7 @@ export default function SpaceCanvas() {
     <Canvas
       camera={{ position: [0, 0, 6], fov: 55 }}
       gl={{ antialias: true, alpha: false }}
-      style={{ background: "#030812" }}
+      className="bg-bg"
     >
       <Suspense fallback={null}>
         {/* Lighting */}

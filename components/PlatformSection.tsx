@@ -1,10 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 
 const StarField = dynamic(() => import("./StarField"), { ssr: false });
+
 type ModuleId = "learn" | "build" | "launch";
+
 interface ModuleData {
   id: ModuleId;
   step: string;
@@ -15,6 +17,7 @@ interface ModuleData {
   bullets: string[];
   accent: string;
 }
+
 const MODULES: ModuleData[] = [
   {
     id: "learn",
@@ -50,6 +53,7 @@ const MODULES: ModuleData[] = [
     accent: "#a78bfa",
   },
 ];
+
 function ModuleCard({
   mod,
   isActive,
@@ -62,125 +66,51 @@ function ModuleCard({
   return (
     <div
       onMouseEnter={onEnter}
-      style={{
-        position: "relative",
-        padding: "2.5rem 2rem",
-        background: isActive
-          ? "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))"
-          : "rgba(255,255,255,0.015)",
-        border: `1px solid ${isActive ? `${mod.accent}55` : "rgba(232,237,245,0.08)"}`,
-        borderRadius: 2,
-        transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
-        cursor: "default",
-        backdropFilter: "blur(6px)",
-        boxShadow: isActive
-          ? `0 0 60px -20px ${mod.accent}33, inset 0 1px 0 ${mod.accent}22`
-          : "none",
-        transform: isActive ? "translateY(-4px)" : "translateY(0)",
-      }}
+      style={
+        {
+          "--accent": mod.accent,
+        } as CSSProperties
+      }
+      className={`relative cursor-default rounded-sm p-8 backdrop-blur-sm transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        isActive
+          ? "-translate-y-1 border-[color:color-mix(in_srgb,var(--accent)_33%,transparent)] bg-gradient-to-b from-white/[0.04] to-white/[0.01] shadow-[0_0_60px_-20px_color-mix(in_srgb,var(--accent)_20%,transparent)]"
+          : "translate-y-0 border-text/8 bg-white/[0.015]"
+      } border`}
     >
-      {/* Top accent line */}
       <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 1,
-          background: `linear-gradient(90deg, transparent, ${mod.accent}, transparent)`,
-          opacity: isActive ? 1 : 0.25,
-          transition: "opacity 0.5s",
-        }}
+        className={`absolute top-0 right-0 left-0 h-px bg-gradient-to-r from-transparent via-[var(--accent)] to-transparent transition-opacity ${isActive ? "opacity-100" : "opacity-25"}`}
       />
-      {/* Step number */}
-      <div
-        style={{
-          fontFamily: "ui-monospace, monospace",
-          fontSize: "0.7rem",
-          letterSpacing: "0.25em",
-          color: mod.accent,
-          opacity: 0.85,
-          marginBottom: "1.5rem",
-        }}
-      >
+
+      <div className="font-ui-mono mb-6 text-[0.7rem] tracking-[0.25em] text-[var(--accent)] opacity-85">
         {mod.step} — MODULE
       </div>
-      {/* Title */}
-      <div style={{ marginBottom: "1.25rem" }}>
-        <h3
-          style={{
-            fontFamily: "Space Grotesk, system-ui, sans-serif",
-            fontSize: "2.4rem",
-            fontWeight: 600,
-            letterSpacing: "-0.02em",
-            color: "#e8edf5",
-            margin: 0,
-            lineHeight: 1,
-          }}
-        >
+
+      <div className="mb-5">
+        <h3 className="font-platform m-0 text-[2.4rem] leading-none font-semibold tracking-tight text-text">
           {mod.title}
         </h3>
-        <div
-          style={{
-            fontFamily: "Sarabun, system-ui, sans-serif",
-            fontSize: "0.95rem",
-            color: "rgba(232,237,245,0.45)",
-            marginTop: "0.4rem",
-            fontWeight: 300,
-          }}
-        >
+        <div className="font-section-thai mt-1.5 text-[0.95rem] font-light text-text/45">
           {mod.titleTh}
         </div>
       </div>
-      {/* Tagline */}
-      <div
-        style={{
-          fontSize: "0.82rem",
-          letterSpacing: "0.04em",
-          color: "rgba(232,237,245,0.7)",
-          marginBottom: "1rem",
-          textTransform: "uppercase",
-        }}
-      >
+
+      <div className="mb-4 text-[0.82rem] tracking-wide text-text/70 uppercase">
         {mod.tagline}
       </div>
-      {/* Description */}
-      <p
-        style={{
-          fontFamily: "Sarabun, system-ui, sans-serif",
-          fontSize: "0.95rem",
-          lineHeight: 1.7,
-          color: "rgba(232,237,245,0.55)",
-          margin: "0 0 1.75rem 0",
-          fontWeight: 300,
-        }}
-      >
+
+      <p className="font-section-thai m-0 mb-7 text-[0.95rem] leading-relaxed font-light text-text/55">
         {mod.description}
       </p>
-      {/* Bullets */}
-      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+
+      <ul className="m-0 list-none p-0">
         {mod.bullets.map((b) => (
           <li
             key={b}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.7rem",
-              fontSize: "0.82rem",
-              color: "rgba(232,237,245,0.65)",
-              padding: "0.4rem 0",
-              fontFamily: "ui-monospace, monospace",
-              letterSpacing: "0.02em",
-            }}
+            className="font-ui-mono flex items-center gap-3 py-1.5 text-[0.82rem] tracking-wide text-text/65"
           >
             <span
-              style={{
-                width: 4,
-                height: 4,
-                borderRadius: "50%",
-                background: mod.accent,
-                opacity: 0.9,
-              }}
+              className="h-1 w-1 rounded-full opacity-90"
+              style={{ background: mod.accent }}
             />
             {b}
           </li>
@@ -189,107 +119,38 @@ function ModuleCard({
     </div>
   );
 }
+
 export default function PlatformSection() {
   const [activeId, setActiveId] = useState<ModuleId>("learn");
+
   return (
     <section
       id="platform"
-      style={{
-        position: "relative",
-        background: "#030812",
-        color: "#e8edf5",
-        padding: "8rem 1.5rem",
-        overflow: "hidden",
-        minHeight: "100vh",
-      }}
+      className="relative min-h-screen overflow-hidden bg-bg px-6 py-32 text-text"
     >
-      <link
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sarabun:wght@300;400;500&display=swap"
-        rel="stylesheet"
-      />
-      {/* Star background */}
       <StarField />
-      {/* Vignette */}
+
       <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(3,8,18,0.6)_70%,#030812_100%)]"
         aria-hidden
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse at center, transparent 0%, rgba(3,8,18,0.6) 70%, #030812 100%)",
-          pointerEvents: "none",
-        }}
       />
-      <div
-        style={{
-          position: "relative",
-          maxWidth: 1200,
-          margin: "0 auto",
-          zIndex: 1,
-        }}
-      >
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "5rem" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.6rem",
-              fontFamily: "ui-monospace, monospace",
-              fontSize: "0.72rem",
-              letterSpacing: "0.3em",
-              color: "rgba(0,229,255,0.85)",
-              marginBottom: "1.75rem",
-            }}
-          >
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                background: "#00e5ff",
-                borderRadius: "50%",
-                boxShadow: "0 0 12px #00e5ff",
-              }}
-            />
+
+      <div className="relative z-[1] mx-auto max-w-[1200px]">
+        <div className="mb-20 text-center">
+          <div className="font-ui-mono mb-7 inline-flex items-center gap-2.5 text-[0.72rem] tracking-[0.3em] text-cyan/85">
+            <span className="glow-dot-cyan h-1.5 w-1.5 rounded-full bg-cyan" />
             PLATFORM
           </div>
-          <h2
-            style={{
-              fontFamily: "Sarabun, system-ui, sans-serif",
-              fontSize: "clamp(2.4rem, 5vw, 3.6rem)",
-              fontWeight: 300,
-              letterSpacing: "-0.01em",
-              color: "#e8edf5",
-              margin: "0 0 1.25rem 0",
-              lineHeight: 1.15,
-            }}
-          >
+          <h2 className="font-section-thai m-0 mb-5 text-[clamp(2.4rem,5vw,3.6rem)] leading-[1.15] font-light tracking-tight text-text">
             เส้นทางสู่จักรวาล
           </h2>
-          <p
-            style={{
-              fontFamily: "Sarabun, system-ui, sans-serif",
-              fontSize: "1.05rem",
-              fontWeight: 300,
-              color: "rgba(232,237,245,0.5)",
-              maxWidth: 560,
-              margin: "0 auto",
-              lineHeight: 1.7,
-            }}
-          >
+          <p className="font-section-thai mx-auto m-0 max-w-[560px] text-[1.05rem] leading-relaxed font-light text-text/50">
             สามขั้นตอนที่ออกแบบมาเพื่อพาคุณจากพื้นฐาน สู่การลงมือสร้าง
             และปล่อยไอเดียของตัวเองสู่โลกจริง
           </p>
         </div>
-        {/* Cards grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "1.5rem",
-            marginBottom: "4rem",
-          }}
-        >
+
+        <div className="mb-16 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6">
           {MODULES.map((m) => (
             <ModuleCard
               key={m.id}
@@ -299,34 +160,11 @@ export default function PlatformSection() {
             />
           ))}
         </div>
-        {/* Footer line */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: "0.75rem",
-            fontFamily: "ui-monospace, monospace",
-            fontSize: "0.7rem",
-            letterSpacing: "0.25em",
-            color: "rgba(232,237,245,0.3)",
-          }}
-        >
-          <span
-            style={{
-              width: 32,
-              height: 1,
-              background: "rgba(232,237,245,0.2)",
-            }}
-          />
+
+        <div className="font-ui-mono flex items-center justify-center gap-3 text-[0.7rem] tracking-[0.25em] text-text/30">
+          <span className="h-px w-8 bg-text/20" />
           LUNAR PLATFORM
-          <span
-            style={{
-              width: 32,
-              height: 1,
-              background: "rgba(232,237,245,0.2)",
-            }}
-          />
+          <span className="h-px w-8 bg-text/20" />
         </div>
       </div>
     </section>

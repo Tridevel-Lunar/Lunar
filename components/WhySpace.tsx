@@ -359,7 +359,7 @@ function CaseModal({ c, onClose }: { c: Case; onClose: () => void }) {
       position: "fixed", inset: 0, zIndex: 999,
       background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "20px", animation: "fadeIn 0.3s ease"
+      padding: "20px", animation: "fade-in 0.3s ease"
     }} onClick={onClose}>
       <div style={{
         background: "linear-gradient(135deg, #060e1a 0%, #0a1628 50%, #060e1a 100%)",
@@ -367,7 +367,7 @@ function CaseModal({ c, onClose }: { c: Case; onClose: () => void }) {
         borderRadius: "16px", maxWidth: "860px", width: "100%",
         overflow: "hidden", position: "relative",
         boxShadow: `0 0 60px ${c.color}20, 0 0 120px ${c.color}10`,
-        animation: "slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"
+        animation: "slide-up 0.4s cubic-bezier(0.16,1,0.3,1)"
       }} onClick={e => e.stopPropagation()}>
 
         {/* Close */}
@@ -385,22 +385,22 @@ function CaseModal({ c, onClose }: { c: Case; onClose: () => void }) {
             position: "absolute", bottom: 0, left: 0, right: 0, height: 80,
             background: "linear-gradient(transparent, #060e1a)"
           }} />
-          <div style={{
+          <div className="font-display" style={{
             position: "absolute", top: 20, left: 24,
             background: `${c.color}20`, border: `1px solid ${c.color}60`,
             padding: "4px 12px", borderRadius: 4,
-            fontSize: 11, letterSpacing: "0.12em", color: c.color, fontFamily: "'Orbitron', sans-serif"
+            fontSize: 11, letterSpacing: "0.12em", color: c.color,
           }}>{c.tag}</div>
         </div>
 
         {/* Content */}
         <div style={{ padding: "28px 32px 32px" }}>
-          <h2 style={{
-            fontSize: "clamp(18px,2.5vw,26px)", fontFamily: "'Orbitron', sans-serif",
+          <h2 className="font-display" style={{
+            fontSize: "clamp(18px,2.5vw,26px)",
             fontWeight: 600, color: "#fff", margin: "0 0 4px",
             lineHeight: 1.3
           }}>{c.title}</h2>
-          <p style={{ fontSize: 12, color: `${c.color}cc`, letterSpacing: "0.1em", margin: "0 0 24px", fontFamily: "'Orbitron', sans-serif" }}>{c.subtitle}</p>
+          <p className="font-display" style={{ fontSize: 12, color: `${c.color}cc`, letterSpacing: "0.1em", margin: "0 0 24px" }}>{c.subtitle}</p>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
             {[
@@ -412,10 +412,10 @@ function CaseModal({ c, onClose }: { c: Case; onClose: () => void }) {
                 background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
                 borderRadius: 10, padding: "16px"
               }}>
-                <div style={{ fontSize: 10, letterSpacing: "0.15em", color: c.color, marginBottom: 10, fontFamily: "'Orbitron', sans-serif", display: "flex", alignItems: "center", gap: 6 }}>
+                <div className="font-display" style={{ fontSize: 10, letterSpacing: "0.15em", color: c.color, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
                   <span style={{ fontSize: 14 }}>{item.icon}</span>{item.label}
                 </div>
-                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.65, margin: 0, fontFamily: "'Sarabun', sans-serif" }}>{item.text}</p>
+                <p className="font-section-thai" style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.65, margin: 0 }}>{item.text}</p>
               </div>
             ))}
           </div>
@@ -477,83 +477,86 @@ function CaseCard({ c, index, onClick }: { c: Case; index: number; onClick: () =
           display: "flex", alignItems: "center", justifyContent: "center",
           transition: "background 0.3s",
         }}>
-          <div style={{
+          <div className="font-display" style={{
             background: `${c.color}20`, border: `1px solid ${c.color}80`,
             borderRadius: 24, padding: "8px 20px",
             fontSize: 11, letterSpacing: "0.15em", color: c.color,
-            fontFamily: "'Orbitron', sans-serif",
             opacity: hovered ? 1 : 0, transform: hovered ? "scale(1)" : "scale(0.9)",
             transition: "opacity 0.3s, transform 0.3s",
           }}>EXPLORE →</div>
         </div>
         {/* Tag */}
-        <div style={{
+        <div className="font-display" style={{
           position: "absolute", top: 14, left: 14,
           background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)",
           border: `1px solid ${c.color}50`, borderRadius: 4,
           padding: "3px 10px", fontSize: 9, letterSpacing: "0.14em",
-          color: c.color, fontFamily: "'Orbitron', sans-serif"
+          color: c.color,
         }}>{c.tag}</div>
         {/* Number */}
-        <div style={{
+        <div className="font-display" style={{
           position: "absolute", bottom: 14, right: 16,
-          fontSize: 48, fontFamily: "'Orbitron', sans-serif", fontWeight: 900,
-          color: `${c.color}15`, lineHeight: 1, userSelect: "none"
+          fontSize: 48, fontWeight: 900,
+          color: `${c.color}15`, lineHeight: 1, userSelect: "none",
         }}>0{c.id}</div>
       </div>
 
       {/* Text Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
+        <div className="font-display" style={{
           fontSize: 10, letterSpacing: "0.18em", color: c.color,
-          marginBottom: 12, fontFamily: "'Orbitron', sans-serif",
-          display: "flex", alignItems: "center", gap: 10
+          marginBottom: 12,
+          display: "flex", alignItems: "center", gap: 10,
         }}>
           <div style={{ width: 24, height: 1, background: c.color, opacity: 0.7 }} />
           {c.tag}
         </div>
 
-        <h3 style={{
-          fontSize: "clamp(20px,2.5vw,32px)", fontFamily: "'Orbitron', sans-serif",
+        <h3 className="font-display" style={{
+          fontSize: "clamp(20px,2.5vw,32px)",
           fontWeight: 700, color: "#fff", margin: "0 0 8px", lineHeight: 1.25,
         }}>{c.title}</h3>
 
-        <p style={{ fontSize: 11, color: `${c.color}aa`, margin: "0 0 18px", fontFamily: "'Orbitron', sans-serif", letterSpacing: "0.1em" }}>{c.subtitle}</p>
+        <p className="font-display" style={{ fontSize: 11, color: `${c.color}aa`, margin: "0 0 18px", letterSpacing: "0.1em" }}>{c.subtitle}</p>
 
-        <p style={{
+        <p className="font-section-thai" style={{
           fontSize: "clamp(13px,1.3vw,15px)", color: "rgba(255,255,255,0.6)",
-          lineHeight: 1.7, margin: "0 0 24px", fontFamily: "'Sarabun', sans-serif",
+          lineHeight: 1.7, margin: "0 0 24px",
           maxWidth: 420,
         }}>{c.concept}</p>
 
         {/* Quick benefit pill */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
           {c.benefit.split(" · ").slice(0, 2).map((b, i) => (
-            <span key={i} style={{
+            <span key={i} className="font-section-thai" style={{
               background: `${c.color}10`, border: `1px solid ${c.color}30`,
               borderRadius: 20, padding: "5px 14px",
-              fontSize: 11, color: `${c.color}cc`, fontFamily: "'Sarabun', sans-serif"
+              fontSize: 11, color: `${c.color}cc`,
             }}>{b}</span>
           ))}
         </div>
 
-        <button onClick={onClick} style={{
-          background: "transparent", border: `1px solid ${c.color}60`,
-          color: c.color, padding: "10px 28px", borderRadius: 6,
-          fontFamily: "'Orbitron', sans-serif", fontSize: 11,
-          letterSpacing: "0.12em", cursor: "pointer",
-          transition: "all 0.3s",
-          position: "relative", overflow: "hidden",
-        }}
-          onMouseEnter={e => {
-            (e.target as HTMLElement).style.background = `${c.color}20`;
-            (e.target as HTMLElement).style.borderColor = c.color;
-            (e.target as HTMLElement).style.boxShadow = `0 0 20px ${c.color}40`;
+        <button
+          type="button"
+          className="font-display"
+          onClick={onClick}
+          style={{
+            background: "transparent", border: `1px solid ${c.color}60`,
+            color: c.color, padding: "10px 28px", borderRadius: 6,
+            fontSize: 11,
+            letterSpacing: "0.12em", cursor: "pointer",
+            transition: "all 0.3s",
+            position: "relative", overflow: "hidden",
           }}
-          onMouseLeave={e => {
-            (e.target as HTMLElement).style.background = "transparent";
-            (e.target as HTMLElement).style.borderColor = `${c.color}60`;
-            (e.target as HTMLElement).style.boxShadow = "none";
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = `${c.color}20`;
+            e.currentTarget.style.borderColor = c.color;
+            e.currentTarget.style.boxShadow = `0 0 20px ${c.color}40`;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.borderColor = `${c.color}60`;
+            e.currentTarget.style.boxShadow = "none";
           }}
         >
           EXPLORE CASE →
@@ -584,19 +587,21 @@ function StarField() {
   }));
 
   return (
-    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+    <div className="pointer-events-none fixed inset-0 z-0">
       {stars.map((s, i) => (
-        <div key={i} style={{
-          position: "absolute",
-          width: s.w,
-          height: s.h,
-          background: "#fff",
-          borderRadius: "50%",
-          left: s.l,
-          top: s.t,
-          opacity: s.o,
-          animation: `twinkle ${s.dur} ease-in-out ${s.del} infinite`,
-        }} />
+        <div
+          key={i}
+          className="absolute animate-twinkle rounded-full bg-white"
+          style={{
+            width: s.w,
+            height: s.h,
+            left: s.l,
+            top: s.t,
+            opacity: s.o,
+            animationDuration: s.dur,
+            animationDelay: s.del,
+          }}
+        />
       ))}
     </div>
   );
@@ -607,98 +612,55 @@ export default function WhySpace() {
   const [activeCase, setActiveCase] = useState<Case | null>(null);
 
   return (
-    <>
-      <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Sarabun:wght@300;400;500&display=swap" rel="stylesheet" />
-      <style>{`
-        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(30px) } to { opacity: 1; transform: translateY(0) } }
-        @keyframes float { 0%,100% { transform: translateY(0px) } 50% { transform: translateY(-12px) } }
-        @keyframes twinkle { 0%,100% { opacity: 0.3 } 50% { opacity: 1 } }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #020810; }
-        ::-webkit-scrollbar-thumb { background: #1a3a5c; border-radius: 3px; }
-      `}</style>
+    <div
+      id="why-space"
+      className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,#020810_0%,#040d1e_40%,#020810_100%)] text-white"
+    >
+      <StarField />
 
-      <div id="why-space" style={{
-        minHeight: "100vh",
-        background: "linear-gradient(180deg, #020810 0%, #040d1e 40%, #020810 100%)",
-        color: "#fff",
-        overflow: "hidden",
-        position: "relative",
-      }}>
-        {/* Background star field — client only */}
-        <StarField />
+      <div
+        className="pointer-events-none fixed inset-0 z-[1] bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,229,255,0.008)_2px,rgba(0,229,255,0.008)_4px)]"
+        aria-hidden
+      />
 
-        {/* Scanline effect */}
-        <div style={{
-          position: "fixed", inset: 0, pointerEvents: "none", zIndex: 1,
-          background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.008) 2px, rgba(0,229,255,0.008) 4px)",
-        }} />
-
-        <div style={{ position: "relative", zIndex: 2 }}>
-          {/* Header Section */}
-          <div style={{
-            textAlign: "center",
-            padding: "clamp(60px,8vw,100px) 20px clamp(50px,6vw,80px)",
-            maxWidth: 800, margin: "0 auto",
-          }}>
-            <div style={{
-              display: "inline-flex", alignItems: "center", gap: 12,
-              background: "rgba(0,229,255,0.08)", border: "1px solid rgba(0,229,255,0.25)",
-              borderRadius: 24, padding: "6px 20px", marginBottom: 32,
-              animation: "fadeIn 1s ease"
-            }}>
-              <div style={{ width: 6, height: 6, background: "#00e5ff", borderRadius: "50%", boxShadow: "0 0 10px #00e5ff" }} />
-              <span style={{ fontSize: 11, letterSpacing: "0.2em", color: "#00e5ff", fontFamily: "'Orbitron', sans-serif" }}>REAL WORLD APPLICATIONS</span>
-            </div>
-
-            <h1 style={{
-              fontSize: "clamp(32px,5vw,60px)", fontFamily: "'Orbitron', sans-serif",
-              fontWeight: 900, lineHeight: 1.15, marginBottom: 20,
-              background: "linear-gradient(135deg, #ffffff 0%, #a8d8ea 50%, #00e5ff 100%)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-              animation: "slideUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both"
-            }}>
-              WHY SPACE<br />TECHNOLOGY?
-            </h1>
-
-            <p style={{
-              fontSize: "clamp(14px,1.6vw,18px)", color: "rgba(255,255,255,0.55)",
-              lineHeight: 1.8, fontFamily: "'Sarabun', sans-serif",
-              animation: "slideUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.35s both",
-              maxWidth: 560, margin: "0 auto"
-            }}>
-              เทคโนโลยีอวกาศไม่ใช่แค่ความฝัน — มันคือโครงสร้างพื้นฐานของโลกยุคต่อไป<br />
-              สำรวจ 3 กรณีศึกษาที่กำลังเปลี่ยนชีวิตมนุษย์อยู่ตอนนี้
-            </p>
-
-            {/* Divider */}
-            <div style={{
-              display: "flex", alignItems: "center", gap: 16,
-              marginTop: 48, justifyContent: "center",
-              animation: "slideUp 0.8s ease 0.5s both"
-            }}>
-              <div style={{ flex: 1, maxWidth: 80, height: 1, background: "linear-gradient(90deg, transparent, rgba(0,229,255,0.4))" }} />
-              <div style={{ width: 8, height: 8, border: "1px solid #00e5ff", transform: "rotate(45deg)", opacity: 0.6 }} />
-              <div style={{ flex: 1, maxWidth: 80, height: 1, background: "linear-gradient(90deg, rgba(0,229,255,0.4), transparent)" }} />
-            </div>
+      <div className="relative z-[2]">
+        <div className="mx-auto max-w-[800px] px-5 py-[clamp(60px,8vw,100px)] pb-[clamp(50px,6vw,80px)] text-center">
+          <div className="mb-8 inline-flex animate-fade-in items-center gap-3 rounded-3xl border border-cyan/25 bg-cyan/8 px-5 py-1.5">
+            <div className="glow-dot-cyan-sm h-1.5 w-1.5 rounded-full bg-cyan" />
+            <span className="font-display text-[11px] tracking-[0.2em] text-cyan">
+              REAL WORLD APPLICATIONS
+            </span>
           </div>
 
-          {/* Cases */}
-          <div style={{
-            maxWidth: 1180, margin: "0 auto",
-            padding: "0 clamp(20px,5vw,60px) clamp(80px,10vw,120px)",
-          }}>
-            {CASES.map((c, i) => (
-              <CaseCard key={c.id} c={c} index={i} onClick={() => setActiveCase(c)} />
-            ))}
+          <h1
+            className="font-display mb-5 text-[clamp(32px,5vw,60px)] leading-[1.15] font-black animate-slide-up bg-[linear-gradient(135deg,#ffffff_0%,#a8d8ea_50%,#00e5ff_100%)] bg-clip-text text-transparent [animation-delay:0.2s]"
+          >
+            WHY SPACE
+            <br />
+            TECHNOLOGY?
+          </h1>
+
+          <p className="font-section-thai mx-auto max-w-[560px] animate-slide-up text-[clamp(14px,1.6vw,18px)] leading-[1.8] text-white/55 [animation-delay:0.35s]">
+            เทคโนโลยีอวกาศไม่ใช่แค่ความฝัน — มันคือโครงสร้างพื้นฐานของโลกยุคต่อไป
+            <br />
+            สำรวจ 3 กรณีศึกษาที่กำลังเปลี่ยนชีวิตมนุษย์อยู่ตอนนี้
+          </p>
+
+          <div className="mt-12 flex animate-slide-up items-center justify-center gap-4 [animation-delay:0.5s]">
+            <div className="h-px max-w-20 flex-1 bg-gradient-to-r from-transparent to-cyan/40" />
+            <div className="h-2 w-2 rotate-45 border border-cyan opacity-60" />
+            <div className="h-px max-w-20 flex-1 bg-gradient-to-l from-transparent to-cyan/40" />
           </div>
         </div>
 
-        {/* Modal */}
-        {activeCase && <CaseModal c={activeCase} onClose={() => setActiveCase(null)} />}
+        <div className="mx-auto max-w-[1180px] px-[clamp(20px,5vw,60px)] pb-[clamp(80px,10vw,120px)]">
+          {CASES.map((c, i) => (
+            <CaseCard key={c.id} c={c} index={i} onClick={() => setActiveCase(c)} />
+          ))}
+        </div>
       </div>
-    </>
+
+      {activeCase && <CaseModal c={activeCase} onClose={() => setActiveCase(null)} />}
+    </div>
   );
 }

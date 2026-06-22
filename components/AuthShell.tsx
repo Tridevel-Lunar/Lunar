@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 const StarField = dynamic(() => import("@/components/StarField"), { ssr: false });
 
@@ -40,53 +40,45 @@ export default function AuthShell({ title, subtitle, children }: AuthShellProps)
     : itemVariants;
 
   return (
-    <div className="auth-shell">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg p-8">
       <StarField />
-      <div className="auth-orb auth-orb-cyan" aria-hidden />
-      <div className="auth-orb auth-orb-teal" aria-hidden />
+      <div
+        className="pointer-events-none absolute top-[-120px] left-1/2 -ml-[210px] h-[420px] w-[420px] animate-auth-orb-drift rounded-full bg-cyan/[0.07] blur-[80px]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute right-[-60px] bottom-[-80px] h-[280px] w-[280px] animate-auth-orb-drift rounded-full bg-teal/[0.05] blur-[80px] [animation-delay:-5s]"
+        aria-hidden
+      />
 
       <motion.div
-        className="auth-card-wrap"
+        className="relative z-[1] w-full max-w-[420px]"
         variants={container}
         initial="hidden"
         animate="show"
       >
         <motion.div variants={item}>
-          <Link href="/" className="font-en auth-logo" style={logoStyle}>
+          <Link
+            href="/"
+            className="font-en mb-8 inline-block animate-auth-glow-pulse text-base font-extrabold tracking-[0.35em] text-cyan no-underline"
+          >
             LUNAR
           </Link>
         </motion.div>
 
-        <motion.div className="auth-card" variants={item}>
-          <motion.h1
-            className="auth-title"
-            variants={item}
-            style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}
-          >
+        <motion.div
+          className="auth-card-scanned relative overflow-hidden bg-[rgba(6,14,28,0.82)] p-8 backdrop-blur-xl"
+          variants={item}
+        >
+          <motion.h1 className="mb-2 text-2xl" variants={item}>
             {title}
           </motion.h1>
-          <motion.p
-            className="auth-subtitle"
-            variants={item}
-            style={{ color: "var(--muted)", marginBottom: "1.75rem", fontSize: "0.95rem" }}
-          >
+          <motion.p className="mb-7 text-[0.95rem] text-muted" variants={item}>
             {subtitle}
           </motion.p>
-          <motion.div className="auth-form-body" variants={item}>
-            {children}
-          </motion.div>
+          <motion.div variants={item}>{children}</motion.div>
         </motion.div>
       </motion.div>
     </div>
   );
 }
-
-const logoStyle: CSSProperties = {
-  display: "inline-block",
-  marginBottom: "2rem",
-  fontWeight: 800,
-  fontSize: "1rem",
-  letterSpacing: "0.35em",
-  color: "var(--cyan)",
-  textDecoration: "none",
-};

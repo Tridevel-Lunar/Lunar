@@ -27,16 +27,7 @@ export default function CallbackClient() {
     : error ?? "กำลังเข้าสู่ระบบ...";
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--bg)",
-        color: "var(--text)",
-      }}
-    >
+    <div className="flex min-h-screen items-center justify-center bg-bg text-text">
       {message}
     </div>
   );
