@@ -26,73 +26,44 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text)", padding: "4rem" }}>
+      <div className="min-h-screen bg-bg p-16 text-text">
         กำลังโหลด...
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background:
-          "radial-gradient(ellipse at 80% 20%, rgba(29,233,182,0.06) 0%, transparent 50%), var(--bg)",
-        color: "var(--text)",
-        padding: "6rem 4rem 4rem",
-      }}
-    >
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3rem" }}>
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_80%_20%,rgba(29,233,182,0.06)_0%,transparent_50%)] bg-bg px-16 pt-24 pb-16 text-text">
+      <header className="mb-12 flex items-center justify-between">
         <Link
           href="/"
-          className="font-en"
-          style={{
-            fontWeight: 800,
-            letterSpacing: "0.35em",
-            color: "var(--cyan)",
-            textDecoration: "none",
-          }}
+          className="font-en text-cyan font-extrabold tracking-[0.35em] no-underline"
         >
           LUNAR
         </Link>
         <button
           type="button"
-          className="font-mono btn-clip"
+          className="btn-clip cursor-pointer border border-cyan bg-transparent px-5 py-2.5 font-mono text-[0.72rem] tracking-[0.12em] text-cyan"
           onClick={handleLogout}
-          style={{
-            padding: "0.6rem 1.4rem",
-            border: "1px solid var(--cyan)",
-            background: "transparent",
-            color: "var(--cyan)",
-            cursor: "pointer",
-            fontSize: "0.72rem",
-            letterSpacing: "0.12em",
-          }}
         >
           ออกจากระบบ
         </button>
       </header>
 
-      <main style={{ maxWidth: "720px" }}>
-        <p className="font-mono" style={{ fontSize: "0.72rem", letterSpacing: "0.15em", color: "var(--teal)", marginBottom: "0.75rem" }}>
+      <main className="max-w-[720px]">
+        <p className="font-mono mb-3 text-[0.72rem] tracking-[0.15em] text-teal">
           DASHBOARD
         </p>
-        <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
+        <h1 className="mb-2 text-[2rem]">
           ยินดีต้อนรับ{user?.display_name ? `, ${user.display_name}` : ""}
         </h1>
-        <p style={{ color: "var(--muted)", marginBottom: "2rem" }}>{user?.email}</p>
+        <p className="mb-8 text-muted">{user?.email}</p>
 
-        <div
-          style={{
-            padding: "1.5rem",
-            border: "1px solid rgba(0,229,255,0.15)",
-            background: "rgba(6,14,28,0.6)",
-          }}
-        >
-          <p style={{ marginBottom: "0.75rem" }}>
+        <div className="border border-cyan/15 bg-[rgba(6,14,28,0.6)] p-6">
+          <p className="mb-3">
             พื้นที่นี้จะเป็นจุดเริ่มต้นสำหรับ Space · Arena · Studio ในอนาคต
           </p>
-          <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
+          <p className="text-[0.9rem] text-muted">
             ตอนนี้คุณเข้าสู่ระบบสำเร็จแล้ว — พร้อมสำหรับการเรียนรู้และสะสม Point
           </p>
         </div>
