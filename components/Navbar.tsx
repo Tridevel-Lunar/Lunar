@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -12,6 +13,12 @@ const NAV_LINKS = [
   { label: "PLATFORM", href: "/#platform" },
   { label: "JOIN US", href: "/#join-us" },
 ] as const;
+
+const navLinkClass =
+  "font-mono text-[0.72rem] tracking-[0.12em] text-text/50 no-underline transition-colors hover:text-cyan";
+
+const outlineBtnClass =
+  "btn-clip font-mono px-5 py-2.5 text-[0.72rem] tracking-[0.12em] uppercase no-underline transition-colors";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -38,57 +45,27 @@ export default function Navbar() {
     window.location.href = "/login";
   }
 
-  const navBackground = isLanding
-    ? scrolled
-      ? "rgba(3,8,18,0.85)"
-      : "transparent"
-    : "rgba(3,8,18,0.85)";
+  const showSolidNav = !isLanding || scrolled;
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
-      style={{
-        padding: "1.2rem 4rem",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        background: navBackground,
-        backdropFilter: isLanding && !scrolled ? "none" : "blur(20px)",
-        borderBottom:
-          isLanding && !scrolled ? "1px solid transparent" : "1px solid rgba(0,229,255,0.1)",
-      }}
+      className={`fixed top-0 right-0 left-0 z-50 flex items-center justify-between px-16 py-5 transition-all duration-500 ${
+        showSolidNav
+          ? "border-b border-cyan/10 bg-bg/85 backdrop-blur-xl"
+          : "border-b border-transparent bg-transparent"
+      }`}
     >
       <Link
         href="/"
-        className="font-en"
-        style={{
-          fontWeight: 800,
-          fontSize: "1.25rem",
-          letterSpacing: "0.35em",
-          color: "#00e5ff",
-          textShadow: "0 0 20px rgba(0,229,255,0.5)",
-          textDecoration: "none",
-        }}
+        className="font-en text-[1.25rem] font-extrabold tracking-[0.35em] text-cyan no-underline shadow-[0_0_20px_rgba(0,229,255,0.5)]"
       >
         LUNAR
       </Link>
 
-      <ul style={{ display: "flex", gap: "2.5rem", listStyle: "none" }}>
+      <ul className="flex list-none gap-10">
         {NAV_LINKS.map((item) => (
           <li key={item.href}>
-            <Link
-              href={item.href}
-              className="font-mono"
-              style={{
-                fontSize: "0.72rem",
-                letterSpacing: "0.12em",
-                color: "rgba(232,237,245,0.5)",
-                textDecoration: "none",
-                transition: "color 0.3s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#00e5ff")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(232,237,245,0.5)")}
-            >
+            <Link href={item.href} className={navLinkClass}>
               {item.label}
             </Link>
           </li>
@@ -96,37 +73,17 @@ export default function Navbar() {
       </ul>
 
       {user ? (
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+        <div className="flex items-center gap-3">
           <Link
             href="/dashboard"
-            className="font-mono btn-clip"
-            style={{
-              fontSize: "0.72rem",
-              letterSpacing: "0.12em",
-              padding: "0.6rem 1.2rem",
-              border: "1px solid #1de9b6",
-              color: "#1de9b6",
-              background: "transparent",
-              textDecoration: "none",
-              textTransform: "uppercase",
-            }}
+            className={`${outlineBtnClass} border border-teal text-teal`}
           >
             Dashboard
           </Link>
           <button
             type="button"
-            className="font-mono btn-clip"
+            className={`${outlineBtnClass} cursor-pointer border border-text/30 text-text/70`}
             onClick={handleLogout}
-            style={{
-              fontSize: "0.72rem",
-              letterSpacing: "0.12em",
-              padding: "0.6rem 1.2rem",
-              border: "1px solid rgba(232,237,245,0.3)",
-              color: "rgba(232,237,245,0.7)",
-              background: "transparent",
-              cursor: "pointer",
-              textTransform: "uppercase",
-            }}
           >
             Logout
           </button>
@@ -134,26 +91,7 @@ export default function Navbar() {
       ) : (
         <Link
           href="/register"
-          className="font-mono btn-clip"
-          style={{
-            fontSize: "0.72rem",
-            letterSpacing: "0.12em",
-            padding: "0.6rem 1.6rem",
-            border: "1px solid #00e5ff",
-            color: "#00e5ff",
-            background: "transparent",
-            textDecoration: "none",
-            textTransform: "uppercase",
-            transition: "all 0.3s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#00e5ff";
-            e.currentTarget.style.color = "#030812";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.color = "#00e5ff";
-          }}
+          className={`${outlineBtnClass} border border-cyan text-cyan transition-all hover:bg-cyan hover:text-bg`}
         >
           ENROLL NOW
         </Link>
