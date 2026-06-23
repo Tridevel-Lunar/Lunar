@@ -1,5 +1,5 @@
 "use client";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { Stars, Float, useTexture } from "@react-three/drei";
 import { Suspense, useEffect, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
@@ -45,8 +45,14 @@ function useCanvasActive(containerRef: RefObject<HTMLDivElement | null>) {
   return active;
 }
 
+const MOON_DRAG_SPEED = 0.004;
+const MOON_INERTIA_DAMPING = 1.5;
+const MOON_IDLE_SPIN = 0.03;
+
 function Moon() {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const dragRef = useRef({ active: false, lastX: 0, lastY: 0 });
+  const velocityRef = useRef({ x: 0, y: 0 });
   const [colorMap, bumpMap] = useTexture([MOON_COLOR_MAP, MOON_BUMP_MAP]);
 
   useEffect(() => {
@@ -56,25 +62,80 @@ function Moon() {
     bumpMap.anisotropy = 4;
   }, [colorMap, bumpMap]);
 
+  const endDrag = () => {
+    dragRef.current.active = false;
+    document.body.style.cursor = "";
+  };
+
+  const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    dragRef.current = { active: true, lastX: e.clientX, lastY: e.clientY };
+    velocityRef.current = { x: 0, y: 0 };
+    document.body.style.cursor = "grabbing";
+    (e.target as Element).setPointerCapture(e.pointerId);
+  };
+
+  const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
+    if (!dragRef.current.active || !groupRef.current) return;
+
+    const dx = e.clientX - dragRef.current.lastX;
+    const dy = e.clientY - dragRef.current.lastY;
+    dragRef.current.lastX = e.clientX;
+    dragRef.current.lastY = e.clientY;
+
+    groupRef.current.rotation.y += dx * MOON_DRAG_SPEED;
+    groupRef.current.rotation.x += dy * MOON_DRAG_SPEED;
+    velocityRef.current = {
+      y: dx * MOON_DRAG_SPEED * 60,
+      x: dy * MOON_DRAG_SPEED * 60,
+    };
+  };
+
   useFrame((_, delta) => {
-    if (meshRef.current) meshRef.current.rotation.y += delta * 0.05;
+    const group = groupRef.current;
+    if (!group || dragRef.current.active) return;
+
+    group.rotation.y += velocityRef.current.y * delta;
+    group.rotation.x += velocityRef.current.x * delta;
+
+    const decay = Math.exp(-MOON_INERTIA_DAMPING * delta);
+    velocityRef.current.x *= decay;
+    velocityRef.current.y *= decay;
+
+    const speed = Math.hypot(velocityRef.current.x, velocityRef.current.y);
+    if (speed < 0.008) group.rotation.y += delta * MOON_IDLE_SPIN;
   });
 
   return (
-    <Float speed={1.2} rotationIntensity={0.3} floatIntensity={0.8}>
-      <mesh ref={meshRef} position={[2.5, 0.3, 0]} rotation={[0, 1.2, 0.08]}>
-        <sphereGeometry args={[1.3, 48, 48]} />
-        <meshStandardMaterial
-          map={colorMap}
-          bumpMap={bumpMap}
-          bumpScale={0.035}
-          roughness={0.92}
-          metalness={0.04}
-          emissive="#0a1020"
-          emissiveIntensity={0.06}
-        />
-      </mesh>
-    </Float>
+    <group position={[2.5, 0.3, 0]}>
+      <Float speed={1.2} rotationIntensity={0} floatIntensity={0.8}>
+        <group ref={groupRef} rotation={[0, 1.2, 0.08]}>
+          <mesh
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={endDrag}
+            onPointerLeave={endDrag}
+            onPointerOver={() => {
+              if (!dragRef.current.active) document.body.style.cursor = "grab";
+            }}
+            onPointerOut={() => {
+              if (!dragRef.current.active) document.body.style.cursor = "";
+            }}
+          >
+            <sphereGeometry args={[1.3, 48, 48]} />
+            <meshStandardMaterial
+              map={colorMap}
+              bumpMap={bumpMap}
+              bumpScale={0.035}
+              roughness={0.92}
+              metalness={0.04}
+              emissive="#0a1020"
+              emissiveIntensity={0.06}
+            />
+          </mesh>
+        </group>
+      </Float>
+    </group>
   );
 }
 
@@ -119,7 +180,7 @@ export default function SpaceCanvas() {
   const active = useCanvasActive(containerRef);
 
   return (
-    <div ref={containerRef} className="h-full w-full">
+    <div ref={containerRef} className="h-full w-full touch-none">
       <Canvas
         camera={{ position: [0, 0, 6], fov: 55 }}
         dpr={[1, 1.5]}
