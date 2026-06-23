@@ -48,11 +48,31 @@ function useCanvasActive(containerRef: RefObject<HTMLDivElement | null>) {
 const MOON_DRAG_SPEED = 0.004;
 const MOON_INERTIA_DAMPING = 1.5;
 const MOON_IDLE_SPIN = 0.03;
+const MOON_INITIAL_EULER = new THREE.Euler(0, 1.2, 0.08);
+const WORLD_X = new THREE.Vector3(1, 0, 0);
+const WORLD_Y = new THREE.Vector3(0, 1, 0);
+
+function applyWorldSpin(
+  quat: THREE.Quaternion,
+  spinX: number,
+  spinY: number,
+  scratch: { qX: THREE.Quaternion; qY: THREE.Quaternion },
+) {
+  scratch.qY.setFromAxisAngle(WORLD_Y, spinY);
+  scratch.qX.setFromAxisAngle(WORLD_X, spinX);
+  quat.premultiply(scratch.qY);
+  quat.premultiply(scratch.qX);
+}
 
 function Moon() {
   const groupRef = useRef<THREE.Group>(null);
   const dragRef = useRef({ active: false, lastX: 0, lastY: 0 });
   const velocityRef = useRef({ x: 0, y: 0 });
+  const quatScratch = useRef({
+    qX: new THREE.Quaternion(),
+    qY: new THREE.Quaternion(),
+    initial: new THREE.Quaternion().setFromEuler(MOON_INITIAL_EULER),
+  });
   const [colorMap, bumpMap] = useTexture([MOON_COLOR_MAP, MOON_BUMP_MAP]);
 
   useEffect(() => {
@@ -61,6 +81,10 @@ function Moon() {
     colorMap.anisotropy = 4;
     bumpMap.anisotropy = 4;
   }, [colorMap, bumpMap]);
+
+  useEffect(() => {
+    if (groupRef.current) groupRef.current.quaternion.copy(quatScratch.current.initial);
+  }, []);
 
   const endDrag = () => {
     dragRef.current.active = false;
@@ -76,18 +100,20 @@ function Moon() {
   };
 
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
-    if (!dragRef.current.active || !groupRef.current) return;
+    const group = groupRef.current;
+    if (!dragRef.current.active || !group) return;
 
     const dx = e.clientX - dragRef.current.lastX;
     const dy = e.clientY - dragRef.current.lastY;
     dragRef.current.lastX = e.clientX;
     dragRef.current.lastY = e.clientY;
 
-    groupRef.current.rotation.y += dx * MOON_DRAG_SPEED;
-    groupRef.current.rotation.x += dy * MOON_DRAG_SPEED;
+    const spinY = dx * MOON_DRAG_SPEED;
+    const spinX = dy * MOON_DRAG_SPEED;
+    applyWorldSpin(group.quaternion, spinX, spinY, quatScratch.current);
     velocityRef.current = {
-      y: dx * MOON_DRAG_SPEED * 60,
-      x: dy * MOON_DRAG_SPEED * 60,
+      y: spinY * 60,
+      x: spinX * 60,
     };
   };
 
@@ -95,21 +121,28 @@ function Moon() {
     const group = groupRef.current;
     if (!group || dragRef.current.active) return;
 
-    group.rotation.y += velocityRef.current.y * delta;
-    group.rotation.x += velocityRef.current.x * delta;
+    applyWorldSpin(
+      group.quaternion,
+      velocityRef.current.x * delta,
+      velocityRef.current.y * delta,
+      quatScratch.current,
+    );
 
     const decay = Math.exp(-MOON_INERTIA_DAMPING * delta);
     velocityRef.current.x *= decay;
     velocityRef.current.y *= decay;
 
     const speed = Math.hypot(velocityRef.current.x, velocityRef.current.y);
-    if (speed < 0.008) group.rotation.y += delta * MOON_IDLE_SPIN;
+    if (speed < 0.008) {
+      quatScratch.current.qY.setFromAxisAngle(WORLD_Y, MOON_IDLE_SPIN * delta);
+      group.quaternion.premultiply(quatScratch.current.qY);
+    }
   });
 
   return (
     <group position={[2.5, 0.3, 0]}>
       <Float speed={1.2} rotationIntensity={0} floatIntensity={0.8}>
-        <group ref={groupRef} rotation={[0, 1.2, 0.08]}>
+        <group ref={groupRef}>
           <mesh
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
