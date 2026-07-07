@@ -1,7 +1,9 @@
 import { lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import type { ReactNode } from "react";
+
+import { useMotionReady } from "@/lib/useMotionReady";
 
 const StarField = lazy(() => import("@/components/StarField"));
 
@@ -27,7 +29,7 @@ const itemVariants = {
 };
 
 export default function AuthShell({ title, subtitle, children }: AuthShellProps) {
-  const reduceMotion = useReducedMotion();
+  const { hydrated, reduceMotion } = useMotionReady();
 
   const container = reduceMotion
     ? { hidden: { opacity: 0 }, show: { opacity: 1 } }
@@ -55,7 +57,7 @@ export default function AuthShell({ title, subtitle, children }: AuthShellProps)
         className="relative z-[1] w-full max-w-[420px]"
         variants={container}
         initial="hidden"
-        animate="show"
+        animate={hydrated ? "show" : "hidden"}
       >
         <motion.div variants={item}>
           <Link

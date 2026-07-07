@@ -1,11 +1,13 @@
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+
+import { useMotionReady } from "@/lib/useMotionReady";
 
 type AuthErrorMessageProps = {
   message: string;
 };
 
 export default function AuthErrorMessage({ message }: AuthErrorMessageProps) {
-  const reduceMotion = useReducedMotion();
+  const { reduceMotion } = useMotionReady();
 
   return (
     <AnimatePresence mode="wait">
