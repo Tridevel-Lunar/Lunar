@@ -8,21 +8,21 @@
 | | รายละเอียด |
 |---|------------|
 | **Input** | การกระทำต่าง ๆ ของผู้ใช้งานบนแพลตฟอร์ม (คลิก, ลาก, ปรับ slider, เขียนบล็อก, ส่งคำถาม LAIKA ฯลฯ) |
-| **Output** | การตอบสนองของระบบต่อการกระทำของผู้ใช้ (UI feedback, คะแนน, ผลจำลอง, ข้อความ error/success, คำแนะนำ AI) |
+| **Output** | การตอบสนองของระบบต่อการกระทำของผู้ใช้ (UI feedback, progress, ผลจำลอง, ข้อความ error/success, คำแนะนำ AI) |
 
 ## 7.4.2 Functional Specification — ภาพรวม
 
 | Module | Tagline | บทบาทหลัก |
 |--------|---------|-----------|
-| **Space** | Learn & Collect | เรียนรู้ทฤษฎีพื้นฐานวิศวกรรมอวกาศแบบ Interactive · เรียน 4 ด้าน · สะสม Point เพื่อปลดล็อกภารกิจใน Arena |
+| **Space** | Learn | เรียนรู้ทฤษฎีพื้นฐานวิศวกรรมอวกาศแบบ Interactive · เรียน 4 ด้าน |
 | **Arena** | Build & Mission Simulation | สร้างตรรกะ Blockly + จำลองภารกิจในสภาพแวดล้อมอวกาศ |
 | **Studio** | Launch, Tech-Transfer & Venture | เก็บผลงาน · LAIKA ช่วยต่อยอดไอเดีย · (อนาคต) แผนธุรกิจ / tech transfer |
 
 ---
 
-## ฟีเจอร์ที่ 1: Space (Learn & Collect)
+## ฟีเจอร์ที่ 1: Space (Learn)
 
-ระบบเรียนรู้ทฤษฎีพื้นฐานวิศวกรรมอวกาศแบบ **Interactive Learning** — เรียนองค์ความรู้ **4 ด้าน** และเก็บสะสม **Point** เพื่อปลดล็อกภารกิจใน Arena
+ระบบเรียนรู้ทฤษฎีพื้นฐานวิศวกรรมอวกาศแบบ **Interactive Learning** — เรียนองค์ความรู้ **4 ด้าน**
 
 ### 1. โมเดล 3 มิติ (3D Model — Spatial Learning)
 
@@ -32,7 +32,7 @@
 | **Exploded View** | ปรับ Slider แยกชิ้นส่วนแบบระเบิดวงแหวน — เรียนรู้โครงสร้างภายนอก |
 | **Interactive detail** | คลิกชิ้นส่วน (เช่น Camera Payload) เพื่อเรียนรู้หน้าที่และการเชื่อมต่อ |
 
-**Output:** ความเข้าใจโครงสร้างกายภาพ · Point / progress ตามกิจกรรมที่ทำครบ
+**Output:** ความเข้าใจโครงสร้างกายภาพ · progress ตามกิจกรรมที่ทำครบ
 
 ### 2. ระบบฝังตัว (Embedded System — Schematic Architecture)
 
@@ -42,7 +42,7 @@
 | **องค์ประกอบ** | เชื่อม OBC (On-Board Computer), EPS (Electrical Power System), กล้องถ่ายภาพ (Payload) เข้าล็อกที่ถูกต้อง |
 | **เป้าหมาย** | จำลองการไหลของข้อมูล — ผู้เรียนเข้าใจในระดับพื้นฐานว่าระบบทำงานอย่างไร |
 
-**Output:** แผนผังที่เชื่อมถูกต้อง / feedback เมื่อผิด · Point
+**Output:** แผนผังที่เชื่อมถูกต้อง / feedback เมื่อผิด
 
 ### 3. ฟิสิกส์ (Physics — Simulation-Based Trial)
 
@@ -51,7 +51,7 @@
 | **กิจกรรม** | แผงควบคุมปรับตัวแปรแบบ real-time |
 | **เนื้อหา** | กฎพลังงาน · วงโคจรระดับต่ำ (LEO) · จัดสรร Power Budget · สถานการณ์เข้าเงามืดของโลก (Eclipse) |
 
-**Output:** กราฟ/ตัวเลข power · สถานะวงโคจร · คะแนนหรือ checkpoint
+**Output:** กราฟ/ตัวเลข power · สถานะวงโคจร · checkpoint
 
 **Backend:** คำนวณ orbital / power budget (Poliastro, PyEphem) — ดู [backend/docs/development.md](../../backend/docs/development.md)
 
@@ -62,12 +62,12 @@
 | **กิจกรรม** | กระดานเขียนคำสั่งควบคุมแบบภาพ (Google Blockly) |
 | **เป้าหมาย** | ต่อบล็อก Logic ชุดแรกให้ดาวเทียม (Autopilot) ทำงานได้ในขอบเขตที่กำหนด |
 
-**Output:** บล็อกที่ compile/validate ผ่าน · preview พฤติกรรม · Point
+**Output:** บล็อกที่ compile/validate ผ่าน · preview พฤติกรรม
 
 ### Space — Progress model
 
 ```
-เรียนครบกิจกรรมใน 4 ด้าน → สะสม Point → ปลดล็อกภารกิจใน Arena
+เรียนครบกิจกรรมใน 4 ด้าน → บันทึก progress → เปิด Arena เมื่อพร้อม
 ```
 
 ---
@@ -134,7 +134,7 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 
 | Landing (`PlatformSection`) | Module | Spec section |
 |-----------------------------|--------|--------------|
-| LEARN | **Space** | § Space — 4 domains + Points |
+| LEARN | **Space** | § Space — 4 domains |
 | BUILD | **Arena** | § Blockly + Simulation |
 | LAUNCH | **Studio** | § Portfolio + LAIKA |
 
@@ -146,6 +146,6 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 | Blockly | Blockly editor, block defs | validate / run mission script |
 | Physics / orbit | แสดงผล 3D + charts | Poliastro, PyEphem, power calc |
 | LAIKA | chat UI ใน Studio | FastAPI → RAG → Gemini |
-| Points / progress | UI state, badges | PostgreSQL (users, progress) |
+| Progress | UI state, lesson completion | PostgreSQL (users, progress) |
 
 เมื่อ implement API ใหม่ บันทึก contract ใน `backend/docs/api.md`

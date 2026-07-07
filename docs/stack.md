@@ -15,7 +15,7 @@
 
 | เครื่องมือ | สถานะ | บทบาท |
 |-----------|--------|--------|
-| **Next.js 16** (React) | ใช้อยู่ | Framework หลัก — App Router, Turbopack |
+| **Vite + React Router** | ใช้อยู่ | SPA framework — React 19, client-side routing |
 | **Tailwind CSS v4** | ใช้อยู่ | Styling หลัก — `@theme` tokens, utilities; CSS เฉพาะ auth pseudo-elements + keyframes |
 | **Shadcn/ui** | วางแผน | คอมโพเนนต์พื้นฐาน (Button, Dialog, Form ฯลฯ) |
 | **Framer Motion** | ใช้อยู่ | แอนิเมชัน auth — card entrance, ปุ่ม, error message |

@@ -1,33 +1,34 @@
 # LUNAR Frontend
 
-Next.js 16 — web app, landing page และ UI การเรียนรู้
+Vite + React Router — web app, landing page และ UI การเรียนรู้
 
 **Product context:** [concept.md](concept.md) · [functional-spec.md](functional-spec.md)  
 **Tech stack (เต็ม):** [stack.md](stack.md)  
-**Stack:** Next.js 16, React 19, Tailwind CSS v4, TypeScript, Three.js / R3F — วางแผนเพิ่ม Shadcn/ui, Framer Motion, Blockly
+**Stack:** Vite, React 19, React Router, Tailwind CSS v4, TypeScript, Three.js / R3F — วางแผนเพิ่ม Shadcn/ui, Blockly
 
 ## Commands
 
 ```bash
 npm install
-npm run dev          # Turbopack — http://localhost:3000
-npm run build
-npm run start
+npm run dev          # Vite — http://localhost:3000
+npm run build        # output → dist/
+npm run preview      # preview production build
 npm run lint
 ```
 
 ### Backend stack (จาก `Lunar/` root)
 
-Frontend รันบนเครื่อง — backend + PostgreSQL ใช้ Docker:
+ทั้ง stack รันใน Docker (Vite HMR + volume mount):
 
 ```bash
-docker compose up --build    # terminal แรก
-cd frontend && npm run dev     # terminal ที่สอง
+docker compose up --build    # http://localhost:3000
 ```
 
 ดู [../../docs/docker-dev.md](../../docs/docker-dev.md)
 
-**Env:** `cp .env.example .env.local` — ต้องมี `NEXT_PUBLIC_API_URL=http://localhost:8000` (หรือรัน `../../scripts/setup-env.ps1` จาก root)
+**Optional (hot reload บนเครื่อง):** `npm run dev` — Vite proxy ส่ง `/api` ไป `localhost:8000`
+
+**Env:** ไม่จำเป็นสำหรับ Docker compose (API same-origin). สำหรับ `npm run dev` บนเครื่อง ใช้ `frontend/.env.example` (ว่าง = ใช้ proxy)
 
 **Requirements:** Node.js 18.17+, npm 9+
 
@@ -45,40 +46,35 @@ cd frontend && npm run dev     # terminal ที่สอง
 
 ```
 frontend/
-├── app/
-│   ├── layout.tsx       # Root layout, metadata, lang="th"
-│   ├── page.tsx         # Home — assembles section components
-│   └── globals.css      # Fonts, CSS variables, Tailwind
-├── components/
-│   ├── SpaceCanvas.tsx  # Hero 3D/Canvas animation (client-only)
-│   ├── Navbar.tsx
-│   ├── HeroSection.tsx
-│   ├── WhySpace.tsx     # ทำไมต้องอวกาศ / เศรษฐกิจอวกาศไทย
-│   ├── PlatformSection.tsx  # LEARN / BUILD / LAUNCH tabs
-│   ├── JoinSection.tsx
-│   ├── Footer.tsx
-│   └── StarField.tsx
+├── index.html
+├── Dockerfile.dev         # Vite dev (compose — volume mount)
+├── vite.config.ts
+├── src/
+│   ├── main.tsx           # createRoot + BrowserRouter
+│   ├── App.tsx            # React Router routes
+│   ├── index.css          # Fonts, CSS variables, Tailwind
+│   ├── pages/             # Route pages
+│   ├── routes/            # ProtectedRoute, GuestRoute
+│   ├── components/        # Landing sections, auth, space demo, R3F canvas
+│   └── lib/               # api.ts, auth.ts, constants.ts
 ├── docs/
-│   ├── concept.md
-│   ├── stack.md         # Tech stack FE/BE
-│   └── development.md   # This file
-├── next.config.ts
 ├── tailwind.config.ts
-└── tsconfig.json        # @/* → ./*
+└── tsconfig.json          # @/* → src/*
 ```
 
 ## Architecture
 
-- **App Router only** — `app/`, ไม่มี `pages/`
+- **SPA** — Vite + React Router; ไม่มี server components
 - **Section components** — แต่ละ section ของ landing อยู่ใน `components/<Section>.tsx`
-- **`page.tsx` บาง** — compose sections เท่านั้น
-- **Canvas / WebGL** — `"use client"` + `dynamic(..., { ssr: false })` สำหรับ browser-only (ดู `HeroSection` → `SpaceCanvas`)
-- **Styling** — Tailwind v4 utilities เป็นหลัก; `@theme` tokens ใน `globals.css`; CSS เฉพาะ pseudo-element / keyframes
+- **Pages บาง** — compose sections เท่านั้น
+- **Canvas / WebGL** — `React.lazy()` + `<Suspense>` สำหรับ browser-only (ดู `HeroSection` → `SpaceCanvas`)
+- **Auth** — httpOnly cookie จาก FastAPI; API เรียก `/api/auth/*` (Vite proxy)
+- **Styling** — Tailwind v4 utilities เป็นหลัก; `@theme` tokens ใน `index.css`; CSS เฉพาะ pseudo-element / keyframes
 
 ## Code Style
 
 - Import ด้วย `@/` (`@/components/Navbar`)
-- Functional components; `"use client"` เมื่อจำเป็นเท่านั้น
+- Functional components
 - สีจาก Tailwind theme (`bg-bg`, `text-cyan`, `text-muted` ฯลฯ) หรือ CSS variables (`--bg`, `--cyan`)
 - Fonts (semantic utilities ใน `@theme`):
   - `font-thai` — Noto Sans Thai (body)
@@ -95,7 +91,6 @@ frontend/
 ### Component Pattern
 
 ```tsx
-// Server component (default)
 import Navbar from "@/components/Navbar";
 
 export default function Home() {
@@ -109,11 +104,14 @@ export default function Home() {
 ```
 
 ```tsx
-// Client — canvas / animation
-"use client";
-import dynamic from "next/dynamic";
+import { lazy, Suspense } from "react";
 
-const SpaceCanvas = dynamic(() => import("./SpaceCanvas"), { ssr: false });
+const SpaceCanvas = lazy(() => import("./SpaceCanvas"));
+
+// ...
+<Suspense fallback={null}>
+  <SpaceCanvas />
+</Suspense>
 ```
 
 ## Landing Sections
@@ -128,10 +126,10 @@ const SpaceCanvas = dynamic(() => import("./SpaceCanvas"), { ssr: false });
 | Do | Don't |
 |----|-------|
 | อ้างอิง [concept.md](concept.md) เมื่อเพิ่มฟีเจอร์ product | สร้างชื่อ module ใหม่ที่ขัด Space/Arena/Studio |
-| Colocate section UI ใน `components/` | ใส่ business logic หนักใน `page.tsx` |
-| `dynamic` + `ssr: false` สำหรับ Three.js/Canvas | Import WebGL ใน server components |
+| Colocate section UI ใน `components/` | ใส่ business logic หนักใน `pages/` |
+| `React.lazy` + `Suspense` สำหรับ Three.js/Canvas | Import WebGL โดยตรงใน route ที่โหลดทันที |
 | เรียก LAIKA/RAG ผ่าน backend API | ฝัง LLM keys หรือ RAG logic ใน frontend |
-| ใช้ CSS variables จาก `globals.css` | สี hex แบบ one-off เมื่อมี token แล้ว |
+| ใช้ CSS variables จาก `index.css` | สี hex แบบ one-off เมื่อมี token แล้ว |
 
 ## Testing & Lint
 
@@ -150,16 +148,22 @@ Frontend ยังไม่มี unit test runner — auth/API ทดสอบ�
 
 ## Boundaries
 
-- ห้ามแก้ `next-env.d.ts` เอง
-- ห้ามเอา `lang="th"` ออกจาก root layout
+- ห้ามเอา `lang="th"` ออกจาก `index.html`
 - โค้ดอยู่ใน `frontend/` เท่านั้น — ไม่ shared package กับ backend
 - อย่าเพิ่ม dependency ถ้าไม่จำเป็น
+
+## Deploy
+
+```bash
+npm run build   # → dist/
+```
+
+Serve `dist/` เป็น static files พร้อม SPA fallback (`/* → index.html`). ไม่ต้องมี Node server ใน production.
 
 ## JIT Index
 
 ```bash
-rg "LEARN|BUILD|LAUNCH" components/PlatformSection.tsx
-rg -l '"use client"' .
-rg "--bg|--cyan|--teal" app/globals.css
-rg "dynamic\\(" components/
+rg "LEARN|BUILD|LAUNCH" src/components/PlatformSection.tsx
+rg "lazy\\(" src/
+rg "--bg|--cyan|--teal" src/index.css
 ```
