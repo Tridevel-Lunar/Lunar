@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { HiArrowLeft } from "react-icons/hi2";
 import type { ReactNode } from "react";
 
 import { useMotionReady } from "@/lib/useMotionReady";
@@ -41,6 +42,14 @@ export default function AuthShell({ title, subtitle, children }: AuthShellProps)
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg p-8">
+      <Link
+        to="/"
+        aria-label="กลับหน้าหลัก"
+        className="btn-clip fixed top-8 left-8 z-[2] inline-flex h-11 w-16 items-center justify-center border border-cyan bg-cyan text-bg no-underline transition-[transform,box-shadow] hover:-translate-y-px hover:shadow-[0_4px_24px_rgba(0,229,255,0.35)]"
+      >
+        <HiArrowLeft className="h-5 w-5" aria-hidden />
+      </Link>
+
       <Suspense fallback={null}>
         <StarField />
       </Suspense>
