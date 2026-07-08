@@ -116,7 +116,7 @@ export default function Register() {
 
       <AuthDivider />
 
-      <GoogleSignInButton label="สมัครด้วย Google" />
+      <GoogleSignInButton label="สมัครด้วย Google" onError={setError} />
 
       <p className="mt-5 text-[0.85rem] text-muted">
         มีบัญชีแล้ว?{" "}

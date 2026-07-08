@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useSearchParams } from "react-router-dom";
 
+import GoogleOneTap from "@/components/auth/GoogleOneTap";
 import { getCurrentUser } from "@/lib/auth";
 
 export default function GuestRoute() {
+  const [searchParams] = useSearchParams();
   const [checked, setChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const redirectTo = searchParams.get("next") || "/space";
 
   useEffect(() => {
     getCurrentUser()
@@ -19,8 +22,13 @@ export default function GuestRoute() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/space" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <GoogleOneTap redirectTo={redirectTo} />
+      <Outlet />
+    </>
+  );
 }

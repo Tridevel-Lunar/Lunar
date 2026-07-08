@@ -101,7 +101,7 @@ export default function LoginForm() {
 
       <AuthDivider />
 
-      <GoogleSignInButton />
+      <GoogleSignInButton redirectTo={nextPath} onError={setError} />
 
       <p className="mt-5 text-[0.85rem] text-muted">
         ยังไม่มีบัญชี?{" "}
