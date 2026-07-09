@@ -9,24 +9,38 @@
 
 ```bash
 npm install
-npm run dev          # Turbopack — http://localhost:3000
+npm run dev          # Vite — http://localhost:3000
 ```
 
-Backend + PostgreSQL รันใน Docker จาก workspace root (`docker compose up --build`) — ดู [../docs/docker-dev.md](../docs/docker-dev.md)
+**Backend:** รัน FastAPI ที่ `localhost:8000` พร้อม PostgreSQL — Vite proxy ส่ง `/api` ไป backend อัตโนมัติ  
+ดู [../Backend/docs/development.md](../Backend/docs/development.md)
+
+**Google Sign-In (optional):** ตั้ง `VITE_GOOGLE_CLIENT_ID` ใน `.env` — ดู [docs/development.md](docs/development.md#environment)
 
 ## Requirements
 
 - Node.js 18.17+
 - npm 9+
+- Backend API + PostgreSQL (สำหรับ auth และข้อมูลผู้ใช้)
 
 ## Tech Stack
 
-- Next.js 16 (App Router + Turbopack)
+- **Vite 7** + **React 19** + **React Router 7**
 - Tailwind CSS v4, TypeScript
 - Three.js / React Three Fiber (Blender → `.gltf`)
-- Shadcn/ui, Framer Motion, Blockly (planned)
-- Backend: Python **FastAPI** — ดู [../backend/docs/development.md](../backend/docs/development.md)
-- Fonts: Syne, Space Mono, Noto Sans Thai
+- Framer Motion, react-icons
+- Google Identity Services (Sign in with Google)
+- Backend: Python **FastAPI** — ดู [../Backend/docs/development.md](../Backend/docs/development.md)
+- Fonts: Syne, Space Mono, Noto Sans Thai, Orbitron, Sarabun, Space Grotesk
+
+## Routes
+
+| Path | Access | หน้า |
+|------|--------|------|
+| `/` | Public | Landing |
+| `/login`, `/register` | Guest | Auth (email/password + Google) |
+| `/space`, `/studio` | Protected | Product modules |
+| `/dashboard` | Redirect | → `/space` |
 
 ## Landing Sections
 
@@ -40,18 +54,25 @@ Backend + PostgreSQL รันใน Docker จาก workspace root (`docker co
 ## Project Structure
 
 ```
-app/
-  layout.tsx, page.tsx, globals.css
-components/
-  SpaceCanvas.tsx, HeroSection.tsx, WhySpace.tsx
-  PlatformSection.tsx, JoinSection.tsx, Navbar.tsx, Footer.tsx
+src/
+  main.tsx, App.tsx, index.css
+  pages/              Home, Login, Register, Space, Studio
+  routes/             ProtectedRoute, GuestRoute
+  components/
+    auth/             GoogleSignInButton, GoogleOneTap, LoginForm
+    space/, studio/   Module demos
+    HeroSection.tsx, Navbar.tsx, ...
+  lib/
+    api.ts, auth.ts, googleIdentity.ts, constants.ts
+  types/
+    google-identity.d.ts
 docs/
-  concept.md        — วิสัยทัศน์ + product model
-  development.md    — dev conventions
+  concept.md, functional-spec.md, development.md, stack.md
 ```
 
 ## Docs
 
-- [concept.md](docs/concept.md) — สาระสำคัญ, Space / Arena / Studio, LAIKA, RAG
+- [concept.md](docs/concept.md) — วิสัยทัศน์ + product model
+- [functional-spec.md](docs/functional-spec.md) — ฟีเจอร์ Space / Arena / Studio + auth
 - [stack.md](docs/stack.md) — tech stack FE/BE, 3D pipeline, Blockly
-- [development.md](docs/development.md) — commands, architecture, code style
+- [development.md](docs/development.md) — commands, architecture, auth, code style

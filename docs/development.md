@@ -1,10 +1,10 @@
 # LUNAR Frontend
 
-Vite + React Router — web app, landing page และ UI การเรียนรู้
+Vite + React Router — web app, landing page, auth และ UI การเรียนรู้
 
 **Product context:** [concept.md](concept.md) · [functional-spec.md](functional-spec.md)  
 **Tech stack (เต็ม):** [stack.md](stack.md)  
-**Stack:** Vite, React 19, React Router, Tailwind CSS v4, TypeScript, Three.js / R3F — วางแผนเพิ่ม Shadcn/ui, Blockly
+**Stack:** Vite 7, React 19, React Router 7, Tailwind CSS v4, TypeScript, Three.js / R3F, Google Identity Services — วางแผนเพิ่ม Shadcn/ui, Blockly
 
 ## Commands
 
@@ -16,47 +16,75 @@ npm run preview      # preview production build
 npm run lint
 ```
 
-### Backend stack (จาก `Lunar/` root)
+### Backend (local dev)
 
-ทั้ง stack รันใน Docker (Vite HMR + volume mount):
+รัน FastAPI แยกที่ `localhost:8000` พร้อม PostgreSQL:
 
 ```bash
-docker compose up --build    # http://localhost:3000
+cd ../Backend
+uvicorn app.main:app --reload --port 8000
 ```
 
-ดู [../../docs/docker-dev.md](../../docs/docker-dev.md)
+Vite proxy ใน `vite.config.ts` ส่ง `/api` → `http://localhost:8000` (strip prefix `/api`)
 
-**Optional (hot reload บนเครื่อง):** `npm run dev` — Vite proxy ส่ง `/api` ไป `localhost:8000`
+ดู [../Backend/docs/development.md](../Backend/docs/development.md)
 
-**Env:** ไม่จำเป็นสำหรับ Docker compose (API same-origin). สำหรับ `npm run dev` บนเครื่อง ใช้ `frontend/.env.example` (ว่าง = ใช้ proxy)
+**Optional:** ทั้ง stack ผ่าน Docker Compose จาก workspace root (เมื่อมี `docker-compose.yml`) — `docker compose up --build`
+
+## Environment
+
+สร้าง `.env` ใน `Frontend/` (ไม่ commit):
+
+| Variable | Default | ใช้เมื่อ |
+|----------|---------|----------|
+| `VITE_API_URL` | `/api` | เปลี่ยนเมื่อเรียก API ตรงไป backend (ไม่ผ่าน proxy) |
+| `VITE_GOOGLE_CLIENT_ID` | _(ว่าง)_ | เปิด Google Sign-In — ต้องตรงกับ `GOOGLE_CLIENT_ID` บน backend |
+
+ถ้าไม่ตั้ง `VITE_GOOGLE_CLIENT_ID` ปุ่ม Google จะไม่แสดง (email/password ยังใช้ได้)
+
+### Google Sign-In setup (dev)
+
+1. สร้าง OAuth 2.0 **Web application** client ใน [Google Cloud Console](https://console.cloud.google.com/)
+2. **Authorized JavaScript origins:** `http://localhost:3000`, `http://127.0.0.1:3000`
+3. OAuth consent screen: **External** + เพิ่ม test user (ถ้าอยู่ใน Testing mode)
+4. ใส่ client ID ใน `Frontend/.env` และ `Backend/.env`
+5. รีสตาร์ท `npm run dev` หลังแก้ `.env`
 
 **Requirements:** Node.js 18.17+, npm 9+
 
 ## Product ↔ UI Mapping
 
-| Product module | Landing tab (`PlatformSection`) | เนื้อหาหลัก |
-|----------------|--------------------------------|-------------|
-| **Space** | LEARN (เรียนรู้) | 3D Model, Embedded, Physics, Programming |
-| **Arena** | BUILD (สร้าง) | Visual Coding, Simulation |
-| **Studio** | LAUNCH (ปล่อย) | พอร์ตโฟลิโอ, LAIKA, ต่อยอดไอเดีย |
+| Product module | Landing tab (`PlatformSection`) | Route | เนื้อหาหลัก |
+|----------------|--------------------------------|-------|-------------|
+| **Space** | LEARN (เรียนรู้) | `/space` | 3D Model, Embedded, Physics, Programming |
+| **Arena** | BUILD (สร้าง) | _(planned)_ | Visual Coding, Simulation |
+| **Studio** | LAUNCH (ปล่อย) | `/studio` | พอร์ตโฟลิโอ, LAIKA, ต่อยอดไอเดีย |
 
 ฟีเจอร์ LAIKA / LLM / RAG จะเรียก backend API — ไม่ implement ใน frontend โดยตรง
 
 ## Directory Map
 
 ```
-frontend/
+Frontend/
 ├── index.html
-├── Dockerfile.dev         # Vite dev (compose — volume mount)
 ├── vite.config.ts
 ├── src/
 │   ├── main.tsx           # createRoot + BrowserRouter
 │   ├── App.tsx            # React Router routes
 │   ├── index.css          # Fonts, CSS variables, Tailwind
-│   ├── pages/             # Route pages
-│   ├── routes/            # ProtectedRoute, GuestRoute
-│   ├── components/        # Landing sections, auth, space demo, R3F canvas
-│   └── lib/               # api.ts, auth.ts, constants.ts
+│   ├── pages/             # Home, Login, Register, Space, Studio
+│   ├── routes/            # ProtectedRoute, GuestRoute, useAuthUser
+│   ├── components/
+│   │   ├── auth/          # GoogleSignInButton, GoogleOneTap, LoginForm, ...
+│   │   ├── space/, studio/
+│   │   └── ...            # Landing sections, Navbar, SpaceCanvas
+│   ├── lib/
+│   │   ├── api.ts         # User type, API helpers
+│   │   ├── auth.ts        # signInWithGoogleCredential, getCurrentUser, logout
+│   │   ├── googleIdentity.ts  # GIS script load, initialize, renderButton, One Tap
+│   │   └── constants.ts   # API_URL
+│   └── types/
+│       └── google-identity.d.ts
 ├── docs/
 ├── tailwind.config.ts
 └── tsconfig.json          # @/* → src/*
@@ -66,10 +94,23 @@ frontend/
 
 - **SPA** — Vite + React Router; ไม่มี server components
 - **Section components** — แต่ละ section ของ landing อยู่ใน `components/<Section>.tsx`
-- **Pages บาง** — compose sections เท่านั้น
+- **Pages** — compose sections หรือ module UI
 - **Canvas / WebGL** — `React.lazy()` + `<Suspense>` สำหรับ browser-only (ดู `HeroSection` → `SpaceCanvas`)
-- **Auth** — httpOnly cookie จาก FastAPI; API เรียก `/api/auth/*` (Vite proxy)
-- **Styling** — Tailwind v4 utilities เป็นหลัก; `@theme` tokens ใน `index.css`; CSS เฉพาะ pseudo-element / keyframes
+- **Auth** — httpOnly cookie จาก FastAPI; เรียก `/api/auth/*` (Vite proxy)
+- **Google Sign-In** — Google Identity Services (`gsi/client`); credential ส่งไป `POST /auth/google/onetap`
+- **Route guards** — `GuestRoute` (login/register) · `ProtectedRoute` (space/studio)
+- **Styling** — Tailwind v4 utilities เป็นหลัก; `@theme` tokens ใน `index.css`
+
+### Auth flow
+
+```
+Login/Register page
+  ├─ Email/password → POST /api/auth/login | register → cookie
+  ├─ GoogleSignInButton → GIS renderButton → credential → POST /api/auth/google/onetap → cookie
+  └─ GoogleOneTap (GuestRoute) → auto prompt on guest pages
+
+ProtectedRoute → GET /api/auth/me (cookie) → allow or redirect /login?next=
+```
 
 ## Code Style
 
@@ -129,6 +170,7 @@ const SpaceCanvas = lazy(() => import("./SpaceCanvas"));
 | Colocate section UI ใน `components/` | ใส่ business logic หนักใน `pages/` |
 | `React.lazy` + `Suspense` สำหรับ Three.js/Canvas | Import WebGL โดยตรงใน route ที่โหลดทันที |
 | เรียก LAIKA/RAG ผ่าน backend API | ฝัง LLM keys หรือ RAG logic ใน frontend |
+| ใช้ `credentials: "include"` กับ auth API | เก็บ JWT ใน localStorage (ใช้ httpOnly cookie) |
 | ใช้ CSS variables จาก `index.css` | สี hex แบบ one-off เมื่อมี token แล้ว |
 
 ## Testing & Lint
@@ -137,20 +179,20 @@ const SpaceCanvas = lazy(() => import("./SpaceCanvas"));
 npm run lint
 ```
 
-Frontend ยังไม่มี unit test runner — auth/API ทดสอบผ่าน backend **pytest** (`cd ../backend && pytest`) หรือ manual ที่ `/register` + Swagger `/docs`
+Frontend ยังไม่มี unit test runner — auth/API ทดสอบผ่าน backend **pytest** (`cd ../Backend && pytest`) หรือ manual ที่ `/login`, `/register` + Swagger `/docs`
 
 ## Git
 
 - Dev บน **`develop`** — ห้าม push ตรงไป **`main`**
 - งานใหญ่: `feature/*` จาก `develop` → PR กลับ `develop`
 - Release: PR **`develop` → `main`**
-- รายละเอียด: [../../docs/git-workflow.md](../../docs/git-workflow.md)
 
 ## Boundaries
 
 - ห้ามเอา `lang="th"` ออกจาก `index.html`
-- โค้ดอยู่ใน `frontend/` เท่านั้น — ไม่ shared package กับ backend
+- โค้ดอยู่ใน `Frontend/` เท่านั้น — ไม่ shared package กับ backend
 - อย่าเพิ่ม dependency ถ้าไม่จำเป็น
+- ห้าม commit `.env` หรือ Google client secrets
 
 ## Deploy
 
@@ -158,12 +200,13 @@ Frontend ยังไม่มี unit test runner — auth/API ทดสอบ�
 npm run build   # → dist/
 ```
 
-Serve `dist/` เป็น static files พร้อม SPA fallback (`/* → index.html`). ไม่ต้องมี Node server ใน production.
+Serve `dist/` เป็น static files พร้อม SPA fallback (`/* → index.html`). ตั้ง `VITE_API_URL` และ `VITE_GOOGLE_CLIENT_ID` สำหรับ production origin ใน build env.
 
 ## JIT Index
 
 ```bash
 rg "LEARN|BUILD|LAUNCH" src/components/PlatformSection.tsx
 rg "lazy\\(" src/
+rg "googleIdentity|GoogleSignIn" src/
 rg "--bg|--cyan|--teal" src/index.css
 ```

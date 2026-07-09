@@ -2,7 +2,7 @@
 
 รายละเอียดเครื่องมือที่ใช้และวางแผนใช้ฝั่ง frontend
 
-**Backend stack:** [../../backend/docs/development.md](../../backend/docs/development.md)
+**Backend stack:** [../../Backend/docs/development.md](../../Backend/docs/development.md)
 
 ## ภาษา
 
@@ -15,11 +15,33 @@
 
 | เครื่องมือ | สถานะ | บทบาท |
 |-----------|--------|--------|
-| **Vite + React Router** | ใช้อยู่ | SPA framework — React 19, client-side routing |
+| **Vite 7 + React Router 7** | ใช้อยู่ | SPA framework — React 19, client-side routing |
 | **Tailwind CSS v4** | ใช้อยู่ | Styling หลัก — `@theme` tokens, utilities; CSS เฉพาะ auth pseudo-elements + keyframes |
 | **Shadcn/ui** | วางแผน | คอมโพเนนต์พื้นฐาน (Button, Dialog, Form ฯลฯ) |
 | **Framer Motion** | ใช้อยู่ | แอนิเมชัน auth — card entrance, ปุ่ม, error message |
-| **react-icons** | ใช้อยู่ | ไอคอนทั่วไป (auth ใช้ inline SVG สำหรับ Google logo) |
+| **react-icons** | ใช้อยู่ | ไอคอนทั่วไปใน UI |
+
+## Authentication
+
+| เครื่องมือ | สถานะ | บทบาท |
+|-----------|--------|--------|
+| **FastAPI auth API** | ใช้อยู่ | register, login, `/auth/me`, logout — httpOnly cookie `lunar_token` |
+| **Google Identity Services (GIS)** | ใช้อยู่ | One Tap + `renderButton` — โหลด `accounts.google.com/gsi/client` |
+| **`googleIdentity.ts`** | ใช้อยู่ | โหลด GIS script, `initialize()`, `renderGoogleSignInButton()`, `promptGoogleOneTap()` |
+| **`auth.ts`** | ใช้อยู่ | `signInWithGoogleCredential()` → `POST /auth/google/onetap` |
+
+### Google Sign-In flow
+
+```
+Browser (GIS)  →  credential JWT
+Frontend       →  POST /api/auth/google/onetap  (credentials: include)
+Backend        →  verify token, upsert user in PostgreSQL, Set-Cookie
+Frontend       →  navigate to /space (or ?next=)
+```
+
+- Client ID: `VITE_GOOGLE_CLIENT_ID` (frontend) ต้องตรงกับ `GOOGLE_CLIENT_ID` (backend)
+- ไม่ใช้ client secret ฝั่ง frontend
+- ปุ่ม login ใช้ `google.accounts.id.renderButton()` (ไม่ใช่ custom popup)
 
 ## 3D & Assets
 
@@ -54,10 +76,13 @@ Frontend เรียก API เท่านั้น — ไม่ฝัง API
 | งาน | Frontend | Backend |
 |-----|----------|---------|
 | UI / State | ✓ | |
+| Auth UI + route guards | ✓ | |
+| Google GIS (browser) | ✓ | |
+| Google token verify + user upsert | | ✓ |
 | 3D viewer (R3F) | ✓ | |
-| Blockly editor | ✓ | |
+| Blockly editor | ✓ (planned) | |
 | Orbital / physics calc | | ✓ (Poliastro, PyEphem) |
 | Run block code / simulation | ส่ง request | ✓ |
 | LAIKA LLM + RAG | แสดงผล | ✓ |
 | Satellite imagery API | แสดงผล | ✓ |
-| PostgreSQL (data) | | ✓ |
+| PostgreSQL (users, progress) | | ✓ |

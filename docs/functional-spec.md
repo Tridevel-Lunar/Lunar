@@ -53,7 +53,7 @@
 
 **Output:** กราฟ/ตัวเลข power · สถานะวงโคจร · checkpoint
 
-**Backend:** คำนวณ orbital / power budget (Poliastro, PyEphem) — ดู [backend/docs/development.md](../../backend/docs/development.md)
+**Backend:** คำนวณ orbital / power budget (Poliastro, PyEphem) — ดู [Backend/docs/development.md](../../Backend/docs/development.md)
 
 ### 4. การเขียนโปรแกรม (Programming — Algorithmic Thinking)
 
@@ -138,6 +138,45 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 | BUILD | **Arena** | § Blockly + Simulation |
 | LAUNCH | **Studio** | § Portfolio + LAIKA |
 
+---
+
+## ฟีเจอร์ที่ 4: Authentication
+
+ระบบเข้าสู่ระบบและสมัครสมาชิก — รองรับ email/password และ Google Sign-In
+
+### Email / Password
+
+| รายการ | รายละเอียด |
+|--------|------------|
+| **Register** | สร้างบัญชีด้วย email + password (≥ 8 ตัวอักษร) |
+| **Login** | เข้าสู่ระบบด้วย email + password |
+| **Session** | httpOnly cookie `lunar_token` จาก backend |
+| **Protected routes** | `/space`, `/studio` — redirect ไป `/login?next=...` ถ้ายังไม่ login |
+
+**Input:** email, password, display name (optional)  
+**Output:** session cookie · redirect ไป `/space` (หรือ `?next=` path)
+
+### Google Sign-In (GIS)
+
+| รายการ | รายละเอียด |
+|--------|------------|
+| **One Tap** | แสดงอัตโนมัติบนหน้า guest (`/login`, `/register`) — optional |
+| **Sign-in button** | ปุ่ม Google อย่างเป็นทางการ (`renderButton`) บน login/register |
+| **Flow** | GIS คืน credential JWT → `POST /api/auth/google/onetap` → backend verify + upsert user |
+| **Config** | `VITE_GOOGLE_CLIENT_ID` ต้องตรงกับ `GOOGLE_CLIENT_ID` บน backend และ OAuth client ใน Google Cloud |
+
+**Input:** การเลือกบัญชี Google  
+**Output:** session cookie · redirect ไป `/space` (หรือ `?next=` path)
+
+**หมายเหตุ:** GIS ทำงานใน browser; การสร้าง/ค้นหาผู้ใช้ใน PostgreSQL อยู่ที่ backend — ต้องมี DB รันอยู่ login จึงจะสำเร็จ
+
+### Auth — Route guards
+
+```
+GuestRoute     → /login, /register  (redirect ถ้า login แล้ว)
+ProtectedRoute → /space, /studio     (redirect /login?next= ถ้ายังไม่ login)
+```
+
 ## Implementation notes (สำหรับ dev)
 
 | ส่วน | Frontend | Backend |
@@ -146,6 +185,8 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 | Blockly | Blockly editor, block defs | validate / run mission script |
 | Physics / orbit | แสดงผล 3D + charts | Poliastro, PyEphem, power calc |
 | LAIKA | chat UI ใน Studio | FastAPI → RAG → Gemini |
+| Auth (email) | LoginForm, Register, route guards | `/auth/register`, `/auth/login`, JWT cookie |
+| Auth (Google) | GIS One Tap + `renderButton` → `googleIdentity.ts` | `/auth/google/onetap`, token verify |
 | Progress | UI state, lesson completion | PostgreSQL (users, progress) |
 
-เมื่อ implement API ใหม่ บันทึก contract ใน `backend/docs/api.md`
+เมื่อ implement API ใหม่ บันทึก contract ใน `Backend/docs/api.md`
