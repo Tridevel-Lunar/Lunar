@@ -62,6 +62,35 @@ Vite proxy ใน `vite.config.ts` ส่ง `/api` → `http://localhost:8000` 
 
 ฟีเจอร์ LAIKA / LLM / RAG จะเรียก backend API — ไม่ implement ใน frontend โดยตรง
 
+### Studio (LAIKA)
+
+Studio แยกเป็น landing + chat ต่อ collection:
+
+| Route | หน้าที่ |
+|-------|---------|
+| `/studio` | LAIKA hero (static copy + typewriter) + collection grid จาก API |
+| `/studio/new` | สร้าง note/idea ใหม่ |
+| `/studio/chat/:id` | แชทกับ LAIKA ต่อ collection (intent + SSE stream) |
+
+| ใน scope | นอก scope |
+|----------|-----------|
+| Collections ใน PostgreSQL (`GET/POST/PATCH /studio/collections`) | Space/Arena progress API → `learning_context` |
+| Branch navigation: `GET …/conversation`, `POST …/select-branch`, `GET …/branch-map` | Venture forms, expert matching |
+| `POST /laika/assist/stream` — history + `created_at`, `client_now`; ชื่อผู้เรียนจาก session ฝั่ง backend | `POST /laika/studio/greeting` บน landing (มี API แต่ UI ใช้ static hero) |
+| Hero: typewriter, rotate หลังพิมพ์เสร็จ ~15s; ต้อนรับกลับถ้าหายไป ≥3 วัน (`studio-visit.ts`) | |
+
+**Lib / components**
+
+| Path | บทบาท |
+|------|--------|
+| `src/lib/api.ts` | `streamLaikaAssist()`, studio collection APIs |
+| `src/lib/studio-storage.ts` | Async CRUD บน `/studio/collections` |
+| `src/lib/studio-tree.ts` | Conversation tree; `toLaikaHistory()` ส่ง `created_at` |
+| `src/lib/studio-visit.ts` | Last visit สำหรับ hero welcome-back |
+| `src/lib/studio-learner.ts` | ใส่ชื่อใน hero copy |
+| `src/components/studio/landing/` | `StudioLanding`, `LaikaHeroGreeting`, `CollectionGrid` |
+| `src/components/studio/chat/` | `StudioChatView`, composer, branch map |
+
 ## Directory Map
 
 ```
