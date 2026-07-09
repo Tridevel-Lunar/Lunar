@@ -56,6 +56,14 @@
     @apply bg-bg text-text font-thai antialiased overflow-x-hidden;
   }
 
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
   ::-webkit-scrollbar {
     width: 4px;
   }
@@ -68,6 +76,43 @@
     background: rgba(0, 229, 255, 0.3);
     border-radius: 2px;
   }
+}
+
+/* KaTeX — dark Studio theme */
+.laika-markdown .katex {
+  color: var(--text);
+  font-size: 1.05em;
+}
+
+.laika-markdown .katex-display {
+  margin: 0.75rem 0 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
+}
+
+.laika-markdown .katex-error {
+  color: #f87171;
+}
+
+.laika-markdown .laika-table-wrap {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.laika-markdown .laika-table-wrap::-webkit-scrollbar {
+  height: 6px;
+}
+
+.laika-markdown .laika-table-wrap::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.laika-markdown .laika-table td p,
+.laika-markdown .laika-table th p {
+  margin: 0;
 }
 
 @utility btn-clip {
