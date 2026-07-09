@@ -80,8 +80,28 @@ export async function promptGoogleOneTap(
   window.google?.accounts?.id?.prompt(onMoment);
 }
 
-export async function promptGoogleSignIn(
-  onMoment?: (notification: google.accounts.id.PromptMomentNotification) => void,
+export type GoogleSignInButtonText = "signin_with" | "signup_with" | "continue_with";
+
+export async function renderGoogleSignInButton(
+  parent: HTMLElement,
+  options: { text?: GoogleSignInButtonText; width?: number } = {},
 ): Promise<void> {
-  return promptGoogleOneTap(onMoment);
+  await loadGoogleIdentityScript();
+
+  if (!window.google?.accounts?.id?.renderButton) {
+    throw new Error("Google Sign-In button unavailable");
+  }
+
+  parent.replaceChildren();
+  const width = options.width ?? (parent.clientWidth || 320);
+
+  window.google.accounts.id.renderButton(parent, {
+    type: "standard",
+    theme: "outline",
+    size: "large",
+    text: options.text ?? "signin_with",
+    shape: "rectangular",
+    logo_alignment: "left",
+    width: Math.max(width, 200),
+  });
 }

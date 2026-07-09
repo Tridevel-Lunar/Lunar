@@ -27,8 +27,20 @@ declare namespace google.accounts.id {
     getMomentType: () => string;
   }
 
+  interface GsiButtonConfiguration {
+    type?: "standard" | "icon";
+    theme?: "outline" | "filled_blue" | "filled_black";
+    size?: "large" | "medium" | "small";
+    text?: "signin_with" | "signup_with" | "continue_with" | "signin" | "signup" | "continue";
+    shape?: "rectangular" | "pill" | "circle" | "square";
+    logo_alignment?: "left" | "center";
+    width?: number;
+    locale?: string;
+  }
+
   function initialize(config: IdConfiguration): void;
   function prompt(momentListener?: (notification: PromptMomentNotification) => void): void;
+  function renderButton(parent: HTMLElement, options: GsiButtonConfiguration): void;
   function cancel(): void;
   function disableAutoSelect(): void;
 }

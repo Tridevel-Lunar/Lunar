@@ -1,76 +1,106 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 
-import GoogleLogo from "@/components/auth/GoogleLogo";
 import { signInWithGoogleCredential } from "@/lib/auth";
 import {
   ensureGoogleIdentityInitialized,
   isGoogleSignInConfigured,
-  promptGoogleSignIn,
+  renderGoogleSignInButton,
+  type GoogleSignInButtonText,
 } from "@/lib/googleIdentity";
 
 type GoogleSignInButtonProps = {
-  label?: string;
   redirectTo?: string;
   onError?: (message: string) => void;
+  /** Google-rendered button label variant */
+  buttonText?: GoogleSignInButtonText;
 };
 
 export default function GoogleSignInButton({
-  label = "เข้าสู่ระบบด้วย Google",
   redirectTo = "/space",
   onError,
+  buttonText = "signin_with",
 }: GoogleSignInButtonProps) {
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
+  const [initFailed, setInitFailed] = useState(false);
+
+  useEffect(() => {
+    if (!isGoogleSignInConfigured() || !containerRef.current) {
+      return;
+    }
+
+    const parent = containerRef.current;
+    let cancelled = false;
+
+    async function setup() {
+      try {
+        await ensureGoogleIdentityInitialized(async (response) => {
+          if (cancelled) {
+            return;
+          }
+
+          setLoading(true);
+          try {
+            await signInWithGoogleCredential(response.credential);
+            navigate(redirectTo);
+          } catch (err) {
+            onError?.(err instanceof Error ? err.message : "เข้าสู่ระบบด้วย Google ไม่สำเร็จ");
+          } finally {
+            setLoading(false);
+          }
+        });
+
+        if (cancelled) {
+          return;
+        }
+
+        await renderGoogleSignInButton(parent, {
+          text: buttonText,
+          width: parent.clientWidth,
+        });
+        setInitFailed(false);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "ไม่สามารถโหลดปุ่ม Google Sign-In ได้";
+        setInitFailed(true);
+        onError?.(message);
+      }
+    }
+
+    void setup();
+
+    return () => {
+      cancelled = true;
+      parent.replaceChildren();
+    };
+  }, [buttonText, navigate, onError, redirectTo]);
 
   if (!isGoogleSignInConfigured()) {
     return null;
   }
 
-  async function handleClick() {
-    setLoading(true);
-
-    try {
-      await ensureGoogleIdentityInitialized(async (response) => {
-        try {
-          await signInWithGoogleCredential(response.credential);
-          navigate(redirectTo);
-        } catch (err) {
-          onError?.(err instanceof Error ? err.message : "เข้าสู่ระบบด้วย Google ไม่สำเร็จ");
-        } finally {
-          setLoading(false);
-        }
-      });
-      await promptGoogleSignIn((notification) => {
-        if (
-          notification.isNotDisplayed() ||
-          notification.isSkippedMoment() ||
-          notification.isDismissedMoment()
-        ) {
-          setLoading(false);
-        }
-      });
-    } catch (err) {
-      onError?.(err instanceof Error ? err.message : "เข้าสู่ระบบด้วย Google ไม่สำเร็จ");
-      setLoading(false);
-    }
-  }
-
   return (
-    <motion.button
-      type="button"
-      onClick={() => void handleClick()}
-      disabled={loading}
-      className="flex w-full items-center justify-center gap-3 rounded border border-white/14 bg-white/5 px-4 py-3 text-[0.9rem] font-medium text-text transition-[border-color,background,box-shadow] hover:border-white/28 hover:bg-white/[0.09] hover:shadow-[0_4px_24px_rgba(0,0,0,0.2)] disabled:cursor-wait disabled:opacity-70"
-      whileHover={loading ? undefined : { scale: 1.02, y: -1 }}
-      whileTap={loading ? undefined : { scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-    >
-      <span className="inline-flex shrink-0 leading-none [&_svg]:block">
-        <GoogleLogo size={20} />
-      </span>
-      <span>{loading ? "กำลังเชื่อมต่อ Google..." : label}</span>
-    </motion.button>
+    <div className="relative w-full">
+      {loading ? (
+        <div
+          className="absolute inset-0 z-10 flex items-center justify-center rounded bg-bg/70 text-sm text-text-muted"
+          aria-live="polite"
+        >
+          กำลังเชื่อมต่อ Google...
+        </div>
+      ) : null}
+      {initFailed ? (
+        <p className="text-center text-sm text-red-400" role="alert">
+          ไม่สามารถโหลดปุ่ม Google Sign-In ได้ — ตรวจสอบการตั้งค่า OAuth
+        </p>
+      ) : null}
+      <div
+        ref={containerRef}
+        className="flex w-full justify-center overflow-hidden rounded"
+        aria-label="Sign in with Google"
+      />
+    </div>
   );
 }
