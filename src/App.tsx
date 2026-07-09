@@ -7,6 +7,10 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Space from "@/pages/Space";
 import Studio from "@/pages/Studio";
+import StudioChat from "@/pages/StudioChat";
+import StudioNew from "@/pages/StudioNew";
+import BackofficeKnowledge from "@/pages/BackofficeKnowledge";
+import BackofficeUsers from "@/pages/BackofficeUsers";
 
 export default function App() {
   return (
@@ -19,6 +23,10 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route path="/space" element={<Space />} />
         <Route path="/studio" element={<Studio />} />
+        <Route path="/studio/new" element={<StudioNew />} />
+        <Route path="/studio/chat/:collectionId" element={<StudioChat />} />
+        <Route path="/backoffice/users" element={<BackofficeUsers />} />
+        <Route path="/backoffice/knowledge" element={<BackofficeKnowledge />} />
       </Route>
       <Route path="/dashboard" element={<Navigate to="/space" replace />} />
     </Routes>

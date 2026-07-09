@@ -20,9 +20,21 @@ export default defineConfig(({ mode }) => {
         usePolling: env.CHOKIDAR_USEPOLLING === "true",
       },
       proxy: {
+        "/api/laika/assist/stream": {
+          target: proxyTarget,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, ""),
+          configure: (proxy) => {
+            proxy.on("proxyRes", (proxyRes) => {
+              proxyRes.headers["cache-control"] = "no-cache, no-transform";
+              proxyRes.headers["x-accel-buffering"] = "no";
+            });
+          },
+        },
         "/api": {
           target: proxyTarget,
           changeOrigin: true,
+          ws: true,
           rewrite: (path) => path.replace(/^\/api/, ""),
         },
       },

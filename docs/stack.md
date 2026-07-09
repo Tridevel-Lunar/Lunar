@@ -66,10 +66,11 @@ Export จาก Blender → `public/models/` หรือ CDN (เมื่อ�
 
 | ส่วน | ที่รัน |
 |------|--------|
-| UI แชท / คำแนะนำ | Frontend |
-| LLM + RAG | **Backend** (Gemini, LangChain/LlamaIndex) |
+| UI landing / แชท / branch map | Frontend |
+| Collections + conversation tree | **Backend** (PostgreSQL) |
+| LLM + RAG | **Backend** (Gemini / Groq / Ollama) |
 
-Frontend เรียก API เท่านั้น — ไม่ฝัง API keys
+Frontend เรียก API เท่านั้น — ไม่ฝัง API keys. แชทส่งประวัติพร้อม `created_at` และ `client_now`; ชื่อผู้เรียน inject ฝั่ง backend จาก session
 
 ## สรุปการแบ่งงาน FE ↔ BE
 

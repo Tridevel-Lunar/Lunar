@@ -9,12 +9,14 @@ import {
   IoLogOutOutline,
   IoPlanetOutline,
   IoRocketOutline,
+  IoServerOutline,
 } from "react-icons/io5";
 
 import type { User } from "@/lib/api";
 import { clearSession } from "@/lib/auth";
 import { DEFAULT_AVATAR_URL } from "@/lib/constants";
 import { getUserDisplayName } from "@/lib/user";
+import { isAdmin } from "@/lib/rbac";
 
 export type AppModule = "space" | "arena" | "studio";
 
@@ -54,6 +56,7 @@ type ModuleSidebarProps = {
 export default function ModuleSidebar({ user, activeModule }: ModuleSidebarProps) {
   const navigate = useNavigate();
   const displayName = getUserDisplayName(user);
+  const backofficeAllowed = isAdmin(user);
 
   async function handleLogout() {
     await clearSession();
@@ -109,6 +112,17 @@ export default function ModuleSidebar({ user, activeModule }: ModuleSidebarProps
       </nav>
 
       <div className="mt-auto shrink-0 space-y-0.5 pt-6">
+        {backofficeAllowed && (
+          <Link
+            to="/backoffice/users"
+            className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.62rem] tracking-[0.1em] text-teal/80 no-underline transition-colors hover:bg-teal/[0.06] hover:text-teal"
+          >
+            <span className="text-sm">
+              <IoServerOutline />
+            </span>
+            BACKOFFICE
+          </Link>
+        )}
         {[
           { icon: <HiOutlineBell />, label: "NOTIFICATIONS" },
           { icon: <HiOutlineCog6Tooth />, label: "SETTINGS" },
@@ -119,7 +133,7 @@ export default function ModuleSidebar({ user, activeModule }: ModuleSidebarProps
               key={item.label}
               type="button"
               onClick={item.onClick}
-              className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.62rem] tracking-[0.1em] text-text/45 transition-colors hover:bg-white/[0.03] hover:text-text/75"
+              className="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.62rem] tracking-[0.1em] text-text/45 transition-colors hover:bg-white/[0.03] hover:text-text/75"
             >
               <span className="text-sm">{item.icon}</span>
               {item.label}

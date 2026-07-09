@@ -116,12 +116,17 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 
 | รายการ | รายละเอียด |
 |--------|------------|
-| **บทบาท** | ช่วยแนะนำ · ประเมินไอเดียต่อยอด · shape ปัญหาให้สอดคล้องฟิสิกส์ |
-| **LLM** | Gemini API (backend) |
-| **RAG** | อ้างอิงเอกสารวิศวกรรม / NASA CubeSat 101 ฯลฯ — ลด hallucination |
+| **บทบาท** | Mentor ภาษาไทยสุภาพ เป็นกลาง — ช่วยสรุป/อธิบาย/ต่อยอดโน้ตและไอเดีย (ไม่ใช้คำลงท้ายเจาะจงเพศ) |
+| **โทนการสนทนา** | รู้ชื่อผู้เรียน (จากบัญชี) · รู้เวลาและช่วงห่างจากข้อความก่อนหน้า · ไม่ทักทายซ้ำทุกตอบ · ต้อนรับกลับเมื่อหายไปหลายวัน |
+| **LLM** | Gemini / Groq / Ollama (backend config) |
+| **RAG** | อ้างอิงเอกสารวิศวกรรม / NASA CubeSat ฯลฯ — ลด hallucination |
+
+**Studio landing:** ข้อความ hero แบบ static + typewriter (ไม่เรียก LLM) — สุ่มข้อความ casual / ต้อนรับกลับตาม last visit
+
+**Studio chat:** multi-turn tree + `POST /laika/assist/stream` พร้อมประวัติและ timestamp
 
 **Input:** คำถาม / ไอเดีย / ผลงานจากผู้เรียน  
-**Output:** คำแนะนำ · คำถามชวนคิด · แนวทางพัฒนาต่อ
+**Output:** คำแนะนำ · คำถามชวนคิด · แนวทางพัฒนาต่อ · `sources[]`
 
 ### Roadmap (อนาคต)
 

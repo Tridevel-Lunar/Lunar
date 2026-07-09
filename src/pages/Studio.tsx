@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import StudioDemo from "@/components/studio/StudioDemo";
+import StudioLanding from "@/components/studio/landing/StudioLanding";
 import { useAuthUser } from "@/routes/useAuthUser";
 
 export default function Studio() {
@@ -10,5 +10,5 @@ export default function Studio() {
     document.title = "Studio — LUNAR";
   }, []);
 
-  return <StudioDemo user={user} />;
+  return <StudioLanding user={user} />;
 }
