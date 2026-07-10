@@ -155,11 +155,12 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 |--------|------------|
 | **Register** | สร้างบัญชีด้วย email + password (≥ 8 ตัวอักษร) |
 | **Login** | เข้าสู่ระบบด้วย email + password |
-| **Session** | httpOnly cookie `lunar_token` จาก backend |
-| **Protected routes** | `/space`, `/studio` — redirect ไป `/login?next=...` ถ้ายังไม่ login |
+| **Session** | httpOnly cookies `lunar_token` (access JWT) + `lunar_refresh` (refresh token) จาก backend |
+| **Refresh** | access หมดอายุ → `POST /api/auth/refresh` อัตโนมัติ (rotate refresh token) |
+| **Protected routes** | `/space`, `/studio`, `/backoffice` — redirect ไป `/login?next=...` ถ้ายังไม่ login |
 
 **Input:** email, password, display name (optional)  
-**Output:** session cookie · redirect ไป `/space` (หรือ `?next=` path)
+**Output:** session cookies · redirect ไป `/space` (หรือ `?next=` path)
 
 ### Google Sign-In (GIS)
 
@@ -171,15 +172,19 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 | **Config** | `VITE_GOOGLE_CLIENT_ID` ต้องตรงกับ `GOOGLE_CLIENT_ID` บน backend และ OAuth client ใน Google Cloud |
 
 **Input:** การเลือกบัญชี Google  
-**Output:** session cookie · redirect ไป `/space` (หรือ `?next=` path)
+**Output:** session cookies · redirect ไป `/space` (หรือ `?next=` path)
 
 **หมายเหตุ:** GIS ทำงานใน browser; การสร้าง/ค้นหาผู้ใช้ใน PostgreSQL อยู่ที่ backend — ต้องมี DB รันอยู่ login จึงจะสำเร็จ
 
-### Auth — Route guards
+### Auth — Route guards & silent refresh
 
 ```
 GuestRoute     → /login, /register  (redirect ถ้า login แล้ว)
-ProtectedRoute → /space, /studio     (redirect /login?next= ถ้ายังไม่ login)
+ProtectedRoute → /space, /studio, /backoffice  (redirect /login?next= ถ้ายังไม่ login)
+
+API 401 (access หมดอายุ)
+  → tryRefreshSession() → POST /api/auth/refresh
+  → retry request หรือ redirect login ถ้า refresh ล้มเหลว
 ```
 
 ## Implementation notes (สำหรับ dev)
@@ -190,7 +195,7 @@ ProtectedRoute → /space, /studio     (redirect /login?next= ถ้ายัง
 | Blockly | Blockly editor, block defs | validate / run mission script |
 | Physics / orbit | แสดงผล 3D + charts | Poliastro, PyEphem, power calc |
 | LAIKA | chat UI ใน Studio | FastAPI → RAG → Gemini |
-| Auth (email) | LoginForm, Register, route guards | `/auth/register`, `/auth/login`, JWT cookie |
+| Auth (email) | LoginForm, Register, route guards, `tryRefreshSession` | `/auth/register`, `/auth/login`, `/auth/refresh`, JWT cookies |
 | Auth (Google) | GIS One Tap + `renderButton` → `googleIdentity.ts` | `/auth/google/onetap`, token verify |
 | Progress | UI state, lesson completion | PostgreSQL (users, progress) |
 

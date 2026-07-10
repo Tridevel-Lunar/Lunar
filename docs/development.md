@@ -109,7 +109,7 @@ Frontend/
 │   │   └── ...            # Landing sections, Navbar, SpaceCanvas
 │   ├── lib/
 │   │   ├── api.ts         # User type, API helpers
-│   │   ├── auth.ts        # signInWithGoogleCredential, getCurrentUser, logout
+│   │   ├── auth.ts        # tryRefreshSession, getCurrentUser, clearSession, Google sign-in
 │   │   ├── googleIdentity.ts  # GIS script load, initialize, renderButton, One Tap
 │   │   └── constants.ts   # API_URL
 │   └── types/
@@ -125,7 +125,7 @@ Frontend/
 - **Section components** — แต่ละ section ของ landing อยู่ใน `components/<Section>.tsx`
 - **Pages** — compose sections หรือ module UI
 - **Canvas / WebGL** — `React.lazy()` + `<Suspense>` สำหรับ browser-only (ดู `HeroSection` → `SpaceCanvas`)
-- **Auth** — httpOnly cookie จาก FastAPI; เรียก `/api/auth/*` (Vite proxy)
+- **Auth** — httpOnly cookies (`lunar_token` + `lunar_refresh`) จาก FastAPI; เรียก `/api/auth/*` (Vite proxy)
 - **Google Sign-In** — Google Identity Services (`gsi/client`); credential ส่งไป `POST /auth/google/onetap`
 - **Route guards** — `GuestRoute` (login/register) · `ProtectedRoute` (space/studio)
 - **Styling** — Tailwind v4 utilities เป็นหลัก; `@theme` tokens ใน `index.css`
@@ -134,12 +134,19 @@ Frontend/
 
 ```
 Login/Register page
-  ├─ Email/password → POST /api/auth/login | register → cookie
-  ├─ GoogleSignInButton → GIS renderButton → credential → POST /api/auth/google/onetap → cookie
+  ├─ Email/password → POST /api/auth/login | register → cookies (access + refresh)
+  ├─ GoogleSignInButton → GIS renderButton → credential → POST /api/auth/google/onetap → cookies
   └─ GoogleOneTap (GuestRoute) → auto prompt on guest pages
 
 ProtectedRoute → GET /api/auth/me (cookie) → allow or redirect /login?next=
+
+API call 401 (access expired)
+  → tryRefreshSession() → POST /api/auth/refresh → retry once
+  → redirect login if refresh fails
 ```
+
+**Lib:** `src/lib/auth.ts` — `tryRefreshSession`, `fetchWithAuthRetry`, `getCurrentUser`  
+**Lib:** `src/lib/api.ts` — `apiFetch` retries on 401 after refresh
 
 ## Code Style
 
@@ -199,7 +206,7 @@ const SpaceCanvas = lazy(() => import("./SpaceCanvas"));
 | Colocate section UI ใน `components/` | ใส่ business logic หนักใน `pages/` |
 | `React.lazy` + `Suspense` สำหรับ Three.js/Canvas | Import WebGL โดยตรงใน route ที่โหลดทันที |
 | เรียก LAIKA/RAG ผ่าน backend API | ฝัง LLM keys หรือ RAG logic ใน frontend |
-| ใช้ `credentials: "include"` กับ auth API | เก็บ JWT ใน localStorage (ใช้ httpOnly cookie) |
+| ใช้ `credentials: "include"` กับ auth API | เก็บ JWT ใน localStorage (ใช้ httpOnly cookies) |
 | ใช้ CSS variables จาก `index.css` | สี hex แบบ one-off เมื่อมี token แล้ว |
 
 ## Testing & Lint

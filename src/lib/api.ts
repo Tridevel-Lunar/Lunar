@@ -1,4 +1,5 @@
 import { API_URL } from "./constants";
+import { shouldSkipAuthRefresh, tryRefreshSession, fetchWithAuthRetry } from "./auth";
 
 export class ApiError extends Error {
   status: number;
@@ -9,7 +10,11 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+export async function apiFetch<T>(
+  path: string,
+  options?: RequestInit,
+  retried = false,
+): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     credentials: "include",
     ...options,
@@ -18,6 +23,17 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
       ...options?.headers,
     },
   });
+
+  if (
+    response.status === 401 &&
+    !retried &&
+    !shouldSkipAuthRefresh(path)
+  ) {
+    const refreshed = await tryRefreshSession();
+    if (refreshed) {
+      return apiFetch<T>(path, options, true);
+    }
+  }
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -327,6 +343,7 @@ export async function streamLaikaAssist(
   body: LaikaAssistRequest,
   handlers: LaikaStreamHandlers,
   signal?: AbortSignal,
+  retried = false,
 ): Promise<boolean> {
   const response = await fetch(`${API_URL}/laika/assist/stream`, {
     method: "POST",
@@ -335,6 +352,13 @@ export async function streamLaikaAssist(
     body: JSON.stringify(body),
     signal,
   });
+
+  if (response.status === 401 && !retried) {
+    const refreshed = await tryRefreshSession();
+    if (refreshed) {
+      return streamLaikaAssist(body, handlers, signal, true);
+    }
+  }
 
   if (!response.ok) {
     const data = (await response.json().catch(() => ({}))) as { detail?: string };
@@ -593,9 +617,8 @@ export async function uploadKnowledgeDocument(
   if (options.license) form.append("license_value", options.license);
   form.append("auto_ingest", String(options.autoIngest ?? true));
 
-  const response = await fetch(`${API_URL}/backoffice/knowledge/upload`, {
+  const response = await fetchWithAuthRetry("/backoffice/knowledge/upload", {
     method: "POST",
-    credentials: "include",
     body: form,
   });
 
@@ -609,9 +632,8 @@ export async function uploadKnowledgeDocument(
 }
 
 export async function deleteKnowledgeSource(sourceId: string): Promise<void> {
-  const response = await fetch(`${API_URL}/backoffice/knowledge/sources/${sourceId}`, {
+  const response = await fetchWithAuthRetry(`/backoffice/knowledge/sources/${sourceId}`, {
     method: "DELETE",
-    credentials: "include",
   });
 
   if (!response.ok) {

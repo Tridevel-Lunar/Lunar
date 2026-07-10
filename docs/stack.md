@@ -25,18 +25,20 @@
 
 | เครื่องมือ | สถานะ | บทบาท |
 |-----------|--------|--------|
-| **FastAPI auth API** | ใช้อยู่ | register, login, `/auth/me`, logout — httpOnly cookie `lunar_token` |
+| **FastAPI auth API** | ใช้อยู่ | register, login, refresh, `/auth/me`, logout — httpOnly cookies `lunar_token` + `lunar_refresh` |
 | **Google Identity Services (GIS)** | ใช้อยู่ | One Tap + `renderButton` — โหลด `accounts.google.com/gsi/client` |
 | **`googleIdentity.ts`** | ใช้อยู่ | โหลด GIS script, `initialize()`, `renderGoogleSignInButton()`, `promptGoogleOneTap()` |
-| **`auth.ts`** | ใช้อยู่ | `signInWithGoogleCredential()` → `POST /auth/google/onetap` |
+| **`auth.ts`** | ใช้อยู่ | `tryRefreshSession()`, `getCurrentUser()`, Google sign-in → `/auth/google/onetap` |
 
 ### Google Sign-In flow
 
 ```
 Browser (GIS)  →  credential JWT
 Frontend       →  POST /api/auth/google/onetap  (credentials: include)
-Backend        →  verify token, upsert user in PostgreSQL, Set-Cookie
+Backend        →  verify token, upsert user in PostgreSQL, Set-Cookie (access + refresh)
 Frontend       →  navigate to /space (or ?next=)
+
+Access token หมดอายุ → `apiFetch` / `getCurrentUser` เรียก `POST /auth/refresh` แล้ว retry
 ```
 
 - Client ID: `VITE_GOOGLE_CLIENT_ID` (frontend) ต้องตรงกับ `GOOGLE_CLIENT_ID` (backend)
