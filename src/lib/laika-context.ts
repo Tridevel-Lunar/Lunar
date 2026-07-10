@@ -98,6 +98,7 @@ export function buildContextUsageEstimate(input: {
   learningContext?: LaikaLearningContext;
   topK?: number;
   webSearch?: boolean;
+  mode?: "standard" | "extra";
 }): ContextUsageEstimate {
   const contextWindow = input.health?.context_window ?? 8192;
   const reservedOutput = input.health?.reserved_output_tokens ?? 1500;
@@ -135,6 +136,9 @@ export function buildContextUsageEstimate(input: {
 
   if (input.webSearch) {
     segments.push({ key: "web", label: "ค้นหาจากอินเทอร์เน็ต", tokens: WEB_SEARCH_TOKEN_ESTIMATE });
+  }
+  if (input.mode === "extra") {
+    segments.push({ key: "tool_loop", label: "Agentic tool loop", tokens: WEB_SEARCH_TOKEN_ESTIMATE * 2 });
   }
 
   segments.push({ key: "history", label: "ประวัติแชท", tokens: historyTokens });

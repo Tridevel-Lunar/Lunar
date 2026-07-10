@@ -113,6 +113,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   const [scrollAfterDoneTick, setScrollAfterDoneTick] = useState(0);
   const [mapFocusUserId, setMapFocusUserId] = useState<string | null>(null);
   const [webSearch, setWebSearch] = useState(false);
+  const [laikaMode, setLaikaMode] = useState<"standard" | "extra">("standard");
 
   const loadConversation = useCallback(async () => {
     if (!collectionId) return;
@@ -524,8 +525,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
           entry_content: baseEntry.content,
           messages: toLaikaHistory(historyBefore),
           client_now: new Date().toISOString(),
-          web_search: webSearch,
-        },
+          web_search: webSearch,          mode: laikaMode,        },
         {
           onStatus: (_phase, message) => {
             setLaikaStatus((prev) => (prev === message ? prev : message));
@@ -971,11 +971,13 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
           canType={canType}
           streamingText={streamingText}
           webSearch={webSearch}
+          laikaMode={laikaMode}
           onOpenBranchMap={() => setBranchMapOpen(true)}
           onLaikaIntent={handleLaikaIntent}
           onSend={handleSend}
           onStop={handleStopGeneration}
           onWebSearchChange={setWebSearch}
+          onModeChange={setLaikaMode}
         />
       </div>
 

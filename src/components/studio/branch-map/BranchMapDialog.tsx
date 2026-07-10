@@ -109,7 +109,6 @@ export default function BranchMapDialog({
       }}
     >
       <DialogContent
-        showCloseButton
         className="flex max-h-[90vh] w-full max-w-[min(90vw,960px)] flex-col gap-0 overflow-hidden border-border bg-popover p-0 text-popover-foreground sm:max-w-[min(90vw,960px)]"
       >
         <DialogHeader className="border-b border-border px-4 py-3 text-left">

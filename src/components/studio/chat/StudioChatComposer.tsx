@@ -4,6 +4,13 @@ import { IoGlobeOutline } from "react-icons/io5";
 import { TbSitemap } from "react-icons/tb";
 
 import ContextUsageRing from "@/components/studio/chat/ContextUsageRing";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { HintTooltip } from "@/components/ui/tooltip";
 import {
   IDEA_INTENTS,
@@ -24,11 +31,13 @@ type StudioChatComposerProps = {
   canType: boolean;
   streamingText: string;
   webSearch: boolean;
+  laikaMode: "standard" | "extra";
   onOpenBranchMap: () => void;
   onLaikaIntent: (intent: LaikaIntent) => void;
   onSend: (text: string) => void;
   onStop: () => void;
   onWebSearchChange: (value: boolean) => void;
+  onModeChange: (mode: "standard" | "extra") => void;
 };
 
 /** Composer footer — local draft state so keystrokes do not re-render the message list. */
@@ -41,11 +50,13 @@ export default function StudioChatComposer({
   canType,
   streamingText,
   webSearch,
+  laikaMode,
   onOpenBranchMap,
   onLaikaIntent,
   onSend,
   onStop,
   onWebSearchChange,
+  onModeChange,
 }: StudioChatComposerProps) {
   const [draft, setDraft] = useState("");
 
@@ -72,8 +83,9 @@ export default function StudioChatComposer({
       draft,
       historyMessages,
       webSearch,
+      mode: laikaMode,
     });
-  }, [draft, entry, laikaHealth, streamingText, webSearch]);
+  }, [draft, entry, laikaHealth, streamingText, webSearch, laikaMode]);
 
   function handleSend() {
     const text = draft.trim();
@@ -91,7 +103,7 @@ export default function StudioChatComposer({
 
   return (
     <footer className="shrink-0 border-t border-white/[0.06] bg-[#02060f]/90 px-4 py-2.5 backdrop-blur-md sm:px-6">
-      <div className="mx-auto w-full max-w-2xl space-y-2">
+      <div className="mx-auto w-full max-w-[75%] space-y-2">
         {awaitingLaika && (
           <div className="flex flex-wrap gap-1.5">
             {intents.map((item) => (
@@ -112,8 +124,20 @@ export default function StudioChatComposer({
           <p className="font-section-thai text-[0.78rem] text-red-400">{laikaError}</p>
         )}
         <div className="flex w-full items-center gap-2">
-          {!awaitingLaika && (
-            <>
+          <HintTooltip content="Branch Map">
+            <button
+              type="button"
+              onClick={onOpenBranchMap}
+              disabled={laikaLoading}
+              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-muted transition hover:border-amber/35 hover:text-amber disabled:opacity-40"
+              aria-label="Branch Map"
+            >
+              <TbSitemap className="text-xl" />
+            </button>
+          </HintTooltip>
+          
+          <div className="flex h-12 grow items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-1.5 focus-within:border-amber/30">
+            {!awaitingLaika && laikaMode === "standard" && (
               <HintTooltip content="ค้นหาจากอินเทอร์เน็ต (DuckDuckGo)">
                 <button
                   type="button"
@@ -129,20 +153,7 @@ export default function StudioChatComposer({
                   <IoGlobeOutline className="text-lg" />
                 </button>
               </HintTooltip>
-              <HintTooltip content="Branch Map">
-                <button
-                  type="button"
-                  onClick={onOpenBranchMap}
-                  disabled={laikaLoading}
-                  className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-muted transition hover:border-amber/35 hover:text-amber disabled:opacity-40"
-                  aria-label="Branch Map"
-                >
-                  <TbSitemap className="text-xl" />
-                </button>
-              </HintTooltip>
-            </>
-          )}
-          <div className="flex h-12 grow items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-1.5 focus-within:border-amber/30">
+            )}
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -154,8 +165,47 @@ export default function StudioChatComposer({
                   ? "เลือกคำสั่งด้านบนเพื่อเริ่มแชทกับ LAIKA…"
                   : "พิมพ์ข้อความ… (Enter ส่ง, Shift+Enter ขึ้นบรรทัดใหม่)"
               }
-              className="max-h-28 min-h-8 flex-1 resize-none bg-transparent px-2 py-2 font-section-thai text-[0.85rem] text-text outline-none placeholder:text-muted/70 disabled:cursor-not-allowed disabled:opacity-50"
+              className="grow max-h-28 min-h-8 flex-1 resize-none bg-transparent px-2 py-2 font-section-thai text-[0.85rem] text-text outline-none placeholder:text-muted/70 disabled:cursor-not-allowed disabled:opacity-50"
             />
+            <Select
+              value={laikaMode}
+              onValueChange={(value) => onModeChange(value as "standard" | "extra")}
+            >
+              <SelectTrigger
+                disabled={laikaLoading}
+                className={`h-9 rounded-lg border px-2.5 text-[0.65rem] font-mono tracking-wider ${
+                  laikaMode === "extra"
+                    ? "border-violet-500/50 bg-violet-500/15 text-violet-300"
+                    : "border-white/10 bg-white/[0.03] text-muted"
+                }`}
+                aria-label="Select LAIKA mode"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent
+                align="center"
+                className="min-w-[11rem] rounded-xl border-white/10 bg-[#0a0f1a] text-text ring-1 ring-white/10"
+              >
+                <SelectItem
+                  value="standard"
+                  title="Standard"
+                  className="flex-col items-start gap-1 pl-8 pr-3 py-2.5 data-highlighted:bg-white/10"
+                >
+                  <span className="block text-[0.6rem] leading-tight text-muted">
+                    คิดเร็ว ตอบไว
+                  </span>
+                </SelectItem>
+                <SelectItem
+                  value="extra"
+                  title="Extra"
+                  className="flex-col items-start gap-1 pl-8 pr-3 py-2.5 data-highlighted:bg-violet-500/15"
+                >
+                  <span className="block text-[0.6rem] leading-tight text-violet-300/70">
+                    ค้นหาข้อมูลให้ลึกขึ้น
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
             {laikaLoading ? (
               <HintTooltip content="หยุดสร้างคำตอบ">
                 <button

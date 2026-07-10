@@ -72,6 +72,8 @@ export type LaikaAssistRequest = {
   client_now?: string;
   /** Enable DuckDuckGo web search as additional context */
   web_search?: boolean;
+  /** LAIKA mode: standard (pre-fetch) or extra (agentic tool-calling) */
+  mode?: "standard" | "extra";
 };
 
 export type LaikaChatMessage = {
