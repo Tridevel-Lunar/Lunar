@@ -7,7 +7,7 @@ export default function StudioChat() {
   const user = useAuthUser();
 
   useEffect(() => {
-    document.title = "Studio — Chat — LUNAR";
+    document.title = "Studio";
   }, []);
 
   return <StudioChatView user={user} />;

@@ -7,7 +7,7 @@ export default function Studio() {
   const user = useAuthUser();
 
   useEffect(() => {
-    document.title = "Studio — LUNAR";
+    document.title = "Studio";
   }, []);
 
   return <StudioLanding user={user} />;

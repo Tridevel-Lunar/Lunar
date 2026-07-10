@@ -51,6 +51,24 @@ function isBranchNodeTarget(target: EventTarget | null): boolean {
   return target instanceof Element && Boolean(target.closest("[data-branch-node]"));
 }
 
+/** Format ISO timestamp to brief Thai-friendly string. */
+function formatNodeTime(iso: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHour = Math.floor(diffMs / 3600000);
+  const diffDay = Math.floor(diffMs / 86400000);
+
+  if (diffMin < 1) return "เมื่อสักครู่";
+  if (diffMin < 60) return `${diffMin} นาทีที่แล้ว`;
+  if (diffHour < 24) return `${diffHour} ชม.ที่แล้ว`;
+  if (diffDay < 7) return `${diffDay} วันที่แล้ว`;
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
+}
+
 /** Smooth bezier: right edge of source → left edge of target, routed through column gap. */
 function connectorPath(from: LayoutPoint, to: LayoutPoint): string {
   const x1 = from.x + NODE_WIDTH;
@@ -330,13 +348,23 @@ export default function BranchMapGraph({
                   />
                   <text
                     x={10}
-                    y={NODE_HEIGHT / 2 + 4}
+                    y={NODE_HEIGHT / 2 + 8}
                     fill={textFill}
                     fontSize={11}
                     fontFamily="inherit"
                     pointerEvents="none"
                   >
                     {node.label.length > 22 ? `${node.label.slice(0, 20)}…` : node.label}
+                  </text>
+                  <text
+                    x={10}
+                    y={16}
+                    fill={textFill}
+                    fontSize={8}
+                    fontFamily="inherit"
+                    pointerEvents="none"
+                  >
+                    {formatNodeTime(node.createdAt)}
                   </text>
                 </g>
               );

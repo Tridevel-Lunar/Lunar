@@ -26,6 +26,7 @@ export type LayoutNode = {
   y: number;
   depth: number;
   label: string;
+  createdAt: string;
 };
 
 export type UserBranchLayout = {
@@ -458,6 +459,7 @@ export function layoutUserBranchMap(graph: UserBranchGraph): UserBranchLayout {
       y: pos.y,
       depth,
       label: label || "(ว่าง)",
+      createdAt: node.createdAt,
     };
   });
 

@@ -7,7 +7,7 @@ export default function StudioNew() {
   const user = useAuthUser();
 
   useEffect(() => {
-    document.title = "Studio — New — LUNAR";
+    document.title = "Studio";
   }, []);
 
   return <StudioNewCollection user={user} />;

@@ -7,7 +7,7 @@ export default function BackofficeUsers() {
   const user = useAuthUser();
 
   useEffect(() => {
-    document.title = "Backoffice — Users — LUNAR";
+    document.title = "Backoffice";
   }, []);
 
   return <BackofficeUsersPanel user={user} />;

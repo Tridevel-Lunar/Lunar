@@ -7,7 +7,7 @@ export default function Space() {
   const user = useAuthUser();
 
   useEffect(() => {
-    document.title = "Space — LUNAR";
+    document.title = "Space";
   }, []);
 
   return <SpaceDemo user={user} />;
