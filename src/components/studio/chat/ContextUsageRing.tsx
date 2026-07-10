@@ -13,6 +13,21 @@ type ContextUsageRingProps = {
   className?: string;
 };
 
+/** Distinct colors per segment key — like disk space analyzer legend. */
+const SEGMENT_COLORS: Record<string, string> = {
+  system: "#2dd4bf",
+  rag: "#a78bfa",
+  learning: "#60a5fa",
+  entry: "#34d399",
+  history: "#fbbf24",
+  pending: "#f472b6",
+  reserved: "#334155",
+};
+
+function segmentColor(key: string): string {
+  return SEGMENT_COLORS[key] ?? "#94a3b8";
+}
+
 function formatTokenCount(value: number): string {
   if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
   return String(value);
@@ -72,19 +87,54 @@ export default function ContextUsageRing({ usage, className = "" }: ContextUsage
           {formatTokenCount(usage.usedInput)} / {formatTokenCount(usage.inputBudget)} input tokens
           <span className="text-muted-foreground"> ({percent}%)</span>
         </p>
-        <p className="font-mono mt-1 text-[0.52rem] text-muted-foreground">
+
+        <div className="mt-2 flex h-1.5 w-full overflow-hidden rounded-full bg-white/[0.1]">
+          {usage.segments.map((segment) => (
+            <div
+              key={segment.key}
+              className="h-full"
+              style={{
+                flex: segment.tokens,
+                backgroundColor: segmentColor(segment.key),
+              }}
+            />
+          ))}
+          <div
+            className="h-full"
+            style={{
+              flex: usage.reservedOutput,
+              backgroundColor: segmentColor("reserved"),
+            }}
+          />
+          {usage.remainingInput > 0 && (
+            <div
+              className="h-full bg-white/[0.04]"
+              style={{ flex: usage.remainingInput }}
+            />
+          )}
+        </div>
+
+        <p className="font-mono mt-1.5 text-[0.52rem] text-muted-foreground">
           {usage.llmModel} · window {formatTokenCount(usage.contextWindow)} · reserve output{" "}
           {formatTokenCount(usage.reservedOutput)}
         </p>
 
-        <ul className="mt-2.5 space-y-1 border-t border-border pt-2">
+        <ul className="mt-2.5 space-y-1.5 border-t border-border pt-2">
           {usage.segments.map((segment) => (
             <li
               key={segment.key}
               className="flex items-center justify-between gap-2 font-section-thai text-[0.72rem] text-popover-foreground/75"
             >
-              <span>{segment.label}</span>
-              <span className="font-mono text-[0.62rem] text-muted-foreground">{segment.tokens}</span>
+              <span className="flex items-center gap-1.5 truncate">
+                <span
+                  className="block h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: segmentColor(segment.key) }}
+                />
+                <span className="truncate">{segment.label}</span>
+              </span>
+              <span className="font-mono shrink-0 text-[0.62rem] text-muted-foreground">
+                {segment.tokens}
+              </span>
             </li>
           ))}
         </ul>
