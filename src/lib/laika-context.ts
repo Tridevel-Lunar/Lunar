@@ -10,6 +10,7 @@ import type { LaikaHealth, LaikaLearningContext } from "@/lib/api";
 
 const RAG_CHUNK_CHAR_ESTIMATE = 1120;
 const RAG_EMPTY_CONTEXT_CHARS = 34;
+const WEB_SEARCH_TOKEN_ESTIMATE = 600;
 
 /** Approximate system prompt sizes per intent (chars) — aligned with backend INTENT_SYSTEM_PROMPTS. */
 const SYSTEM_PROMPT_CHAR_ESTIMATE: Record<LaikaIntent, number> = {
@@ -96,6 +97,7 @@ export function buildContextUsageEstimate(input: {
   historyMessages: ChatNode[];
   learningContext?: LaikaLearningContext;
   topK?: number;
+  webSearch?: boolean;
 }): ContextUsageEstimate {
   const contextWindow = input.health?.context_window ?? 8192;
   const reservedOutput = input.health?.reserved_output_tokens ?? 1500;
@@ -108,13 +110,14 @@ export function buildContextUsageEstimate(input: {
   const pending =
     (input.draft ?? "").trim() || input.currentContent.trim();
 
-  const fixedTokens =
+  let fixedTokens =
     estimateTokens("x".repeat(SYSTEM_PROMPT_CHAR_ESTIMATE[input.intent])) +
     estimateRagTokens(topK) +
     estimateTokens(formatLearningContext(learningContext)) +
     estimateTokens(input.entryContent.trim()) +
     estimateTokens(pending) +
     48;
+  if (input.webSearch) fixedTokens += WEB_SEARCH_TOKEN_ESTIMATE;
 
   const historyBudget = Math.min(
     maxHistoryTokens,
@@ -129,6 +132,10 @@ export function buildContextUsageEstimate(input: {
     { key: "learning", label: "Learning progress", tokens: estimateTokens(formatLearningContext(learningContext)) },
     { key: "entry", label: "โน้ตต้นทาง", tokens: estimateTokens(input.entryContent.trim()) },
   ];
+
+  if (input.webSearch) {
+    segments.push({ key: "web", label: "ค้นหาจากอินเทอร์เน็ต", tokens: WEB_SEARCH_TOKEN_ESTIMATE });
+  }
 
   segments.push({ key: "history", label: "ประวัติแชท", tokens: historyTokens });
 

@@ -21,6 +21,7 @@ const SEGMENT_COLORS: Record<string, string> = {
   entry: "#34d399",
   history: "#fbbf24",
   pending: "#f472b6",
+  web: "#f97316",
   reserved: "#334155",
 };
 

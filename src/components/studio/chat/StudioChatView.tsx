@@ -112,6 +112,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   const [scrollToBottomTick, setScrollToBottomTick] = useState(0);
   const [scrollAfterDoneTick, setScrollAfterDoneTick] = useState(0);
   const [mapFocusUserId, setMapFocusUserId] = useState<string | null>(null);
+  const [webSearch, setWebSearch] = useState(false);
 
   const loadConversation = useCallback(async () => {
     if (!collectionId) return;
@@ -414,8 +415,9 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     intent: LaikaIntent;
     baseEntry: CollectionEntry;
     historyBefore: ChatNode[];
+    webSearch?: boolean;
   }) {
-    const { assistantNodeId, userContent, intent, baseEntry, historyBefore } = params;
+    const { assistantNodeId, userContent, intent, baseEntry, historyBefore, webSearch } = params;
 
     setLaikaLoading(true);
     setLaikaError(null);
@@ -522,6 +524,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
           entry_content: baseEntry.content,
           messages: toLaikaHistory(historyBefore),
           client_now: new Date().toISOString(),
+          web_search: webSearch,
         },
         {
           onStatus: (_phase, message) => {
@@ -601,6 +604,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
       intent,
       baseEntry: updated,
       historyBefore: [],
+      webSearch,
     });
   }
 
@@ -634,6 +638,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
       intent,
       baseEntry: withNodes,
       historyBefore,
+      webSearch,
     });
   }
 
@@ -654,6 +659,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
       intent,
       baseEntry: entry,
       historyBefore,
+      webSearch,
     });
   }
 
@@ -703,6 +709,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
       intent,
       baseEntry: updated,
       historyBefore,
+      webSearch,
     });
   }
 
@@ -963,10 +970,12 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
           awaitingLaika={awaitingLaika}
           canType={canType}
           streamingText={streamingText}
+          webSearch={webSearch}
           onOpenBranchMap={() => setBranchMapOpen(true)}
           onLaikaIntent={handleLaikaIntent}
           onSend={handleSend}
           onStop={handleStopGeneration}
+          onWebSearchChange={setWebSearch}
         />
       </div>
 

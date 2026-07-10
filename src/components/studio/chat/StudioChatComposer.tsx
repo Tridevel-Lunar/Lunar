@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { HiOutlinePaperAirplane, HiStop } from "react-icons/hi2";
+import { IoGlobeOutline } from "react-icons/io5";
 import { TbSitemap } from "react-icons/tb";
 
 import ContextUsageRing from "@/components/studio/chat/ContextUsageRing";
@@ -22,10 +23,12 @@ type StudioChatComposerProps = {
   awaitingLaika: boolean;
   canType: boolean;
   streamingText: string;
+  webSearch: boolean;
   onOpenBranchMap: () => void;
   onLaikaIntent: (intent: LaikaIntent) => void;
   onSend: (text: string) => void;
   onStop: () => void;
+  onWebSearchChange: (value: boolean) => void;
 };
 
 /** Composer footer — local draft state so keystrokes do not re-render the message list. */
@@ -37,10 +40,12 @@ export default function StudioChatComposer({
   awaitingLaika,
   canType,
   streamingText,
+  webSearch,
   onOpenBranchMap,
   onLaikaIntent,
   onSend,
   onStop,
+  onWebSearchChange,
 }: StudioChatComposerProps) {
   const [draft, setDraft] = useState("");
 
@@ -66,8 +71,9 @@ export default function StudioChatComposer({
       currentContent: "",
       draft,
       historyMessages,
+      webSearch,
     });
-  }, [draft, entry, laikaHealth, streamingText]);
+  }, [draft, entry, laikaHealth, streamingText, webSearch]);
 
   function handleSend() {
     const text = draft.trim();
@@ -107,17 +113,34 @@ export default function StudioChatComposer({
         )}
         <div className="flex w-full items-center gap-2">
           {!awaitingLaika && (
-            <HintTooltip content="Branch Map">
-              <button
-                type="button"
-                onClick={onOpenBranchMap}
-                disabled={laikaLoading}
-                className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-muted transition hover:border-amber/35 hover:text-amber disabled:opacity-40"
-                aria-label="Branch Map"
-              >
-                <TbSitemap className="text-xl" />
-              </button>
-            </HintTooltip>
+            <>
+              <HintTooltip content="ค้นหาจากอินเทอร์เน็ต (DuckDuckGo)">
+                <button
+                  type="button"
+                  onClick={() => onWebSearchChange(!webSearch)}
+                  disabled={laikaLoading}
+                  className={`flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border transition disabled:opacity-40 ${
+                    webSearch
+                      ? "border-cyan/50 bg-cyan/15 text-cyan"
+                      : "border-white/10 bg-white/[0.03] text-muted hover:border-cyan/35 hover:text-cyan"
+                  }`}
+                  aria-label="Web Search"
+                >
+                  <IoGlobeOutline className="text-lg" />
+                </button>
+              </HintTooltip>
+              <HintTooltip content="Branch Map">
+                <button
+                  type="button"
+                  onClick={onOpenBranchMap}
+                  disabled={laikaLoading}
+                  className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-muted transition hover:border-amber/35 hover:text-amber disabled:opacity-40"
+                  aria-label="Branch Map"
+                >
+                  <TbSitemap className="text-xl" />
+                </button>
+              </HintTooltip>
+            </>
           )}
           <div className="flex h-12 grow items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-1.5 focus-within:border-amber/30">
             <textarea

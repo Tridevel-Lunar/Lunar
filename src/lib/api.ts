@@ -70,6 +70,8 @@ export type LaikaAssistRequest = {
   };
   /** ISO-8601 client clock for conversation timing hints */
   client_now?: string;
+  /** Enable DuckDuckGo web search as additional context */
+  web_search?: boolean;
 };
 
 export type LaikaChatMessage = {
