@@ -3,8 +3,8 @@
  */
 
 import {
+  type ChatNode,
   type LaikaIntent,
-  type StudioMessage,
 } from "@/components/studio/data/studio-data";
 import type { LaikaHealth, LaikaLearningContext } from "@/lib/api";
 
@@ -60,22 +60,22 @@ function formatLearningContext(ctx?: LaikaLearningContext): string {
   return `Course: ${ctx.course ?? ""}\nCompleted topics: ${topics}\nArena missions: ${missions}`;
 }
 
-function formatHistory(messages: StudioMessage[]): string {
+function formatHistory(messages: ChatNode[]): string {
   if (messages.length === 0) return "";
   return messages
     .map((m) => `${m.role === "user" ? "Learner" : "LAIKA"}:\n${m.content}`)
     .join("\n\n");
 }
 
-function trimMessages(messages: StudioMessage[], maxTokens: number): {
-  kept: StudioMessage[];
+function trimMessages(messages: ChatNode[], maxTokens: number): {
+  kept: ChatNode[];
   dropped: number;
 } {
   if (maxTokens <= 0 || messages.length === 0) {
     return { kept: [], dropped: messages.length };
   }
 
-  const kept: StudioMessage[] = [];
+  const kept: ChatNode[] = [];
   let total = 0;
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const msg = messages[i];
@@ -93,7 +93,7 @@ export function buildContextUsageEstimate(input: {
   entryContent: string;
   currentContent: string;
   draft?: string;
-  historyMessages: StudioMessage[];
+  historyMessages: ChatNode[];
   learningContext?: LaikaLearningContext;
   topK?: number;
 }): ContextUsageEstimate {

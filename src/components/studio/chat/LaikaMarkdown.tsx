@@ -2,11 +2,13 @@ import "katex/dist/katex.min.css";
 
 import { memo } from "react";
 import Markdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 
-/** Renders LAIKA assistant bubbles (GFM, math, tables). */
+/** Renders LAIKA assistant bubbles (GFM, math, tables, syntax highlight). */
 
 type LaikaMarkdownProps = {
   content: string;
@@ -14,7 +16,9 @@ type LaikaMarkdownProps = {
 };
 
 const REMARK_PLUGINS = [remarkGfm, remarkMath];
-const REHYPE_PLUGINS = [[rehypeKatex, { throwOnError: false, strict: false }]] as const;
+const REHYPE_PLUGINS: Parameters<typeof Markdown>[0]["rehypePlugins"] = [
+  [rehypeKatex, { throwOnError: false, strict: false }],
+];
 
 const MARKDOWN_COMPONENTS = {
   p: ({ children }: { children?: React.ReactNode }) => (
@@ -71,10 +75,23 @@ const MARKDOWN_COMPONENTS = {
   }) => {
     const isBlock = className?.includes("language-");
     if (isBlock) {
+      const lang = className?.replace("language-", "") ?? "";
+      const codeString = String(children).replace(/\n$/, "");
       return (
-        <code className={`block font-mono text-[0.82em] text-cyan ${className ?? ""}`} {...props}>
-          {children}
-        </code>
+        <SyntaxHighlighter
+          style={oneDark}
+          language={lang}
+          PreTag="div"
+          customStyle={{
+            margin: 0,
+            borderRadius: "0.5rem",
+            fontSize: "0.82em",
+            background: "#0d1117",
+          }}
+          codeTagProps={{ style: { fontFamily: "inherit" } }}
+        >
+          {codeString}
+        </SyntaxHighlighter>
       );
     }
     return (
@@ -115,7 +132,7 @@ function LaikaMarkdown({
     <div className={`laika-markdown font-section-thai ${textClass}`}>
       <Markdown
         remarkPlugins={REMARK_PLUGINS}
-        rehypePlugins={[...REHYPE_PLUGINS]}
+        rehypePlugins={REHYPE_PLUGINS}
         components={MARKDOWN_COMPONENTS}
       >
         {content}

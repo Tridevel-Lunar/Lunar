@@ -80,6 +80,5 @@ export async function createCollection(
 export function collectionHasLaika(entry: CollectionEntry): boolean {
   if (entry.hasLaika !== undefined) return entry.hasLaika;
   if (entry.laikaStreaming) return true;
-  if (entry.tree) return hasLaikaInTree(entry.tree);
-  return Boolean(entry.laikaResponse?.trim());
+  return hasLaikaInTree(entry.tree);
 }

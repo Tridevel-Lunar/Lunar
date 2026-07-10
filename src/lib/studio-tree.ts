@@ -1,4 +1,4 @@
-import type { LaikaChatMessage, LaikaSource } from "@/lib/api";
+import type { LaikaChatMessage } from "@/lib/api";
 import type { ChatNode, ConversationTree, LaikaIntent } from "@/components/studio/data/studio-data";
 
 /**
@@ -555,75 +555,6 @@ export function defaultIntentForEntry(
   laikaIntent?: LaikaIntent,
 ): LaikaIntent {
   return laikaIntent ?? (type === "idea" ? "analyze" : "explain");
-}
-
-/** Migrate legacy flat `messages[]` entries into a ConversationTree. */
-export function migrateMessagesToTree(
-  messages: Array<{
-    id: string;
-    role: "user" | "assistant";
-    content: string;
-    createdAt: string;
-    laikaIntent?: LaikaIntent;
-    laikaSources?: LaikaSource[];
-    parentId?: string;
-  }>,
-  entryContent: string,
-  laikaResponse?: string,
-  laikaIntent?: LaikaIntent,
-  laikaSources?: LaikaSource[],
-): ConversationTree {
-  if (messages.length === 0) {
-    return createEmptyTree(entryContent);
-  }
-
-  const nodes: Record<string, ChatNode> = {};
-  const selectedChildByParent: Record<string, string> = {};
-  let prevId: string | undefined;
-
-  for (const msg of messages) {
-    const node: ChatNode = {
-      id: msg.id,
-      role: msg.role,
-      content: msg.content,
-      createdAt: msg.createdAt,
-      parentId: prevId,
-      laikaIntent: msg.laikaIntent,
-      laikaSources: msg.laikaSources,
-    };
-    nodes[node.id] = node;
-    if (prevId) selectedChildByParent[prevId] = node.id;
-    prevId = node.id;
-  }
-
-  if (laikaResponse?.trim() && !Object.values(nodes).some((n) => n.role === "assistant")) {
-    const lastNode = prevId ? nodes[prevId] : undefined;
-    const parentId = lastNode?.role === "user" ? lastNode.id : lastNode?.parentId;
-    if (parentId) {
-      const assistant = createNode({
-        role: "assistant",
-        content: laikaResponse.trim(),
-        parentId,
-        laikaIntent,
-        laikaSources,
-      });
-      nodes[assistant.id] = assistant;
-      selectedChildByParent[parentId] = assistant.id;
-    }
-  }
-
-  const rootIds = Object.values(nodes)
-    .filter((n) => !n.parentId && n.role === "user")
-    .map((n) => n.id);
-
-  const firstRoot = rootIds[0];
-  if (firstRoot) selectedChildByParent[ROOT_PARENT_KEY] = firstRoot;
-
-  return pruneInvalidSelections({
-    nodes,
-    rootIds: rootIds.length > 0 ? rootIds : [messages[0].id],
-    selectedChildByParent,
-  });
 }
 
 export { NODE_WIDTH, NODE_HEIGHT, COLUMN_GAP, ROW_GAP };

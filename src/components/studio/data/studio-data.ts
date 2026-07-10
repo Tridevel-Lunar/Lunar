@@ -9,16 +9,6 @@ export type IdeaIntent = "analyze" | "innovation-path" | "more-ideas" | "career-
 
 export type LaikaIntent = NoteIntent | IdeaIntent;
 
-/** @deprecated Use ChatNode in ConversationTree */
-export type StudioMessage = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  laikaIntent?: LaikaIntent;
-  laikaSources?: LaikaSource[];
-  createdAt: string;
-};
-
 export type ChatNode = {
   id: string;
   role: "user" | "assistant";
@@ -45,11 +35,7 @@ export type CollectionEntry = {
   tree: ConversationTree;
   streamingNodeId?: string;
   laikaStreaming?: boolean;
-  /** @deprecated migrated into tree */
-  messages?: StudioMessage[];
   laikaIntent?: LaikaIntent;
-  /** @deprecated migrated into tree */
-  laikaResponse?: string;
   laikaSources?: LaikaSource[];
   /** Set on list summaries from API; omitted on full entry loads */
   hasLaika?: boolean;
@@ -81,9 +67,6 @@ export const STUDIO_HERO_GREETINGS_CASUAL = [
   "หากมีความคิดใหม่ระหว่างทาง สร้าง collection ใหม่แล้วให้ LAIKA ช่วยจัดให้เป็นระบบและอ่านง่ายขึ้น",
   "เมื่อพร้อมแล้ว เลือก collection ด้านล่าง หรือเริ่มแชทใหม่สำหรับคำถามล่าสุดของคุณได้",
 ] as const;
-
-/** @deprecated Use STUDIO_HERO_GREETINGS_CASUAL */
-export const STUDIO_HERO_GREETINGS_RETURNING = STUDIO_HERO_GREETINGS_CASUAL;
 
 export const NOTE_INTENTS: { id: NoteIntent; label: string; description: string }[] = [
   {
