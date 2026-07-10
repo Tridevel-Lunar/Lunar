@@ -58,7 +58,7 @@ export type LaikaSource = {
 };
 
 export type LaikaAssistRequest = {
-  entry_type: "note" | "idea";
+  entry_type: "note" | "idea" | "learn";
   content: string;
   intent: string;
   entry_content?: string;
@@ -162,7 +162,7 @@ export function getStudioCollection(id: string): Promise<StudioCollectionEntry> 
 }
 
 export function createStudioCollection(
-  type: "note" | "idea",
+  type: "note" | "idea" | "learn",
   content: string,
 ): Promise<StudioCollectionEntry> {
   return apiFetch<StudioCollectionEntry>("/studio/collections", {

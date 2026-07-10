@@ -551,9 +551,10 @@ export function getHistoryBeforeNode(tree: ConversationTree, nodeId: string): Ch
 }
 
 export function defaultIntentForEntry(
-  type: "note" | "idea",
+  type: "note" | "idea" | "learn",
   laikaIntent?: LaikaIntent,
 ): LaikaIntent {
+  if (type === "learn") return laikaIntent ?? "ask-anything";
   return laikaIntent ?? (type === "idea" ? "analyze" : "explain");
 }
 

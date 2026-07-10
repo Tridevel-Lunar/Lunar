@@ -14,6 +14,7 @@ import {
 import { HintTooltip } from "@/components/ui/tooltip";
 import {
   IDEA_INTENTS,
+  LEARN_INTENTS,
   NOTE_INTENTS,
   type CollectionEntry,
   type LaikaIntent,
@@ -60,7 +61,8 @@ export default function StudioChatComposer({
 }: StudioChatComposerProps) {
   const [draft, setDraft] = useState("");
 
-  const intents = entry.type === "idea" ? IDEA_INTENTS : NOTE_INTENTS;
+  const intents =
+    entry.type === "learn" ? LEARN_INTENTS : entry.type === "idea" ? IDEA_INTENTS : NOTE_INTENTS;
 
   const contextUsage = useMemo(() => {
     const path = buildActivePath(entry.tree);

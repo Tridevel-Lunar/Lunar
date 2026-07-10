@@ -21,6 +21,7 @@ const SYSTEM_PROMPT_CHAR_ESTIMATE: Record<LaikaIntent, number> = {
   "innovation-path": 680,
   "more-ideas": 660,
   "career-path": 680,
+  "ask-anything": 800,
 };
 
 export type ContextUsageSegment = {

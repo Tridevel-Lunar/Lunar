@@ -20,16 +20,17 @@ export function GlassCard({
 }
 
 export function TypeBadge({ type }: { type: EntryType }) {
-  const isIdea = type === "idea";
   return (
     <span
       className={`font-mono rounded-full border px-2 py-0.5 text-[0.55rem] tracking-wider ${
-        isIdea
+        type === "idea"
           ? "border-amber/40 bg-amber/10 text-amber"
-          : "border-teal/40 bg-teal/10 text-teal"
+          : type === "learn"
+            ? "border-violet-400/40 bg-violet-500/10 text-violet-300"
+            : "border-teal/40 bg-teal/10 text-teal"
       }`}
     >
-      {isIdea ? "IDEA" : "NOTE"}
+      {type === "idea" ? "IDEA" : type === "learn" ? "LEARN" : "NOTE"}
     </span>
   );
 }

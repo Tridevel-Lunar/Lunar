@@ -2,12 +2,13 @@ import type { LaikaSource } from "@/lib/api";
 
 /** Shared types and constants for Studio (notes, ideas, LAIKA intents, conversation tree). */
 
-export type EntryType = "note" | "idea";
+export type EntryType = "note" | "idea" | "learn";
 
 export type NoteIntent = "summarize" | "explain" | "next-step";
 export type IdeaIntent = "analyze" | "innovation-path" | "more-ideas" | "career-path";
+export type LearnIntent = "ask-anything";
 
-export type LaikaIntent = NoteIntent | IdeaIntent;
+export type LaikaIntent = NoteIntent | IdeaIntent | LearnIntent;
 
 export type ChatNode = {
   id: string;
@@ -83,6 +84,14 @@ export const NOTE_INTENTS: { id: NoteIntent; label: string; description: string 
     id: "next-step",
     label: "แนะนำขั้นตอนถัดไป",
     description: "ควรลองทำอะไรใน Arena หรือเรียนต่อ",
+  },
+];
+
+export const LEARN_INTENTS: { id: LearnIntent; label: string; description: string }[] = [
+  {
+    id: "ask-anything",
+    label: "ถามได้ทุกเรื่อง",
+    description: "เปิดให้ LAIKA อธิบาย code, คณิตศาสตร์, ฟิสิกส์ หรือความรู้ทั่วไป",
   },
 ];
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { HiOutlineArrowLeft, HiOutlineLightBulb, HiOutlinePencilSquare } from "react-icons/hi2";
 import { IoRocketOutline } from "react-icons/io5";
+import { RiGraduationCapFill } from "react-icons/ri";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
 import type { EntryType } from "@/components/studio/data/studio-data";
@@ -67,6 +68,7 @@ export default function StudioNewCollection({ user }: StudioNewCollectionProps) 
                 [
                   { type: "note" as const, label: "โน้ต", icon: HiOutlinePencilSquare },
                   { type: "idea" as const, label: "ไอเดีย", icon: HiOutlineLightBulb },
+                  { type: "learn" as const, label: "เรียนรู้", icon: RiGraduationCapFill },
                 ] as const
               ).map(({ type, label, icon: Icon }) => (
                 <button
@@ -77,7 +79,9 @@ export default function StudioNewCollection({ user }: StudioNewCollectionProps) 
                     draftType === type
                       ? type === "idea"
                         ? "border-amber/50 bg-amber/10 text-amber"
-                        : "border-teal/50 bg-teal/10 text-teal"
+                        : type === "learn"
+                          ? "border-violet-400/50 bg-violet-500/10 text-violet-300"
+                          : "border-teal/50 bg-teal/10 text-teal"
                       : "border-white/10 text-text/50 hover:border-white/20"
                   }`}
                 >
@@ -93,7 +97,9 @@ export default function StudioNewCollection({ user }: StudioNewCollectionProps) 
               placeholder={
                 draftType === "idea"
                   ? "เช่น อยากทำดาวเทียมถ่ายภาพนาข้าวโซนภาคเหนือ..."
-                  : "เช่น ยังงงเรื่อง power budget ตอน eclipse..."
+                  : draftType === "learn"
+                    ? "เช่น การเขียนโปรแกรมควบคุม Arduino สำหรับ CubeSat..."
+                    : "เช่น ยังงงเรื่อง power budget ตอน eclipse..."
               }
               rows={5}
               className="mb-4 w-full resize-none rounded-lg border border-white/10 bg-[rgba(3,8,18,0.5)] px-4 py-3 font-section-thai text-[0.9rem] text-text outline-none transition focus:border-amber/40"
