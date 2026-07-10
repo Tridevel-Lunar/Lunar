@@ -51,6 +51,7 @@ import {
   createNode,
   defaultIntentForEntry,
   getActiveLeaf,
+  getChildren,
   getUserNodeForAssistant,
   getHistoryBeforeNode,
   selectSibling,
@@ -671,8 +672,35 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     const entry = await ensureFullEntry();
     const node = entry.tree.nodes[userNodeId];
     if (!node || node.role !== "user") return;
+
+    if (userCompose?.mode === "edit") {
+      // Edit in-place: update content, then retry last assistant
+      let tree = updateNode(entry.tree, userNodeId, { content: trimmed });
+      const assistant = getChildren(tree, userNodeId).find((n) => n.role === "assistant");
+      if (assistant) {
+        tree = updateNode(tree, assistant.id, { content: "", laikaSources: undefined });
+      }
+      const updated = { ...entry, tree, updatedAt: new Date().toISOString() };
+      await persistEntry(updated);
+      setUserCompose(null);
+      setEditDraft("");
+
+      const historyBefore = getHistoryBeforeNode(updated.tree, userNodeId);
+      const intent = defaultIntentForEntry(entry.type, entry.laikaIntent);
+      await runLaikaAssist({
+        assistantNodeId: assistant?.id ?? "",
+        userContent: trimmed,
+        intent,
+        baseEntry: updated,
+        historyBefore,
+        webSearch,
+      });
+      return;
+    }
+
+    // Branch mode: create a sibling variant (existing behavior)
     const spot = session.userSpotsById[userNodeId];
-    if (userCompose?.mode === "branch" && spot && !spot.canCreateBranch) {
+    if (spot && !spot.canCreateBranch) {
       return;
     }
 
@@ -782,6 +810,19 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   const awaitingLaika = !hasLaikaConversation(session);
   const canType = hasLaikaConversation(session) && !laikaLoading && !branchSwitching;
 
+  const lastUserIdx = (() => {
+    for (let i = session.messages.length - 1; i >= 0; i--) {
+      if (session.messages[i].role === "user") return i;
+    }
+    return -1;
+  })();
+  const lastAssistantIdx = (() => {
+    for (let i = session.messages.length - 1; i >= 0; i--) {
+      if (session.messages[i].role === "assistant") return i;
+    }
+    return -1;
+  })();
+
   return (
     <div className="flex h-screen overflow-hidden bg-bg text-text">
       <ModuleSidebar user={user} activeModule="studio" />
@@ -877,7 +918,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
                             />
                             <UserMessageActions
                               onCopy={() => copyText(node.content)}
-                              onEdit={() => openUserCompose(node.id, "edit")}
+                              onEdit={index === lastUserIdx ? () => openUserCompose(node.id, "edit") : undefined}
                               onCreateBranch={() => openUserCompose(node.id, "branch")}
                               canCreateBranch={spot?.canCreateBranch ?? false}
                               disabled={laikaLoading || branchSwitching}
@@ -934,7 +975,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
                         <div className="mt-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                           <AssistantMessageActions
                             onCopy={() => copyText(node.content)}
-                            onRetry={() => handleRetry(node.id)}
+                            onRetry={index === lastAssistantIdx ? () => handleRetry(node.id) : undefined}
                             disabled={laikaLoading}
                           />
                         </div>

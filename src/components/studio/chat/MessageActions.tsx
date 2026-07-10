@@ -7,8 +7,8 @@ import { HintTooltip } from "@/components/ui/tooltip";
 
 type UserMessageActionsProps = {
   onCopy: () => void;
-  onEdit: () => void;
-  onCreateBranch: () => void;
+  onEdit?: () => void;
+  onCreateBranch?: () => void;
   canCreateBranch?: boolean;
   disabled?: boolean;
 };
@@ -25,10 +25,12 @@ export function UserMessageActions({
       <IconActionButton label="Copy" onClick={onCopy} disabled={disabled}>
         <HiOutlineClipboard />
       </IconActionButton>
-      <IconActionButton label="Edit" onClick={onEdit} disabled={disabled}>
-        <HiOutlinePencilSquare />
-      </IconActionButton>
-      {canCreateBranch && (
+      {onEdit && (
+        <IconActionButton label="Edit" onClick={onEdit} disabled={disabled}>
+          <HiOutlinePencilSquare />
+        </IconActionButton>
+      )}
+      {canCreateBranch && onCreateBranch && (
         <IconActionButton label="Create Branch" onClick={onCreateBranch} disabled={disabled}>
           <TbGitBranch />
         </IconActionButton>
@@ -39,7 +41,7 @@ export function UserMessageActions({
 
 type AssistantMessageActionsProps = {
   onCopy: () => void;
-  onRetry: () => void;
+  onRetry?: () => void;
   disabled?: boolean;
 };
 
@@ -53,9 +55,11 @@ export function AssistantMessageActions({
       <IconActionButton label="Copy" onClick={onCopy} disabled={disabled}>
         <HiOutlineClipboard />
       </IconActionButton>
-      <IconActionButton label="Retry" onClick={onRetry} disabled={disabled}>
-        <HiArrowPath />
-      </IconActionButton>
+      {onRetry && (
+        <IconActionButton label="Retry" onClick={onRetry} disabled={disabled}>
+          <HiArrowPath />
+        </IconActionButton>
+      )}
     </div>
   );
 }
