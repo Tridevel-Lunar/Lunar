@@ -8,6 +8,29 @@ function isSameCalendarDay(a: Date, b: Date): boolean {
   );
 }
 
+/** Whether two ISO timestamps fall on the same local calendar day. */
+export function isSameChatCalendarDay(aIso: string, bIso: string): boolean {
+  return isSameCalendarDay(new Date(aIso), new Date(bIso));
+}
+
+/** Center label for Discord-style date dividers in chat. */
+export function formatChatDateDivider(iso: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (isSameCalendarDay(date, now)) return "วันนี้";
+  if (isSameCalendarDay(date, yesterday)) return "เมื่อวาน";
+
+  return date.toLocaleDateString("th-TH", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    ...(date.getFullYear() !== now.getFullYear() ? { year: "numeric" } : {}),
+  });
+}
+
 /** Short label for chat bubbles — วันนี้ / เมื่อวาน / 9 ก.ค. + เวลา (Discord-style). */
 export function formatChatBubbleTime(iso: string): string {
   const date = new Date(iso);

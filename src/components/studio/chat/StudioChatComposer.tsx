@@ -3,6 +3,7 @@ import { HiOutlinePaperAirplane, HiStop } from "react-icons/hi2";
 import { TbSitemap } from "react-icons/tb";
 
 import ContextUsageRing from "@/components/studio/chat/ContextUsageRing";
+import { HintTooltip } from "@/components/ui/tooltip";
 import {
   IDEA_INTENTS,
   NOTE_INTENTS,
@@ -106,16 +107,17 @@ export default function StudioChatComposer({
         )}
         <div className="flex w-full items-center gap-2">
           {!awaitingLaika && (
-            <button
-              type="button"
-              onClick={onOpenBranchMap}
-              disabled={laikaLoading}
-              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-muted transition hover:border-amber/35 hover:text-amber disabled:opacity-40"
-              aria-label="Branch Map"
-              title="Branch Map"
-            >
-              <TbSitemap className="text-xl" />
-            </button>
+            <HintTooltip content="Branch Map">
+              <button
+                type="button"
+                onClick={onOpenBranchMap}
+                disabled={laikaLoading}
+                className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-muted transition hover:border-amber/35 hover:text-amber disabled:opacity-40"
+                aria-label="Branch Map"
+              >
+                <TbSitemap className="text-xl" />
+              </button>
+            </HintTooltip>
           )}
           <div className="flex h-12 grow items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-1.5 focus-within:border-amber/30">
             <textarea
@@ -132,24 +134,28 @@ export default function StudioChatComposer({
               className="max-h-28 min-h-8 flex-1 resize-none bg-transparent px-2 py-2 font-section-thai text-[0.85rem] text-text outline-none placeholder:text-muted/70 disabled:cursor-not-allowed disabled:opacity-50"
             />
             {laikaLoading ? (
-              <button
-                type="button"
-                onClick={onStop}
-                className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-red-400/40 bg-red-500/15 text-red-300 transition hover:bg-red-500/25"
-                aria-label="หยุดสร้างคำตอบ"
-              >
-                <HiStop className="text-base" />
-              </button>
+              <HintTooltip content="หยุดสร้างคำตอบ">
+                <button
+                  type="button"
+                  onClick={onStop}
+                  className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-red-400/40 bg-red-500/15 text-red-300 transition hover:bg-red-500/25"
+                  aria-label="หยุดสร้างคำตอบ"
+                >
+                  <HiStop className="text-base" />
+                </button>
+              </HintTooltip>
             ) : (
-              <button
-                type="button"
-                onClick={handleSend}
-                disabled={!canType || !draft.trim()}
-                className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-amber/40 bg-amber/15 text-amber transition hover:bg-amber/25 disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="ส่งข้อความ"
-              >
-                <HiOutlinePaperAirplane className="text-base" />
-              </button>
+              <HintTooltip content="ส่งข้อความ">
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  disabled={!canType || !draft.trim()}
+                  className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-amber/40 bg-amber/15 text-amber transition hover:bg-amber/25 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="ส่งข้อความ"
+                >
+                  <HiOutlinePaperAirplane className="text-base" />
+                </button>
+              </HintTooltip>
             )}
           </div>
           {!awaitingLaika && <ContextUsageRing usage={contextUsage} />}

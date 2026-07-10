@@ -1,6 +1,8 @@
 import { HiArrowPath, HiOutlineClipboard, HiOutlinePencilSquare } from "react-icons/hi2";
 import { TbGitBranch } from "react-icons/tb";
 
+import { HintTooltip } from "@/components/ui/tooltip";
+
 /** Copy / edit / branch actions under user bubbles. */
 
 type UserMessageActionsProps = {
@@ -70,15 +72,16 @@ function IconActionButton({
   children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      title={label}
-      aria-label={label}
-      className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-muted transition hover:bg-white/[0.06] hover:text-text disabled:cursor-not-allowed disabled:opacity-40 [&_svg]:size-5"
-    >
-      {children}
-    </button>
+    <HintTooltip content={label}>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        aria-label={label}
+        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-muted transition hover:bg-white/[0.06] hover:text-text disabled:cursor-not-allowed disabled:opacity-40 [&_svg]:size-5"
+      >
+        {children}
+      </button>
+    </HintTooltip>
   );
 }

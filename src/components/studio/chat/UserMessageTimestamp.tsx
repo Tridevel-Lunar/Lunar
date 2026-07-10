@@ -1,4 +1,5 @@
 import type { ChatNode } from "@/components/studio/data/studio-data";
+import { HintTooltip } from "@/components/ui/tooltip";
 import {
   formatChatBubbleTime,
   formatChatBubbleTimeFull,
@@ -17,12 +18,13 @@ export default function UserMessageTimestamp({ node, siblings }: UserMessageTime
   const full = formatChatBubbleTimeFull(node.createdAt);
 
   return (
-    <time
-      dateTime={node.createdAt}
-      title={full}
-      className="mb-0.5 cursor-default font-mono text-[0.7rem] tracking-wide text-muted/65"
-    >
-      {action}เมื่อ {short}
-    </time>
+    <HintTooltip content={action + "เมื่อ " + full}>
+      <time
+        dateTime={node.createdAt}
+        className="text-nowrap h-fit mb-0.5 cursor-default font-mono text-[0.7rem] tracking-wide text-muted/65"
+      >
+        {short}
+      </time>
+    </HintTooltip>
   );
 }

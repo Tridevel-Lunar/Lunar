@@ -17,7 +17,7 @@
 |-----------|--------|--------|
 | **Vite 7 + React Router 7** | ใช้อยู่ | SPA framework — React 19, client-side routing |
 | **Tailwind CSS v4** | ใช้อยู่ | Styling หลัก — `@theme` tokens, utilities; CSS เฉพาะ auth pseudo-elements + keyframes |
-| **Shadcn/ui** | วางแผน | คอมโพเนนต์พื้นฐาน (Button, Dialog, Form ฯลฯ) |
+| **Shadcn/ui** (base-vega) | ใช้อยู่ | Dialog, Button — Radix/Base UI + Tailwind tokens |
 | **Framer Motion** | ใช้อยู่ | แอนิเมชัน auth — card entrance, ปุ่ม, error message |
 | **react-icons** | ใช้อยู่ | ไอคอนทั่วไปใน UI |
 

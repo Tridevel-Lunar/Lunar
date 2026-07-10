@@ -3,6 +3,7 @@ import { HiOutlineUsers } from "react-icons/hi2";
 import { IoRocketOutline } from "react-icons/io5";
 
 import BackofficeSidebar from "@/components/backoffice/BackofficeSidebar";
+import { HintTooltip } from "@/components/ui/tooltip";
 import {
   ApiError,
   getBackofficeUsers,
@@ -205,28 +206,33 @@ export default function BackofficeUsersPanel({ user }: BackofficeUsersPanelProps
                               {isSelf ? (
                                 <span className="font-mono text-[0.58rem] text-muted">—</span>
                               ) : row.role === "admin" ? (
-                                <button
-                                  type="button"
-                                  disabled={isUpdating || adminCount <= 1}
-                                  onClick={() => handleRoleChange(row, "learner")}
-                                  className="font-mono cursor-pointer rounded border border-white/15 px-2.5 py-1 text-[0.58rem] tracking-wider text-text/70 transition hover:border-white/25 hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
-                                  title={
+                                <HintTooltip
+                                  content={
                                     adminCount <= 1
                                       ? "ต้องมี admin อย่างน้อย 1 คน"
                                       : "Demote to learner"
                                   }
                                 >
-                                  {isUpdating ? "…" : "→ LEARNER"}
-                                </button>
+                                  <button
+                                    type="button"
+                                    disabled={isUpdating || adminCount <= 1}
+                                    onClick={() => handleRoleChange(row, "learner")}
+                                    className="font-mono cursor-pointer rounded border border-white/15 px-2.5 py-1 text-[0.58rem] tracking-wider text-text/70 transition hover:border-white/25 hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
+                                  >
+                                    {isUpdating ? "…" : "→ LEARNER"}
+                                  </button>
+                                </HintTooltip>
                               ) : (
-                                <button
-                                  type="button"
-                                  disabled={isUpdating}
-                                  onClick={() => handleRoleChange(row, "admin")}
-                                  className="font-mono cursor-pointer rounded border border-teal/40 bg-teal/10 px-2.5 py-1 text-[0.58rem] tracking-wider text-teal transition hover:bg-teal/20 disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                  {isUpdating ? "…" : "→ ADMIN"}
-                                </button>
+                                <HintTooltip content="Promote to admin">
+                                  <button
+                                    type="button"
+                                    disabled={isUpdating}
+                                    onClick={() => handleRoleChange(row, "admin")}
+                                    className="font-mono cursor-pointer rounded border border-teal/40 bg-teal/10 px-2.5 py-1 text-[0.58rem] tracking-wider text-teal transition hover:bg-teal/20 disabled:cursor-not-allowed disabled:opacity-40"
+                                  >
+                                    {isUpdating ? "…" : "→ ADMIN"}
+                                  </button>
+                                </HintTooltip>
                               )}
                             </td>
                           </tr>

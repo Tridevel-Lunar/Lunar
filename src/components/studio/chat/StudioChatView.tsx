@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   HiOutlineArrowLeft,
@@ -7,6 +7,7 @@ import { IoRocketOutline } from "react-icons/io5";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
 import BranchMapDialog from "@/components/studio/branch-map/BranchMapDialog";
+import ChatDateDivider from "@/components/studio/chat/ChatDateDivider";
 import LaikaMarkdown from "@/components/studio/chat/LaikaMarkdown";
 import StudioChatComposer from "@/components/studio/chat/StudioChatComposer";
 import {
@@ -23,7 +24,7 @@ import {
 import { laikaStatusLabel } from "@/components/studio/data/laika-status";
 import LaikaTypingStatus from "@/components/studio/chat/LaikaTypingStatus";
 import { LaikaAvatar, TypeBadge } from "@/components/studio/shared/studio-shared";
-import type { LaikaSource } from "@/lib/api";
+import { isSameChatCalendarDay } from "@/lib/chat-timestamp";
 import {
   ApiError,
   getLaikaHealth,
@@ -33,6 +34,7 @@ import {
   shutdownLaikaAssistWs,
   streamLaikaAssist,
   type LaikaHealth,
+  type LaikaSource,
   type StudioBranchMap,
   type User,
 } from "@/lib/api";
@@ -93,6 +95,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   const [entryLoading, setEntryLoading] = useState(true);
   const [branchMap, setBranchMap] = useState<StudioBranchMap | null>(null);
   const [branchMapLoading, setBranchMapLoading] = useState(false);
+  const [branchMapError, setBranchMapError] = useState<string | null>(null);
   const [branchSwitching, setBranchSwitching] = useState(false);
   const [streamingText, setStreamingText] = useState("");
   const [laikaLoading, setLaikaLoading] = useState(false);
@@ -130,24 +133,25 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     void loadConversation();
   }, [loadConversation]);
 
-  useEffect(() => {
-    if (!branchMapOpen || !collectionId) return;
-    let cancelled = false;
+  const loadBranchMap = useCallback(async () => {
+    if (!collectionId) return;
     setBranchMapLoading(true);
-    getStudioBranchMap(collectionId)
-      .then((map) => {
-        if (!cancelled) setBranchMap(map);
-      })
-      .catch(() => {
-        if (!cancelled) setBranchMap(null);
-      })
-      .finally(() => {
-        if (!cancelled) setBranchMapLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [branchMapOpen, collectionId]);
+    setBranchMapError(null);
+    try {
+      const map = await getStudioBranchMap(collectionId);
+      setBranchMap(map);
+    } catch {
+      setBranchMap(null);
+      setBranchMapError("ไม่สามารถโหลดแผนผังได้ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setBranchMapLoading(false);
+    }
+  }, [collectionId]);
+
+  useEffect(() => {
+    if (!branchMapOpen) return;
+    void loadBranchMap();
+  }, [branchMapOpen, loadBranchMap]);
 
   useEffect(() => {
     getLaikaHealth()
@@ -793,7 +797,10 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
 
         <div ref={chatScrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
           <div className="mx-auto flex w-full max-w-[80%] flex-col gap-4">
-            {session.messages.map((node) => {
+            {session.messages.map((node, index) => {
+              const prevMessage = index > 0 ? session.messages[index - 1] : null;
+              const showDateDivider =
+                !prevMessage || !isSameChatCalendarDay(prevMessage.createdAt, node.createdAt);
               const isStreaming = session.laikaStreaming && node.id === session.streamingNodeId;
               const assistantContent = isStreaming ? streamingText : node.content;
 
@@ -804,7 +811,9 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
                 const isComposing = userCompose?.nodeId === node.id;
 
                 return (
-                  <div key={node.id} className="flex w-full justify-end scroll-mt-3">
+                  <Fragment key={node.id}>
+                    {showDateDivider && <ChatDateDivider createdAt={node.createdAt} />}
+                    <div className="flex w-full justify-end scroll-mt-3">
                     <div className="group flex w-full max-w-[min(100%,28rem)] flex-col items-end">
                       {isComposing ? (
                         <div
@@ -840,14 +849,16 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
                         </div>
                       ) : (
                         <>
-                          <UserMessageTimestamp node={node} siblings={siblings} />
-                          <div
-                            data-chat-user-node={node.id}
-                            className="rounded-2xl rounded-br-md border border-teal/25 bg-teal/10 px-4 py-2.5"
-                          >
-                            <p className="font-section-thai text-[0.88rem] leading-relaxed text-text/90">
-                              {node.content}
-                            </p>
+                          <div className="flex items-end gap-2">
+                            <UserMessageTimestamp node={node} siblings={siblings} />
+                            <div
+                              data-chat-user-node={node.id}
+                              className="rounded-2xl rounded-tr-md border border-teal/25 bg-teal/10 px-4 py-2.5"
+                            >
+                              <p className="font-section-thai text-[0.88rem] leading-relaxed text-text/90">
+                                {node.content}
+                              </p>
+                            </div>
                           </div>
                           <div className="mt-1 flex w-full items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                             <UserBranchPager
@@ -869,15 +880,18 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
                       )}
                     </div>
                   </div>
+                  </Fragment>
                 );
               }
 
               return (
-                <div key={node.id} className="flex justify-start">
+                <Fragment key={node.id}>
+                  {showDateDivider && <ChatDateDivider createdAt={node.createdAt} />}
+                  <div className="flex justify-start">
                   <div className="flex max-w-full gap-2.5">
                     <LaikaAvatar />
                     <div className="group flex min-w-0 flex-1 flex-col items-start">
-                      <div className="min-w-0 rounded-2xl rounded-bl-md border border-white/10 bg-white/[0.04] px-4 py-2.5">
+                      <div className="min-w-0 rounded-2xl rounded-tl-md border border-white/10 bg-white/[0.04] px-4 py-2.5">
                       <div className="mb-1.5 flex flex-wrap items-center gap-2">
                         <p className="font-mono text-[0.85rem] tracking-[0.14em] text-amber">LAIKA</p>
                       </div>
@@ -921,13 +935,14 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
                     </div>
                   </div>
                 </div>
+                </Fragment>
               );
             })}
 
             {awaitingLaika && (
               <div className="flex justify-start gap-2.5">
                 <LaikaAvatar />
-                <div className="max-w-[min(100%,32rem)] rounded-2xl rounded-bl-md border border-amber/20 bg-amber/[0.04] px-4 py-2.5">
+                <div className="max-w-[min(100%,32rem)] rounded-2xl rounded-tl-md border border-amber/20 bg-amber/[0.04] px-4 py-2.5">
                   <p className="font-section-thai mb-1 text-[0.88rem] text-text">
                     อยากให้ LAIKA ช่วยแนะนำอะไร?
                   </p>
@@ -959,8 +974,10 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
         open={branchMapOpen}
         branchMap={branchMap}
         branchMapLoading={branchMapLoading}
+        branchMapError={branchMapError}
         focusUserId={mapFocusUserId}
         onClose={() => setBranchMapOpen(false)}
+        onRetry={() => void loadBranchMap()}
         onSelectNode={handleBranchMapSelect}
       />
     </div>
