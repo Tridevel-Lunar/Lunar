@@ -8,6 +8,22 @@ Vite + React Router — web app, landing page, auth และ UI การเร
 
 ## Commands
 
+### Docker (recommended — workspace root)
+
+Repo นี้เป็น submodule ใน [lunar-dev](https://github.com/Tridevel-Lunar/lunar-dev). รันทั้ง stack จาก workspace:
+
+```bash
+# จาก lunar-dev root
+cp .env.example .env
+docker compose up --build
+```
+
+- App: http://localhost:3000 (Vite HMR + `/api` → backend)
+- Backend **ไม่** expose ออก host — เรียกผ่าน proxy เท่านั้น
+- รายละเอียด: [../../docs/docker-dev.md](../../docs/docker-dev.md)
+
+### Local frontend only
+
 ```bash
 npm install
 npm run dev          # Vite — http://localhost:3000
@@ -16,41 +32,37 @@ npm run preview      # preview production build
 npm run lint
 ```
 
-### Backend (local dev)
+Vite proxy ใน `vite.config.ts` ส่ง `/api` → `VITE_PROXY_TARGET` (default `http://localhost:8000`; ใน Docker = `http://backend:8000`)
 
-รัน FastAPI แยกที่ `localhost:8000` พร้อม PostgreSQL:
+Backend แยก: [../../backend/docs/development.md](../../backend/docs/development.md)
 
-```bash
-cd ../Backend
-uvicorn app.main:app --reload --port 8000
-```
-
-Vite proxy ใน `vite.config.ts` ส่ง `/api` → `http://localhost:8000` (strip prefix `/api`)
-
-ดู [../Backend/docs/development.md](../Backend/docs/development.md)
-
-**Optional:** ทั้ง stack ผ่าน Docker Compose จาก workspace root (เมื่อมี `docker-compose.yml`) — `docker compose up --build`
+**Requirements:** Node.js 18.17+, npm 9+
 
 ## Environment
 
-สร้าง `.env` ใน `Frontend/` (ไม่ commit):
+**Docker:** ตั้งค่าใน workspace root `.env` — compose ส่ง `GOOGLE_CLIENT_ID` ไปทั้ง frontend และ backend (ห้ามส่ง `GOOGLE_CLIENT_SECRET` ไป frontend)
 
-| Variable | Default | ใช้เมื่อ |
+| Variable | ที่ตั้ง | ใช้เมื่อ |
 |----------|---------|----------|
-| `VITE_API_URL` | `/api` | เปลี่ยนเมื่อเรียก API ตรงไป backend (ไม่ผ่าน proxy) |
-| `VITE_GOOGLE_CLIENT_ID` | _(ว่าง)_ | เปิด Google Sign-In — ต้องตรงกับ `GOOGLE_CLIENT_ID` บน backend |
+| `GOOGLE_CLIENT_ID` | workspace `.env` → compose → FE + BE | เปิด Google Sign-In (GIS) |
+| `GOOGLE_CLIENT_SECRET` | workspace `.env` → backend เท่านั้น | redirect OAuth (optional) |
+| `GOOGLE_REDIRECT_URI` | workspace `.env` | default `http://localhost:3000/api/auth/google/callback` |
+| `VITE_API_URL` | optional (frontend) | default `/api` — เปลี่ยนเมื่อไม่ใช้ Vite proxy |
+| `VITE_PROXY_TARGET` | compose (frontend) | backend URL สำหรับ proxy |
 
-ถ้าไม่ตั้ง `VITE_GOOGLE_CLIENT_ID` ปุ่ม Google จะไม่แสดง (email/password ยังใช้ได้)
+ถ้าไม่ตั้ง `GOOGLE_CLIENT_ID` ปุ่ม Google จะไม่แสดง (email/password ยังใช้ได้)
+
+Vite เปิดเผยเฉพาะชื่อ `GOOGLE_CLIENT_ID` (ผ่าน `envPrefix` ใน `vite.config.ts`) — ไม่ใช่ prefix `GOOGLE_` ทั้งก้อน (จะรั่ว secret)
+
+**Local without Docker:** สร้าง `frontend/.env.local` (ไม่ commit) แล้วใส่ `GOOGLE_CLIENT_ID=…` ให้ตรงกับ backend
 
 ### Google Sign-In setup (dev)
 
 1. สร้าง OAuth 2.0 **Web application** client ใน [Google Cloud Console](https://console.cloud.google.com/)
 2. **Authorized JavaScript origins:** `http://localhost:3000`, `http://127.0.0.1:3000`
-3. OAuth consent screen: **External** + เพิ่ม test user (ถ้าอยู่ใน Testing mode)
-4. ใส่ client ID ใน `Frontend/.env` และ `Backend/.env`
-5. รีสตาร์ท `npm run dev` หลังแก้ `.env`
-
-**Requirements:** Node.js 18.17+, npm 9+
+3. **Authorized redirect URIs:** `http://localhost:3000/api/auth/google/callback` (ถ้าใช้ redirect flow)
+4. OAuth consent screen: **External** + เพิ่ม test user (ถ้าอยู่ใน Testing mode)
+5. ใส่ client ID เป็น `GOOGLE_CLIENT_ID` ใน workspace `.env` แล้ว recreate frontend container (หรือรีสตาร์ท `npm run dev`)
 
 ## Product ↔ UI Mapping
 
@@ -94,7 +106,7 @@ Studio แยกเป็น landing + chat ต่อ collection:
 ## Directory Map
 
 ```
-Frontend/
+frontend/
 ├── index.html
 ├── vite.config.ts
 ├── src/
@@ -215,7 +227,7 @@ const SpaceCanvas = lazy(() => import("./SpaceCanvas"));
 npm run lint
 ```
 
-Frontend ยังไม่มี unit test runner — auth/API ทดสอบผ่าน backend **pytest** (`cd ../Backend && pytest`) หรือ manual ที่ `/login`, `/register` + Swagger `/docs`
+Frontend ยังไม่มี unit test runner — auth/API ทดสอบผ่าน backend **pytest** (`cd ../backend && pytest`) หรือ manual ที่ `/login`, `/register` + Swagger (`/api/docs` ผ่าน Docker proxy)
 
 ## Git
 
@@ -226,9 +238,9 @@ Frontend ยังไม่มี unit test runner — auth/API ทดสอบ�
 ## Boundaries
 
 - ห้ามเอา `lang="th"` ออกจาก `index.html`
-- โค้ดอยู่ใน `Frontend/` เท่านั้น — ไม่ shared package กับ backend
+- โค้ดอยู่ใน `frontend/` เท่านั้น — ไม่ shared package กับ backend
 - อย่าเพิ่ม dependency ถ้าไม่จำเป็น
-- ห้าม commit `.env` หรือ Google client secrets
+- ห้าม commit `.env` / `.env.local` หรือ Google **client secret** (`GOOGLE_CLIENT_ID` เป็นค่า public ได้)
 
 ## Deploy
 
@@ -236,7 +248,7 @@ Frontend ยังไม่มี unit test runner — auth/API ทดสอบ�
 npm run build   # → dist/
 ```
 
-Serve `dist/` เป็น static files พร้อม SPA fallback (`/* → index.html`). ตั้ง `VITE_API_URL` และ `VITE_GOOGLE_CLIENT_ID` สำหรับ production origin ใน build env.
+Serve `dist/` เป็น static files พร้อม SPA fallback (`/* → index.html`). ตั้ง `GOOGLE_CLIENT_ID` (และ `VITE_API_URL` ถ้าจำเป็น) ใน build env สำหรับ production origin.
 
 ## JIT Index
 

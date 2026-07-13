@@ -53,7 +53,7 @@
 
 **Output:** กราฟ/ตัวเลข power · สถานะวงโคจร · checkpoint
 
-**Backend:** คำนวณ orbital / power budget (Poliastro, PyEphem) — ดู [Backend/docs/development.md](../../Backend/docs/development.md)
+**Backend:** คำนวณ orbital / power budget (Poliastro, PyEphem) — ดู [backend/docs/development.md](../../backend/docs/development.md)
 
 ### 4. การเขียนโปรแกรม (Programming — Algorithmic Thinking)
 
@@ -169,7 +169,7 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 | **One Tap** | แสดงอัตโนมัติบนหน้า guest (`/login`, `/register`) — optional |
 | **Sign-in button** | ปุ่ม Google อย่างเป็นทางการ (`renderButton`) บน login/register |
 | **Flow** | GIS คืน credential JWT → `POST /api/auth/google/onetap` → backend verify + upsert user |
-| **Config** | `VITE_GOOGLE_CLIENT_ID` ต้องตรงกับ `GOOGLE_CLIENT_ID` บน backend และ OAuth client ใน Google Cloud |
+| **Config** | `GOOGLE_CLIENT_ID` เดียวกันทั้ง frontend/backend และ OAuth client ใน Google Cloud (workspace `.env`) |
 
 **Input:** การเลือกบัญชี Google  
 **Output:** session cookies · redirect ไป `/space` (หรือ `?next=` path)
@@ -199,4 +199,4 @@ API 401 (access หมดอายุ)
 | Auth (Google) | GIS One Tap + `renderButton` → `googleIdentity.ts` | `/auth/google/onetap`, token verify |
 | Progress | UI state, lesson completion | PostgreSQL (users, progress) |
 
-เมื่อ implement API ใหม่ บันทึก contract ใน `Backend/docs/api.md`
+เมื่อ implement API ใหม่ บันทึก contract ใน `backend/docs/api.md`

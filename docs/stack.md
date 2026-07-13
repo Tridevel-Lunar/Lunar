@@ -2,7 +2,8 @@
 
 รายละเอียดเครื่องมือที่ใช้และวางแผนใช้ฝั่ง frontend
 
-**Backend stack:** [../../Backend/docs/development.md](../../Backend/docs/development.md)
+**Backend stack:** [../../backend/docs/development.md](../../backend/docs/development.md)  
+**Workspace Docker:** [../../docs/docker-dev.md](../../docs/docker-dev.md)
 
 ## ภาษา
 
@@ -41,7 +42,7 @@ Frontend       →  navigate to /space (or ?next=)
 Access token หมดอายุ → `apiFetch` / `getCurrentUser` เรียก `POST /auth/refresh` แล้ว retry
 ```
 
-- Client ID: `VITE_GOOGLE_CLIENT_ID` (frontend) ต้องตรงกับ `GOOGLE_CLIENT_ID` (backend)
+- Client ID: `GOOGLE_CLIENT_ID` เดียวกันทั้ง frontend (GIS) และ backend (verify) — ตั้งใน workspace `.env`
 - ไม่ใช้ client secret ฝั่ง frontend
 - ปุ่ม login ใช้ `google.accounts.id.renderButton()` (ไม่ใช่ custom popup)
 
