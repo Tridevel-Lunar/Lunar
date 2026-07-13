@@ -1,6 +1,6 @@
 const GIS_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
 
-export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
+export const GOOGLE_CLIENT_ID = import.meta.env.GOOGLE_CLIENT_ID ?? "";
 
 export function isGoogleSignInConfigured(): boolean {
   return GOOGLE_CLIENT_ID.length > 0;

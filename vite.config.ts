@@ -8,6 +8,8 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    // Expose public client ID only — do not use a "GOOGLE_" prefix (would leak CLIENT_SECRET).
+    envPrefix: ["VITE_", "GOOGLE_CLIENT_ID"],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "src"),
