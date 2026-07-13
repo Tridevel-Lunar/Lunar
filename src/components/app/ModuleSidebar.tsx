@@ -101,7 +101,7 @@ export default function ModuleSidebar({ user, activeModule }: ModuleSidebarProps
           active={activeModule === "arena"}
           icon={<IoGameControllerOutline />}
           label="ARENA"
-          href="/space#arena"
+          href="/arena"
         />
         <SidebarNavItem
           active={activeModule === "studio"}
