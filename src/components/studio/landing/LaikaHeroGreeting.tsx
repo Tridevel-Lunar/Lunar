@@ -7,7 +7,6 @@ import {
 } from "@/components/studio/data/studio-data";
 import { LaikaAvatar } from "@/components/studio/shared/studio-shared";
 import { useQueuedTypewriter } from "@/lib/use-queued-typewriter";
-import { personalizeHeroGreeting } from "@/lib/studio-learner";
 import { isStudioReturnAfterAway, recordStudioVisit } from "@/lib/studio-visit";
 
 /** LAIKA greeting card on Studio landing — typewriter reveal, hold, then rotate. */
@@ -17,24 +16,18 @@ const HOLD_MS = 15_000;
 type LaikaHeroGreetingProps = {
   collectionsReady: boolean;
   hasCollections: boolean;
-  displayName?: string | null;
 };
 
 type GreetingPool = readonly string[];
 
 function pickRandomGreeting(
   pool: GreetingPool,
-  displayName?: string | null,
   exclude?: string,
 ): string {
-  if (pool.length === 1) {
-    return personalizeHeroGreeting(pool[0], displayName);
-  }
-  let next = pool[Math.floor(Math.random() * pool.length)];
-  let candidate = personalizeHeroGreeting(next, displayName);
+  if (pool.length === 1) return pool[0];
+  let candidate = pool[Math.floor(Math.random() * pool.length)];
   while (candidate === exclude) {
-    next = pool[Math.floor(Math.random() * pool.length)];
-    candidate = personalizeHeroGreeting(next, displayName);
+    candidate = pool[Math.floor(Math.random() * pool.length)];
   }
   return candidate;
 }
@@ -48,7 +41,6 @@ function longestGreeting(...pools: GreetingPool[]): string {
 export default function LaikaHeroGreeting({
   collectionsReady,
   hasCollections,
-  displayName,
 }: LaikaHeroGreetingProps) {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [greeting, setGreeting] = useState<string | null>(null);
@@ -65,7 +57,7 @@ export default function LaikaHeroGreeting({
     }
 
     if (!hasCollections) {
-      setGreeting(personalizeHeroGreeting(STUDIO_HERO_GREETING_FIRST_TIME, displayName));
+      setGreeting(STUDIO_HERO_GREETING_FIRST_TIME);
       setRotatePool(STUDIO_HERO_GREETINGS_CASUAL);
       recordStudioVisit();
       return;
@@ -74,9 +66,9 @@ export default function LaikaHeroGreeting({
     const away = isStudioReturnAfterAway();
     const initialPool = away ? STUDIO_HERO_GREETINGS_AWAY : STUDIO_HERO_GREETINGS_CASUAL;
     setRotatePool(STUDIO_HERO_GREETINGS_CASUAL);
-    setGreeting(pickRandomGreeting(initialPool, displayName));
+    setGreeting(pickRandomGreeting(initialPool));
     recordStudioVisit();
-  }, [collectionsReady, hasCollections, displayName]);
+  }, [collectionsReady, hasCollections]);
 
   const { display } = useQueuedTypewriter(reduceMotion ? null : greeting, {
     typeMs: 32,
@@ -88,11 +80,11 @@ export default function LaikaHeroGreeting({
     if (!reduceMotion && display !== greeting) return;
 
     const id = window.setTimeout(() => {
-      setGreeting((prev) => pickRandomGreeting(rotatePool, displayName, prev ?? undefined));
+      setGreeting((prev) => pickRandomGreeting(rotatePool, prev ?? undefined));
     }, HOLD_MS);
 
     return () => window.clearTimeout(id);
-  }, [collectionsReady, hasCollections, greeting, display, reduceMotion, rotatePool, displayName]);
+  }, [collectionsReady, hasCollections, greeting, display, reduceMotion, rotatePool]);
 
   const shown = reduceMotion && greeting ? greeting : display;
 

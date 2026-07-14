@@ -885,10 +885,10 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
                 <LaikaAvatar />
                 <div className="max-w-[min(100%,32rem)] rounded-2xl rounded-tl-md border border-amber/20 bg-amber/[0.04] px-4 py-2.5">
                   <p className="font-section-thai mb-1 text-[0.88rem] text-text">
-                    อยากให้ LAIKA ช่วยแนะนำอะไร?
+                    ว่าไง อยากให้ LAIKA ช่วยเรื่องอะไร?
                   </p>
                   <p className="font-mono text-[0.52rem] tracking-wider text-muted">
-                    เลือกคำสั่งด้านล่างเพื่อเริ่ม
+                    เลือกคำสั่งด้านล่าง แล้วมาเริ่มกันเลย
                   </p>
                 </div>
               </div>

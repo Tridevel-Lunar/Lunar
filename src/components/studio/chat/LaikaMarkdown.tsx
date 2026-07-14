@@ -4,6 +4,9 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 
+import React from "react";
+import MermaidBlock from "./MermaidBlock";
+
 /** Renders LAIKA assistant bubbles (GFM, plain markdown). */
 
 type LaikaMarkdownProps = {
@@ -42,7 +45,11 @@ const MARKDOWN_COMPONENTS = {
     className?: string;
     children?: React.ReactNode;
   }) => {
-    const isBlock = className?.includes("language-");
+    const language = className?.replace("language-", "");
+    if (language === "mermaid") {
+      return <MermaidBlock chart={String(children)} />;
+    }
+    const isBlock = Boolean(language);
     if (isBlock) {
       return (
         <pre className="mb-3 overflow-x-auto rounded-lg border border-white/10 bg-white/[0.04] p-3 last:mb-0">
@@ -61,11 +68,17 @@ const MARKDOWN_COMPONENTS = {
       </code>
     );
   },
-  pre: ({ children }: { children?: React.ReactNode }) => (
-    <pre className="mb-3 overflow-x-auto rounded-lg border border-white/10 bg-white/[0.04] p-3 last:mb-0">
-      {children}
-    </pre>
-  ),
+  pre: ({ children }: { children?: React.ReactNode }) => {
+    // MermaidBlock handles its own styling — don't wrap in <pre>
+    if (React.isValidElement(children) && typeof children.type !== "string" && (children.type as React.ComponentType & { displayName?: string }).displayName === "MermaidBlock") {
+      return <>{children}</>;
+    }
+    return (
+      <pre className="mb-3 overflow-x-auto rounded-lg border border-white/10 bg-white/[0.04] p-3 last:mb-0">
+        {children}
+      </pre>
+    );
+  },
   blockquote: ({ children }: { children?: React.ReactNode }) => (
     <blockquote className="mb-3 border-l-2 border-cyan/40 pl-3 text-text/75">
       {children}

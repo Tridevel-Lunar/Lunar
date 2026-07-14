@@ -63,7 +63,6 @@ export default function StudioLanding({ user }: StudioLandingProps) {
             <LaikaHeroGreeting
               collectionsReady={!loading}
               hasCollections={collections.length > 0}
-              displayName={user.display_name}
             />
           </div>
 
