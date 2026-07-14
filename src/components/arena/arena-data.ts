@@ -43,3 +43,26 @@ export const FEATURED_MISSION_1: ArenaMission = {
   ctaHint: "เตรียมตัวให้พร้อม แล้วเริ่มภารกิจของคุณเลย!",
   ctaLabel: "เริ่มภารกิจ",
 };
+
+export const FEATURED_MISSION_2: ArenaMission = {
+  id: "coming-soon",
+  code: "MISSION 02",
+  title: "COMING SOON",
+  subtitle: "ภารกิจนี้ยังไม่พร้อมสำหรับการปฏิบัติ",
+  level: "BEGINNER",
+  details: "ภารกิจนี้ยังไม่พร้อมสำหรับการปฏิบัติ",
+  hint: "ภารกิจนี้ยังไม่พร้อมสำหรับการปฏิบัติ",
+  objectiveLead: "ภารกิจนี้ยังไม่พร้อมสำหรับการปฏิบัติ",
+  objectiveHighlight: "ภารกิจนี้ยังไม่พร้อมสำหรับการปฏิบัติ",
+  youWillDoIntro: "ภารกิจนี้ยังไม่พร้อมสำหรับการปฏิบัติ",
+  youWillDo: [],
+  ctaPrompt: "ภารกิจนี้ยังไม่พร้อมสำหรับการปฏิบัติ",
+  ctaHint: "ภารกิจนี้ยังไม่พร้อมสำหรับการปฏิบัติ",
+  ctaLabel: "ภารกิจนี้ยังไม่พร้อมสำหรับการปฏิบัติ",
+};
+
+/** Ordered list shown in Arena — one mission per view, navigate with arrows. */
+export const ARENA_MISSIONS: ArenaMission[] = [
+  FEATURED_MISSION_1,
+  FEATURED_MISSION_2,
+];

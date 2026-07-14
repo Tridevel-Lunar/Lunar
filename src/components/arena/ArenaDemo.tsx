@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react";
 import {
   HiOutlineBell,
   HiOutlineCalendar,
   HiOutlineCheckCircle,
+  HiOutlineChevronLeft,
+  HiOutlineChevronRight,
   HiOutlineMagnifyingGlass,
   HiOutlinePlusCircle,
 } from "react-icons/hi2";
@@ -14,9 +17,10 @@ import {
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
 import type { User } from "@/lib/api";
-import { ARENA_PAGE, FEATURED_MISSION_1 } from "./arena-data";
+import { ARENA_MISSIONS, ARENA_PAGE, type ArenaMission } from "./arena-data";
 
 const ARENA_BG = "/space-hero-earth.png";
+const TRANSITION_MS = 220;
 
 function MissionImagePlaceholder() {
   return (
@@ -35,9 +39,7 @@ function MissionImagePlaceholder() {
   );
 }
 
-function MissionCard() {
-  const mission = FEATURED_MISSION_1;
-
+function MissionCard({ mission }: { mission: ArenaMission }) {
   return (
     <article className="overflow-hidden rounded-2xl border border-cyan/40 bg-[#060e1c]/78 shadow-[0_0_40px_rgba(0,229,255,0.12),0_12px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl">
       <div className="grid gap-0 lg:grid-cols-[minmax(240px,0.9fr)_1.2fr]">
@@ -68,8 +70,11 @@ function MissionCard() {
             <p className="font-section-thai text-[0.82rem] leading-relaxed text-text/80">
               {mission.details}
             </p>
-            <p className="font-section-thai text-[0.82rem] leading-relaxed text-text/80 mt-2">
-              <span className="font-display font-semibold tracking-[0.16em] text-cyan">HINT:</span> {mission.hint}
+            <p className="font-section-thai mt-2 text-[0.82rem] leading-relaxed text-text/80">
+              <span className="font-display font-semibold tracking-[0.16em] text-cyan">
+                HINT:
+              </span>{" "}
+              {mission.hint}
             </p>
           </section>
 
@@ -82,7 +87,7 @@ function MissionCard() {
             </div>
             <p className="font-section-thai text-[0.82rem] leading-relaxed text-text/80">
               {mission.objectiveLead}{" "}
-              <span className="block mt-1 text-[0.95rem] font-medium text-cyan text-glow-cyan-sm">
+              <span className="mt-1 block text-[0.95rem] font-medium text-cyan text-glow-cyan-sm">
                 {mission.objectiveHighlight}
               </span>
             </p>
@@ -137,12 +142,98 @@ function MissionCard() {
   );
 }
 
+function MissionNavButton({
+  direction,
+  disabled,
+  onClick,
+}: {
+  direction: "prev" | "next";
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  const Icon = direction === "prev" ? HiOutlineChevronLeft : HiOutlineChevronRight;
+  const label = direction === "prev" ? "ภารกิจก่อนหน้า" : "ภารกิจถัดไป";
+
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-cyan/40 bg-cyan/10 text-cyan shadow-[0_0_18px_rgba(0,229,255,0.12)] transition hover:border-cyan/60 hover:bg-cyan/20 hover:shadow-[0_0_24px_rgba(0,229,255,0.25)] disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.03] disabled:text-text/25 disabled:shadow-none"
+    >
+      <Icon className="text-xl" />
+    </button>
+  );
+}
+
 export default function ArenaDemo({ user }: { user: User }) {
+  const [index, setIndex] = useState(0);
+  const [phase, setPhase] = useState<"idle" | "out" | "in">("idle");
+  const [slideDir, setSlideDir] = useState<"left" | "right">("right");
+
+  const total = ARENA_MISSIONS.length;
+  const mission = ARENA_MISSIONS[index];
+  const canPrev = index > 0;
+  const canNext = index < total - 1;
+  const isBusy = phase !== "idle";
+
   const today = new Date().toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
+
+  useEffect(() => {
+    if (phase !== "out") return;
+
+    const timer = window.setTimeout(() => {
+      setIndex((current) => {
+        if (slideDir === "right") return Math.min(current + 1, total - 1);
+        return Math.max(current - 1, 0);
+      });
+      setPhase("in");
+    }, TRANSITION_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [phase, slideDir, total]);
+
+  useEffect(() => {
+    if (phase !== "in") return;
+
+    // Let the incoming card paint at opacity-0 first, then ease in.
+    const frame = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setPhase("idle"));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [phase]);
+
+  function goPrev() {
+    if (!canPrev || isBusy) return;
+    setSlideDir("left");
+    setPhase("out");
+  }
+
+  function goNext() {
+    if (!canNext || isBusy) return;
+    setSlideDir("right");
+    setPhase("out");
+  }
+
+  const slidingOut = phase === "out";
+  const slidingIn = phase === "in";
+  const offset =
+    slideDir === "right"
+      ? slidingOut
+        ? "-translate-x-4"
+        : slidingIn
+          ? "translate-x-4"
+          : "translate-x-0"
+      : slidingOut
+        ? "translate-x-4"
+        : slidingIn
+          ? "-translate-x-4"
+          : "translate-x-0";
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg text-text">
@@ -200,7 +291,35 @@ export default function ArenaDemo({ user }: { user: User }) {
               </p>
             </div>
 
-            <MissionCard />
+            <p className="font-mono text-center text-[0.68rem] tracking-[0.16em] text-cyan/80">
+              {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+            </p>
+
+            <div className="flex items-center gap-3 sm:gap-4">
+              <MissionNavButton
+                direction="prev"
+                disabled={!canPrev || isBusy}
+                onClick={goPrev}
+              />
+
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div
+                  key={mission.id}
+                  className={`transition-all ease-out ${
+                    slidingOut || slidingIn ? "opacity-0" : "opacity-100"
+                  } ${offset}`}
+                  style={{ transitionDuration: `${TRANSITION_MS}ms` }}
+                >
+                  <MissionCard mission={mission} />
+                </div>
+              </div>
+
+              <MissionNavButton
+                direction="next"
+                disabled={!canNext || isBusy}
+                onClick={goNext}
+              />
+            </div>
           </div>
         </main>
       </div>
