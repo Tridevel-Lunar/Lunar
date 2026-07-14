@@ -74,6 +74,10 @@ export type LaikaAssistRequest = {
   web_search?: boolean;
   /** LAIKA mode: standard (pre-fetch) or extra (agentic tool-calling) */
   mode?: "standard" | "extra";
+  /** Collection ID for backend auto-save on done/cancel */
+  collection_id?: string;
+  /** Assistant node ID for backend auto-save on done/cancel */
+  assistant_node_id?: string;
 };
 
 export type LaikaChatMessage = {
