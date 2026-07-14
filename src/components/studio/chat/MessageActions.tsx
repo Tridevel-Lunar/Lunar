@@ -11,6 +11,7 @@ type UserMessageActionsProps = {
   onCreateBranch?: () => void;
   canCreateBranch?: boolean;
   disabled?: boolean;
+  streaming?: boolean;
 };
 
 export function UserMessageActions({
@@ -19,6 +20,7 @@ export function UserMessageActions({
   onCreateBranch,
   canCreateBranch = true,
   disabled,
+  streaming,
 }: UserMessageActionsProps) {
   return (
     <div className="flex justify-end gap-0.5">
@@ -26,12 +28,12 @@ export function UserMessageActions({
         <HiOutlineClipboard />
       </IconActionButton>
       {onEdit && (
-        <IconActionButton label="Edit" onClick={onEdit} disabled={disabled}>
+        <IconActionButton label="Edit" onClick={onEdit} disabled={disabled || streaming}>
           <HiOutlinePencilSquare />
         </IconActionButton>
       )}
       {canCreateBranch && onCreateBranch && (
-        <IconActionButton label="Create Branch" onClick={onCreateBranch} disabled={disabled}>
+        <IconActionButton label="Create Branch" onClick={onCreateBranch} disabled={disabled || streaming}>
           <TbGitBranch />
         </IconActionButton>
       )}
@@ -43,12 +45,14 @@ type AssistantMessageActionsProps = {
   onCopy: () => void;
   onRetry?: () => void;
   disabled?: boolean;
+  streaming?: boolean;
 };
 
 export function AssistantMessageActions({
   onCopy,
   onRetry,
   disabled,
+  streaming,
 }: AssistantMessageActionsProps) {
   return (
     <div className="flex gap-0.5">
@@ -56,7 +60,7 @@ export function AssistantMessageActions({
         <HiOutlineClipboard />
       </IconActionButton>
       {onRetry && (
-        <IconActionButton label="Retry" onClick={onRetry} disabled={disabled}>
+        <IconActionButton label="Retry" onClick={onRetry} disabled={disabled || streaming}>
           <HiArrowPath />
         </IconActionButton>
       )}

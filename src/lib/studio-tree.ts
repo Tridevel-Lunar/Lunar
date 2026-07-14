@@ -1,11 +1,8 @@
-import type { LaikaChatMessage } from "@/lib/api";
 import type { ChatNode, ConversationTree, LaikaIntent } from "@/components/studio/data/studio-data";
 
 /**
  * Conversation tree model for Studio LAIKA chat.
- *
- * Shape: user → assistant → user → … with `selectedChildByParent` choosing the active
- * branch at each fork. Powers chat rendering, LAIKA history, sibling pager, and branch map.
+ * Powers chat rendering, sibling pager, and branch map.
  */
 
 export const ROOT_PARENT_KEY = "__root__";
@@ -36,44 +33,14 @@ export type UserBranchLayout = {
   height: number;
 };
 
+export const NODE_WIDTH = 160;
+export const NODE_HEIGHT = 44;
+
 const COLUMN_GAP = 220;
 const ROW_GAP = 76;
-const NODE_WIDTH = 160;
-const NODE_HEIGHT = 44;
 const NODE_GAP = 12;
 
-// --- Tree construction & lookup ---
-
-export function parentKey(parentId: string | undefined): string {
-  return parentId ?? ROOT_PARENT_KEY;
-}
-
-export function createNode(
-  partial: Omit<ChatNode, "id" | "createdAt"> & { id?: string; createdAt?: string },
-): ChatNode {
-  return {
-    id: partial.id ?? crypto.randomUUID(),
-    createdAt: partial.createdAt ?? new Date().toISOString(),
-    role: partial.role,
-    content: partial.content,
-    parentId: partial.parentId,
-    laikaIntent: partial.laikaIntent,
-    laikaSources: partial.laikaSources,
-  };
-}
-
-export function createEmptyTree(rootContent: string, createdAt?: string): ConversationTree {
-  const root = createNode({
-    role: "user",
-    content: rootContent,
-    createdAt,
-  });
-  return {
-    nodes: { [root.id]: root },
-    rootIds: [root.id],
-    selectedChildByParent: {},
-  };
-}
+// --- Tree lookup ---
 
 export function getNode(tree: ConversationTree, id: string): ChatNode | undefined {
   return tree.nodes[id];
@@ -85,36 +52,7 @@ export function getChildren(tree: ConversationTree, parentId: string): ChatNode[
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-/** Root user nodes mirror collection `content` — branching from them is not allowed. */
-export function canCreateBranchFromUserNode(tree: ConversationTree, nodeId: string): boolean {
-  const node = getNode(tree, nodeId);
-  if (!node || node.role !== "user") return false;
-  return node.parentId !== undefined;
-}
-
-export function getUserSiblings(tree: ConversationTree, nodeId: string): ChatNode[] {
-  const node = getNode(tree, nodeId);
-  if (!node || node.role !== "user") return [];
-  const key = parentKey(node.parentId);
-  if (key === ROOT_PARENT_KEY) {
-    return tree.rootIds
-      .map((id) => getNode(tree, id))
-      .filter((n): n is ChatNode => n?.role === "user")
-      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  }
-  return getChildren(tree, node.parentId!).filter((n) => n.role === "user");
-}
-
-// --- Active path (selected branch) ---
-
-export function getSelectedChild(tree: ConversationTree, parentId: string): ChatNode | undefined {
-  const selectedId = tree.selectedChildByParent[parentId];
-  if (!selectedId) {
-    const children = getChildren(tree, parentId);
-    return children[0];
-  }
-  return getNode(tree, selectedId);
-}
+// --- Active path ---
 
 /** Walk `selectedChildByParent` from root to the current leaf (user and assistant nodes). */
 export function buildActivePath(tree: ConversationTree): ChatNode[] {
@@ -143,10 +81,6 @@ export function getActiveUserPath(tree: ConversationTree): ChatNode[] {
   return buildActivePath(tree).filter((n) => n.role === "user");
 }
 
-export function getActiveUserLeaf(tree: ConversationTree): ChatNode | undefined {
-  return getActiveUserPath(tree).at(-1);
-}
-
 export function getActiveLeaf(tree: ConversationTree): ChatNode | undefined {
   const path = buildActivePath(tree);
   return path.at(-1);
@@ -158,176 +92,7 @@ export function hasLaikaInTree(tree: ConversationTree): boolean {
   );
 }
 
-export function pruneInvalidSelections(tree: ConversationTree): ConversationTree {
-  const selectedChildByParent = { ...tree.selectedChildByParent };
-  for (const [parentId, childId] of Object.entries(selectedChildByParent)) {
-    const child = getNode(tree, childId);
-    const validParent = parentId === ROOT_PARENT_KEY ? undefined : parentId;
-    if (!child || child.parentId !== validParent) {
-      delete selectedChildByParent[parentId];
-    }
-  }
-  return { ...tree, selectedChildByParent };
-}
-
-/** Switch to a sibling user variant at the same tree level (pager prev/next). */
-export function selectSibling(
-  tree: ConversationTree,
-  parentId: string | undefined,
-  siblingId: string,
-): ConversationTree {
-  const key = parentKey(parentId);
-  const siblings = parentId
-    ? getChildren(tree, parentId).filter((n) => n.role === "user")
-    : getUserSiblings(tree, siblingId);
-
-  if (!siblings.some((s) => s.id === siblingId)) return tree;
-
-  const next: ConversationTree = {
-    ...tree,
-    selectedChildByParent: { ...tree.selectedChildByParent, [key]: siblingId },
-  };
-  if (!parentId) {
-    next.rootIds = [
-      siblingId,
-      ...tree.rootIds.filter((id) => id !== siblingId),
-    ];
-  }
-  return pruneInvalidSelections(next);
-}
-
-/** Rewire `selectedChildByParent` so the path root → target user is active (branch map click). */
-export function selectPathToNode(tree: ConversationTree, targetNodeId: string): ConversationTree {
-  const target = getNode(tree, targetNodeId);
-  if (!target || target.role !== "user") return tree;
-
-  const chain: ChatNode[] = [];
-  let current: ChatNode | undefined = target;
-  while (current) {
-    chain.unshift(current);
-    current = current.parentId ? getNode(tree, current.parentId) : undefined;
-    if (current?.role === "assistant" && current.parentId) {
-      current = getNode(tree, current.parentId);
-    } else if (current?.role === "assistant") {
-      break;
-    }
-  }
-
-  const selectedChildByParent = { ...tree.selectedChildByParent };
-  for (let i = 0; i < chain.length - 1; i += 1) {
-    const userNode = chain[i];
-    const nextUser = chain[i + 1];
-    const assistants = getChildren(tree, userNode.id).filter((n) => n.role === "assistant");
-    for (const assistant of assistants) {
-      const userChild = getChildren(tree, assistant.id).find((n) => n.id === nextUser.id);
-      if (userChild) {
-        selectedChildByParent[userNode.id] = assistant.id;
-        selectedChildByParent[assistant.id] = nextUser.id;
-        break;
-      }
-    }
-  }
-
-  const rootUser = chain[0];
-  if (rootUser) {
-    selectedChildByParent[ROOT_PARENT_KEY] = rootUser.id;
-  }
-
-  return pruneInvalidSelections({
-    ...tree,
-    selectedChildByParent,
-  });
-}
-
-// --- Mutations ---
-
-export function addNode(tree: ConversationTree, node: ChatNode): ConversationTree {
-  const nodes = { ...tree.nodes, [node.id]: node };
-  let rootIds = tree.rootIds;
-  if (!node.parentId && node.role === "user" && !rootIds.includes(node.id)) {
-    rootIds = [...rootIds, node.id];
-  }
-  const selectedChildByParent = { ...tree.selectedChildByParent };
-  if (node.parentId) {
-    selectedChildByParent[node.parentId] = node.id;
-  } else if (node.role === "user") {
-    selectedChildByParent[ROOT_PARENT_KEY] = node.id;
-  }
-  return { ...tree, nodes, rootIds, selectedChildByParent };
-}
-
-export function updateNode(
-  tree: ConversationTree,
-  nodeId: string,
-  patch: Partial<Pick<ChatNode, "content" | "laikaIntent" | "laikaSources">>,
-): ConversationTree {
-  const existing = getNode(tree, nodeId);
-  if (!existing) return tree;
-  return {
-    ...tree,
-    nodes: {
-      ...tree.nodes,
-      [nodeId]: { ...existing, ...patch },
-    },
-  };
-}
-
-// --- LAIKA integration ---
-
-export function toLaikaHistory(
-  path: ChatNode[],
-  upToNodeId?: string,
-): LaikaChatMessage[] {
-  let nodes = path.filter((n) => n.content.trim().length > 0);
-  if (upToNodeId) {
-    const idx = nodes.findIndex((n) => n.id === upToNodeId);
-    if (idx >= 0) nodes = nodes.slice(0, idx);
-  }
-  return nodes.map((n) => ({
-    role: n.role,
-    content: n.content.trim(),
-    created_at: n.createdAt,
-  }));
-}
-
-export function pathToStudioMessages(path: ChatNode[]): ChatNode[] {
-  return path;
-}
-
-export function getNextUserDepth(tree: ConversationTree, userNodeId: string): number {
-  // const userPath = getActiveUserPath(tree);
-  const depths = computeUserDepths(tree);
-  return (depths.get(userNodeId) ?? 0) + 1;
-}
-
-function computeUserDepths(tree: ConversationTree): Map<string, number> {
-  const depths = new Map<string, number>();
-  const roots = tree.rootIds
-    .map((id) => getNode(tree, id))
-    .filter((n): n is ChatNode => n?.role === "user");
-
-  const queue: { id: string; depth: number }[] = roots.map((r) => ({
-    id: r.id,
-    depth: 0,
-  }));
-
-  while (queue.length > 0) {
-    const { id, depth } = queue.shift()!;
-    if (depths.has(id)) continue;
-    depths.set(id, depth);
-
-    const assistants = getChildren(tree, id).filter((n) => n.role === "assistant");
-    for (const assistant of assistants) {
-      const users = getChildren(tree, assistant.id).filter((n) => n.role === "user");
-      for (const user of users) {
-        queue.push({ id: user.id, depth: depth + 1 });
-      }
-    }
-  }
-  return depths;
-}
-
-// --- Branch map graph & layout ---
+// --- Branch map ---
 
 export function buildUserBranchGraph(tree: ConversationTree): UserBranchGraph {
   const userNodes = Object.values(tree.nodes)
@@ -348,7 +113,6 @@ export function buildUserBranchGraph(tree: ConversationTree): UserBranchGraph {
   return { userNodes, edges };
 }
 
-/** Full active branch to leaf — for map white path (not truncated at scroll focus). */
 export function getActiveBranchUserEdgeIds(tree: ConversationTree): Set<string> {
   const activeUsers = getActiveUserPath(tree);
   const ids = new Set<string>();
@@ -523,32 +287,7 @@ function shiftSubtreeY(
   }
 }
 
-export function findAssistantParent(
-  tree: ConversationTree,
-  assistantId: string,
-): ChatNode | undefined {
-  const assistant = getNode(tree, assistantId);
-  if (!assistant?.parentId) return undefined;
-  return getNode(tree, assistant.parentId);
-}
-
-export function getUserNodeForAssistant(
-  tree: ConversationTree,
-  assistantId: string,
-): ChatNode | undefined {
-  const assistant = getNode(tree, assistantId);
-  if (!assistant?.parentId) return undefined;
-  return getNode(tree, assistant.parentId);
-}
-
-/** Chat history nodes strictly before `nodeId` on the path to that node (for retry/edit). */
-export function getHistoryBeforeNode(tree: ConversationTree, nodeId: string): ChatNode[] {
-  const focused = selectPathToNode(tree, nodeId);
-  const path = buildActivePath(focused);
-  const idx = path.findIndex((n) => n.id === nodeId);
-  if (idx <= 0) return [];
-  return path.slice(0, idx);
-}
+// --- Helpers ---
 
 export function defaultIntentForEntry(
   type: "note" | "idea" | "learn",
@@ -557,5 +296,3 @@ export function defaultIntentForEntry(
   if (type === "learn") return laikaIntent ?? "ask-anything";
   return laikaIntent ?? (type === "idea" ? "analyze" : "explain");
 }
-
-export { NODE_WIDTH, NODE_HEIGHT, COLUMN_GAP, ROW_GAP };

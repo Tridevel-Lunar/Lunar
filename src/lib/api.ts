@@ -44,11 +44,6 @@ export async function apiFetch<T>(
   return data as T;
 }
 
-export type TokenResponse = {
-  access_token: string;
-  token_type: string;
-};
-
 export type LaikaSource = {
   source_id: string;
   title: string;
@@ -57,38 +52,22 @@ export type LaikaSource = {
   snippet: string;
 };
 
-export type LaikaAssistRequest = {
-  entry_type: "note" | "idea" | "learn";
+
+/** Lean request for streaming — backend fetches entry_type/entry_content/messages from DB. */
+export type StreamAssistRequest = {
+  collection_id: string;
   content: string;
   intent: string;
-  entry_content?: string;
-  messages?: LaikaChatMessage[];
+  mode: "new" | "follow_up" | "edit" | "retry" | "branch";
+  node_id?: string;
+  parent_node_id?: string;
+  web_search?: boolean;
+  laika_mode?: "standard" | "extra";
   learning_context?: {
     course?: string;
     completed_topics?: string[];
     arena_missions?: string[];
   };
-  /** ISO-8601 client clock for conversation timing hints */
-  client_now?: string;
-  /** Enable DuckDuckGo web search as additional context */
-  web_search?: boolean;
-  /** LAIKA mode: standard (pre-fetch) or extra (agentic tool-calling) */
-  mode?: "standard" | "extra";
-  /** Collection ID for backend auto-save on done/cancel */
-  collection_id?: string;
-  /** Assistant node ID for backend auto-save on done/cancel */
-  assistant_node_id?: string;
-};
-
-export type LaikaChatMessage = {
-  role: "user" | "assistant";
-  content: string;
-  created_at?: string;
-};
-
-export type LaikaAssistResponse = {
-  response: string;
-  sources: LaikaSource[];
 };
 
 export type LaikaHealth = {
@@ -112,19 +91,6 @@ export type LaikaLearningContext = {
   completed_topics?: string[];
   arena_missions?: string[];
 };
-
-export type StudioGreetingResponse = {
-  greeting: string;
-};
-
-export function postLaikaStudioGreeting(
-  learning_context?: LaikaLearningContext,
-): Promise<StudioGreetingResponse> {
-  return apiFetch<StudioGreetingResponse>("/laika/studio/greeting", {
-    method: "POST",
-    body: JSON.stringify({ learning_context }),
-  });
-}
 
 export type User = {
   id: string;
@@ -190,18 +156,14 @@ export function updateStudioCollection(
   });
 }
 
-export function deleteStudioCollection(id: string): Promise<void> {
-  return apiFetch<void>(`/studio/collections/${id}`, { method: "DELETE" });
-}
-
 export type StudioConversationMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
   created_at: string;
+  updated_at?: string;
   parent_id: string | null;
   laika_intent: string | null;
-  laika_sources: LaikaSource[] | null;
 };
 
 export type StudioUserSpot = {
@@ -248,6 +210,7 @@ export type StudioBranchMapNode = {
   id: string;
   label: string;
   created_at: string;
+  updated_at?: string;
 };
 
 export type StudioBranchMap = {
@@ -262,12 +225,6 @@ export function getStudioBranchMap(id: string): Promise<StudioBranchMap> {
   return apiFetch<StudioBranchMap>(`/studio/collections/${id}/branch-map`);
 }
 
-export function postLaikaAssist(body: LaikaAssistRequest): Promise<LaikaAssistResponse> {
-  return apiFetch<LaikaAssistResponse>("/laika/assist", {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-}
 
 export type LaikaStreamDone = {
   sources: LaikaSource[];
@@ -276,7 +233,13 @@ export type LaikaStreamDone = {
   truncated?: boolean;
 };
 
+export type LaikaStreamMeta = {
+  user_node_id: string;
+  assistant_node_id: string;
+};
+
 export type LaikaStreamHandlers = {
+  onMeta?: (meta: LaikaStreamMeta) => void;
   onStatus?: (phase: string, message: string) => void;
   onToken: (delta: string) => void;
   onDone: (result: LaikaStreamDone) => void;
@@ -314,9 +277,16 @@ function handleLaikaSseEvent(
   event: string,
   data: string,
   handlers: LaikaStreamHandlers,
-): "done" | "error" | null {
+): "meta" | "done" | "error" | null {
   const payload = JSON.parse(data) as Record<string, unknown>;
 
+  if (event === "meta" && typeof payload.user_node_id === "string" && typeof payload.assistant_node_id === "string") {
+    handlers.onMeta?.({
+      user_node_id: payload.user_node_id,
+      assistant_node_id: payload.assistant_node_id,
+    });
+    return "meta";
+  }
   if (event === "status" && typeof payload.message === "string") {
     const phase = typeof payload.phase === "string" ? payload.phase : "generating";
     handlers.onStatus?.(phase, payload.message);
@@ -343,12 +313,8 @@ function handleLaikaSseEvent(
   return null;
 }
 
-export function shutdownLaikaAssistWs(): void {
-  /* SSE uses per-request fetch; nothing to shut down globally. */
-}
-
 export async function streamLaikaAssist(
-  body: LaikaAssistRequest,
+  body: StreamAssistRequest,
   handlers: LaikaStreamHandlers,
   signal?: AbortSignal,
   retried = false,
@@ -432,11 +398,6 @@ export async function streamLaikaAssist(
   return completed;
 }
 
-export type BackofficeAccess = {
-  allowed: boolean;
-  role: string;
-};
-
 export type KnowledgeSource = {
   id: string;
   manifest_id: string | null;
@@ -452,13 +413,6 @@ export type KnowledgeSource = {
   chunk_count: number;
   last_ingested_at: string | null;
   created_at: string;
-};
-
-export type KnowledgeOverview = {
-  total_chunks: number;
-  embedding_provider: string;
-  embedding_enabled: boolean;
-  sources: KnowledgeSource[];
 };
 
 export type KnowledgeCatalogItem = {
@@ -542,14 +496,6 @@ export type BackofficeUsersList = {
   users: BackofficeUser[];
   admin_count: number;
 };
-
-export function getBackofficeAccess(): Promise<BackofficeAccess> {
-  return apiFetch<BackofficeAccess>("/backoffice/access");
-}
-
-export function getKnowledgeOverview(): Promise<KnowledgeOverview> {
-  return apiFetch<KnowledgeOverview>("/backoffice/knowledge");
-}
 
 export function getKnowledgeCatalog(): Promise<KnowledgeCatalog> {
   return apiFetch<KnowledgeCatalog>("/backoffice/knowledge/catalog");

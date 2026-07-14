@@ -15,9 +15,9 @@ export type ChatNode = {
   role: "user" | "assistant";
   content: string;
   createdAt: string;
+  updatedAt?: string;
   parentId?: string;
   laikaIntent?: LaikaIntent;
-  laikaSources?: LaikaSource[];
 };
 
 export type ConversationTree = {

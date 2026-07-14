@@ -31,10 +31,12 @@ type StudioChatComposerProps = {
   webSearch: boolean;
   laikaMode: "standard" | "extra";
   contextUsage?: ContextUsageEstimate;
+  showScrollButton?: boolean;
   onOpenBranchMap: () => void;
   onLaikaIntent: (intent: LaikaIntent) => void;
   onSend: (text: string) => void;
   onStop: () => void;
+  onScrollToBottom?: () => void;
   onWebSearchChange: (value: boolean) => void;
   onModeChange: (mode: "standard" | "extra") => void;
 };
@@ -49,10 +51,12 @@ export default function StudioChatComposer({
   webSearch,
   laikaMode,
   contextUsage,
+  showScrollButton,
   onOpenBranchMap,
   onLaikaIntent,
   onSend,
   onStop,
+  onScrollToBottom,
   onWebSearchChange,
   onModeChange,
 }: StudioChatComposerProps) {
@@ -77,7 +81,17 @@ export default function StudioChatComposer({
   }
 
   return (
-    <footer className="shrink-0 border-t border-white/[0.06] bg-[#02060f]/90 px-4 py-2.5 backdrop-blur-md sm:px-6">
+    <footer className="relative shrink-0 border-t border-white/[0.06] bg-[#02060f]/90 px-4 py-2.5 backdrop-blur-md sm:px-6">
+      {showScrollButton && (
+        <button
+          type="button"
+          onClick={onScrollToBottom}
+          className="absolute -top-12 right-4 z-20 flex size-9 items-center justify-center rounded-full border border-white/15 bg-bg/90 text-text/70 shadow-lg backdrop-blur-sm transition hover:border-amber/40 hover:text-amber cursor-pointer"
+          aria-label="เลื่อนไปล่างสุด"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      )}
       <div className="mx-auto w-full max-w-[75%] space-y-2">
         {awaitingLaika && (
           <div className="flex flex-wrap gap-1.5">
@@ -116,8 +130,7 @@ export default function StudioChatComposer({
                 <button
                   type="button"
                   onClick={() => onWebSearchChange(!webSearch)}
-                  disabled={laikaLoading}
-                  className={`flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border transition disabled:opacity-40 ${
+                  className={`flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border transition ${
                     webSearch
                       ? "border-cyan/50 bg-cyan/15 text-cyan"
                       : "border-white/10 bg-white/[0.03] text-muted hover:border-cyan/35 hover:text-cyan"
@@ -146,7 +159,6 @@ export default function StudioChatComposer({
               onValueChange={(value) => onModeChange(value as "standard" | "extra")}
             >
               <SelectTrigger
-                disabled={laikaLoading}
                 className={`h-9 rounded-lg border px-2.5 text-[0.65rem] font-mono tracking-wider ${
                   laikaMode === "extra"
                     ? "border-violet-500/50 bg-violet-500/15 text-violet-300"
@@ -209,6 +221,9 @@ export default function StudioChatComposer({
             <ContextUsageRing usage={contextUsage} />
           )}
         </div>
+        <p className="text-center font-section-thai text-[0.7rem] text-muted/50">
+          LAIKA เป็น AI และอาจทำผิดพลาดได้
+        </p>
       </div>
     </footer>
   );

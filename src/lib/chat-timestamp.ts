@@ -69,9 +69,8 @@ export function formatChatBubbleTimeFull(iso: string): string {
   });
 }
 
-/** Original sibling = พิมพ์; later variants from edit/branch = แก้ไข. */
-export function userBubbleActionLabel(nodeId: string, siblings: ChatNode[]): "พิมพ์" | "แก้ไข" {
-  if (siblings.length <= 1) return "พิมพ์";
-  const oldest = [...siblings].sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0];
-  return oldest?.id === nodeId ? "พิมพ์" : "แก้ไข";
+/** แก้ไขเมื่อ updatedAt ต่างจาก createdAt. */
+export function userBubbleActionLabel(node: ChatNode): "พิมพ์" | "แก้ไข" {
+  if (node.updatedAt && node.updatedAt !== node.createdAt) return "แก้ไข";
+  return "พิมพ์";
 }

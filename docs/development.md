@@ -4,7 +4,7 @@ Vite + React Router — web app, landing page, auth และ UI การเร
 
 **Product context:** [concept.md](concept.md) · [functional-spec.md](functional-spec.md)  
 **Tech stack (เต็ม):** [stack.md](stack.md)  
-**Stack:** Vite 7, React 19, React Router 7, Tailwind CSS v4, TypeScript, Three.js / R3F, Google Identity Services — วางแผนเพิ่ม Shadcn/ui, Blockly
+**Stack:** Vite 7, React 19, React Router 7, Tailwind CSS v4, TypeScript, Three.js / R3F, Google Identity Services, micromark (streaming Markdown), react-markdown + KaTeX, Shadcn/ui
 
 ## Commands
 

@@ -21,6 +21,8 @@
 | **Shadcn/ui** (base-vega) | ใช้อยู่ | Dialog, Button — Radix/Base UI + Tailwind tokens |
 | **Framer Motion** | ใช้อยู่ | แอนิเมชัน auth — card entrance, ปุ่ม, error message |
 | **react-icons** | ใช้อยู่ | ไอคอนทั่วไปใน UI |
+| **micromark** + extensions | ใช้อยู่ | Real-time Markdown streaming (GFM, math, tables) — ใช้ใน LAIKA Studio chat |
+| **react-markdown** + KaTeX | ใช้อยู่ | Final Markdown renderer พร้อม math + GFM (หลัง stream จบ) |
 
 ## Authentication
 

@@ -37,9 +37,9 @@ function toChatNode(message: StudioConversationMessage): ChatNode {
     role: message.role,
     content: message.content,
     createdAt: message.created_at,
+    updatedAt: message.updated_at ?? undefined,
     parentId: message.parent_id ?? undefined,
     laikaIntent: message.laika_intent as LaikaIntent | undefined,
-    laikaSources: message.laika_sources ?? undefined,
   };
 }
 
@@ -120,6 +120,7 @@ export function branchMapToGraphInput(map: StudioBranchMap) {
     role: "user" as const,
     content: n.label,
     createdAt: n.created_at,
+    updatedAt: n.updated_at ?? undefined,
   }));
   const edges = map.edges.map((e) => ({ from: e.from_id, to: e.to_id }));
   return {

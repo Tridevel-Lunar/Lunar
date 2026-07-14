@@ -31,33 +31,23 @@ import {
   getStudioBranchMap,
   getStudioConversation,
   selectStudioBranch,
-  shutdownLaikaAssistWs,
   streamLaikaAssist,
   type LaikaHealth,
-  type LaikaSource,
   type StudioBranchMap,
   type User,
 } from "@/lib/api";
-import { getCollection, saveCollection } from "@/lib/studio-storage";
+import { getCollection } from "@/lib/studio-storage";
 import {
   conversationToSession,
   sessionToComposerEntry,
   type StudioChatSession,
 } from "@/lib/studio-conversation";
 import { buildContextUsageEstimate, type ContextUsageEstimate } from "@/lib/laika-context";
-import { resolveDeepestVisibleUserNodeId, isChatScrolledToBottom, scrollChatToBottom, scrollUserBubbleToTop } from "@/lib/studio-visible-focus";
+import { resolveDeepestVisibleUserNodeId, scrollChatToBottom, scrollUserBubbleToTop } from "@/lib/studio-visible-focus";
 import {
-  addNode,
   buildActivePath,
-  createNode,
   defaultIntentForEntry,
   getActiveLeaf,
-  getChildren,
-  getUserNodeForAssistant,
-  getHistoryBeforeNode,
-  selectSibling,
-  toLaikaHistory,
-  updateNode,
 } from "@/lib/studio-tree";
 
 /**
@@ -89,10 +79,11 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   const entryRef = useRef<CollectionEntry | null>(null);
   const sessionRef = useRef<StudioChatSession | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const stickToBottomRef = useRef(true);
+  const autoFollowRef = useRef(true);
 
   const [session, setSession] = useState<StudioChatSession | null>(null);
   const [entryLoading, setEntryLoading] = useState(true);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const [branchMap, setBranchMap] = useState<StudioBranchMap | null>(null);
   const [branchMapLoading, setBranchMapLoading] = useState(false);
   const [branchMapError, setBranchMapError] = useState<string | null>(null);
@@ -199,6 +190,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     const next = conversationToSession(conversation, streaming);
     setSession(next);
     sessionRef.current = next;
+    entryRef.current = null;
   }
 
   // Scroll-derived focus for branch map (see studio-visible-focus.ts).
@@ -215,20 +207,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     const container = chatScrollRef.current;
     if (!container) return;
 
-    let lastScrollTop = container.scrollTop;
     let frame = 0;
-
-    const syncStickToBottom = () => {
-      const top = container.scrollTop;
-      if (top < lastScrollTop - 1) {
-        stickToBottomRef.current = false;
-      } else if (isChatScrolledToBottom(container)) {
-        stickToBottomRef.current = true;
-      } else {
-        stickToBottomRef.current = false;
-      }
-      lastScrollTop = top;
-    };
 
     const scheduleMapFocus = () => {
       cancelAnimationFrame(frame);
@@ -236,13 +215,13 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     };
 
     const onScroll = () => {
-      syncStickToBottom();
       scheduleMapFocus();
     };
 
     const onWheel = (e: WheelEvent) => {
       if (e.deltaY < 0) {
-        stickToBottomRef.current = false;
+        autoFollowRef.current = false;
+        setShowScrollButton(true);
       }
     };
 
@@ -253,12 +232,12 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     const onTouchMove = (e: TouchEvent) => {
       const y = e.touches[0]?.clientY;
       if (touchY != null && y != null && y > touchY + 4) {
-        stickToBottomRef.current = false;
+        autoFollowRef.current = false;
+        setShowScrollButton(true);
       }
       if (y != null) touchY = y;
     };
 
-    syncStickToBottom();
     scheduleMapFocus();
     container.addEventListener("scroll", onScroll, { passive: true });
     container.addEventListener("wheel", onWheel, { passive: true });
@@ -275,7 +254,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
       container.removeEventListener("touchmove", onTouchMove);
       ro.disconnect();
     };
-  }, [collectionId, updateMapFocusUser]);
+  }, [collectionId, updateMapFocusUser, entryLoading]);
 
   useEffect(() => {
     if (branchMapOpen) {
@@ -290,7 +269,8 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     if (!container) return;
 
     const nodeId = scrollToUserNodeId;
-    stickToBottomRef.current = false;
+    autoFollowRef.current = false;
+    setShowScrollButton(true);
     const frame = requestAnimationFrame(() => {
       const el = container.querySelector(`[data-chat-user-node="${nodeId}"]`);
       if (el instanceof HTMLElement) {
@@ -302,25 +282,22 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     return () => cancelAnimationFrame(frame);
   }, [scrollToUserNodeId, session, updateMapFocusUser]);
 
-  // One-shot scroll to bottom after composer send (not during LAIKA stream).
+  // One-shot scroll to bottom after send — instant, re-engage auto-follow.
   useLayoutEffect(() => {
     if (scrollToBottomTick === 0) return;
     const container = chatScrollRef.current;
     if (!container) return;
-    stickToBottomRef.current = true;
-    scrollChatToBottom(container);
+    autoFollowRef.current = true;
+    setShowScrollButton(false);
+    scrollChatToBottom(container, "auto");
     window.setTimeout(updateMapFocusUser, 400);
   }, [scrollToBottomTick, updateMapFocusUser]);
 
-  // Follow LAIKA stream while the user is already at the bottom.
+  // Follow LAIKA stream while auto-follow is engaged.
   useLayoutEffect(() => {
-    if (!session?.laikaStreaming || !stickToBottomRef.current) return;
+    if (!session?.laikaStreaming || !autoFollowRef.current) return;
     const container = chatScrollRef.current;
     if (!container) return;
-    if (!isChatScrolledToBottom(container, 96)) {
-      stickToBottomRef.current = false;
-      return;
-    }
     scrollChatToBottom(container, "auto");
   }, [streamingText, laikaStatus, session?.laikaStreaming]);
 
@@ -344,7 +321,8 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     const container = chatScrollRef.current;
     if (!container) return;
 
-    stickToBottomRef.current = true;
+    autoFollowRef.current = true;
+    setShowScrollButton(false);
     const jump = () => scrollChatToBottom(container, "auto");
     jump();
     const frame = requestAnimationFrame(() => {
@@ -361,7 +339,6 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
       streamingDivRef.current = null;
       entryRef.current = null;
       sessionRef.current = null;
-      shutdownLaikaAssistWs();
     };
   }, []);
 
@@ -397,37 +374,8 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   }
 
   function bumpScrollAfterDoneIfStuck() {
-    if (stickToBottomRef.current) {
+    if (autoFollowRef.current) {
       setScrollAfterDoneTick((t) => t + 1);
-    }
-  }
-
-  async function persistEntry(
-    updated: CollectionEntry,
-    options?: { save?: boolean; refresh?: boolean },
-  ) {
-    entryRef.current = updated;
-    if (options?.save !== false) {
-      await saveCollection(updated);
-      entryRef.current = (await getCollection(updated.id)) ?? updated;
-    }
-    if (options?.refresh !== false) {
-      await refreshConversation({
-        laikaStreaming: updated.laikaStreaming,
-        streamingNodeId: updated.streamingNodeId,
-      });
-    } else {
-      setSession((prev) =>
-        prev
-          ? {
-              ...prev,
-              laikaStreaming: updated.laikaStreaming,
-              streamingNodeId: updated.streamingNodeId,
-              updatedAt: updated.updatedAt,
-              laikaIntent: updated.laikaIntent,
-            }
-          : prev,
-      );
     }
   }
 
@@ -437,111 +385,32 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     setTimeout(() => setStopNotice(false), 2500);
   }
 
-  function mergeStreamText(accumulated: string, fromServer?: string): string {
-    const acc = accumulated.trim();
-    const srv = fromServer?.trim() ?? "";
-    if (!srv) return acc;
-    if (!acc) return srv;
-    return srv.length >= acc.length ? srv : acc;
+  function handleScrollToBottom() {
+    const container = chatScrollRef.current;
+    if (!container) return;
+    autoFollowRef.current = true;
+    setShowScrollButton(false);
+    scrollChatToBottom(container, "smooth");
   }
 
   async function runLaikaAssist(params: {
-    assistantNodeId: string;
+    mode: "new" | "follow_up" | "edit" | "retry" | "branch";
     userContent: string;
     intent: LaikaIntent;
-    baseEntry: CollectionEntry;
-    historyBefore: ChatNode[];
+    nodeId?: string;
+    parentNodeId?: string;
     webSearch?: boolean;
   }) {
-    const { assistantNodeId, userContent, intent, baseEntry, historyBefore, webSearch } = params;
+    const { mode, userContent, intent, nodeId, parentNodeId, webSearch } = params;
 
     setLaikaLoading(true);
     setLaikaError(null);
     clearStreamingUi();
 
-    let tree = updateNode(baseEntry.tree, assistantNodeId, {
-      content: "",
-      laikaSources: undefined,
-      laikaIntent: intent,
-    });
-
-    const streaming: CollectionEntry = {
-      ...baseEntry,
-      tree,
-      laikaIntent: intent,
-      laikaStreaming: true,
-      streamingNodeId: assistantNodeId,
-      updatedAt: new Date().toISOString(),
-    };
-    await persistEntry(streaming);
-
     let responseText = "";
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-
-    async function commitAssistantResponse(
-      sources: LaikaSource[],
-      finalText?: string,
-      truncated?: boolean,
-    ) {
-      clearStreamingUi();
-      setLaikaStatus(null);
-      const now = new Date().toISOString();
-      const current = entryRef.current ?? streaming;
-      const trimmed = mergeStreamText(responseText, finalText);
-      responseText = trimmed;
-      let nextTree = updateNode(current.tree, assistantNodeId, {
-        content: trimmed,
-        laikaSources: sources.length > 0 ? sources : undefined,
-        laikaIntent: intent,
-      });
-
-      await persistEntry({
-        ...current,
-        tree: nextTree,
-        laikaStreaming: false,
-        streamingNodeId: undefined,
-        laikaIntent: intent,
-        updatedAt: now,
-      });
-
-      if (truncated) {
-        setLaikaError(
-          "คำตอบถูกตัดเพราะ context เต็ม — ลดประวัติแชท หรือเพิ่ม OLLAMA_NUM_CTX ถ้า VRAM พอ",
-        );
-      }
-
-      bumpScrollAfterDoneIfStuck();
-    }
-
-    async function finalizeAfterAbort() {
-      clearStreamingUi();
-      setLaikaStatus(null);
-      const current = entryRef.current ?? streaming;
-      const trimmed = responseText.trim();
-      if (trimmed) {
-        const nextTree = updateNode(current.tree, assistantNodeId, {
-          content: trimmed,
-          laikaIntent: intent,
-        });
-        await persistEntry({
-          ...current,
-          tree: nextTree,
-          laikaStreaming: false,
-          streamingNodeId: undefined,
-          updatedAt: new Date().toISOString(),
-        });
-        bumpScrollAfterDoneIfStuck();
-        return;
-      }
-
-      await persistEntry({
-        ...current,
-        laikaStreaming: false,
-        streamingNodeId: undefined,
-      }, { save: false, refresh: true });
-    }
 
     try {
       const health = await getLaikaHealth();
@@ -554,16 +423,93 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
 
       const completed = await streamLaikaAssist(
         {
-          entry_type: baseEntry.type,
+          collection_id: collectionId!,
           content: userContent,
           intent,
-          entry_content: baseEntry.content,
-          messages: toLaikaHistory(historyBefore),
-          client_now: new Date().toISOString(),
-          web_search: webSearch,          mode: laikaMode,
-          collection_id: collectionId,
-          assistant_node_id: assistantNodeId,        },
+          mode,
+          node_id: nodeId,
+          parent_node_id: parentNodeId,
+          web_search: webSearch ?? false,
+          laika_mode: laikaMode,
+        },
         {
+          onMeta: (meta) => {
+            // Avoid race with onDone's refreshConversation() — update session
+            // locally with placeholder nodes instead of fetching from backend.
+            setSession((prev) => {
+              if (!prev) return prev;
+              const now = new Date().toISOString();
+
+              if (mode === "edit") {
+                // Update existing user node content + clear its assistant
+                const messages = prev.messages.map((n) => {
+                  if (n.id === nodeId) return { ...n, content: userContent, updatedAt: now };
+                  if (nodeId && n.parentId === nodeId && n.role === "assistant")
+                    return { ...n, content: "" };
+                  return n;
+                });
+                return { ...prev, laikaStreaming: true, streamingNodeId: meta.assistant_node_id, messages };
+              }
+
+              if (mode === "retry") {
+                const messages = prev.messages.map((n) =>
+                  n.id === meta.assistant_node_id ? { ...n, content: "" } : n,
+                );
+                return { ...prev, laikaStreaming: true, streamingNodeId: meta.assistant_node_id, messages };
+              }
+
+              if (mode === "branch") {
+                // Cut off conversation from the branch point, then append new branch
+                const cutIdx = nodeId ? prev.messages.findIndex((n) => n.id === nodeId) : -1;
+                const kept = cutIdx >= 0 ? prev.messages.slice(0, cutIdx) : prev.messages;
+                const userNode: ChatNode = {
+                  id: meta.user_node_id,
+                  role: "user",
+                  content: userContent,
+                  createdAt: now,
+                  updatedAt: now,
+                };
+                const assistantNode: ChatNode = {
+                  id: meta.assistant_node_id,
+                  role: "assistant",
+                  content: "",
+                  createdAt: now,
+                  updatedAt: now,
+                };
+                return {
+                  ...prev,
+                  laikaStreaming: true,
+                  streamingNodeId: meta.assistant_node_id,
+                  messages: [...kept, userNode, assistantNode],
+                  hasLaika: true,
+                };
+              }
+
+              // new / follow_up: append placeholder user+assistant
+              const userNode: ChatNode = {
+                id: meta.user_node_id,
+                role: "user",
+                content: userContent,
+                createdAt: now,
+                updatedAt: now,
+              };
+              const assistantNode: ChatNode = {
+                id: meta.assistant_node_id,
+                role: "assistant",
+                content: "",
+                createdAt: now,
+                updatedAt: now,
+              };
+              return {
+                ...prev,
+                laikaStreaming: true,
+                streamingNodeId: meta.assistant_node_id,
+                messages: [...prev.messages, userNode, assistantNode],
+                hasLaika: true,
+              };
+            });
+            setScrollToBottomTick((t) => t + 1);
+          },
           onStatus: (_phase, message) => {
             setLaikaStatus((prev) => (prev === message ? prev : message));
           },
@@ -571,8 +517,11 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
             responseText += delta;
             scheduleStreamingUi(responseText);
           },
-          onDone: ({ sources, response, truncated }) => {
-            void commitAssistantResponse(sources, response, truncated);
+          onDone: () => {
+            setLaikaStatus(null);
+            clearStreamingUi();
+            refreshConversation();
+            bumpScrollAfterDoneIfStuck();
           },
         },
         controller.signal,
@@ -580,24 +529,28 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
 
       if (!completed) {
         if (controller.signal.aborted) {
-          await finalizeAfterAbort();
+          clearStreamingUi();
+          setLaikaStatus(null);
+          setStopNotice(true);
+          setTimeout(() => setStopNotice(false), 2500);
+          refreshConversation();
         } else if (responseText.trim()) {
-          await commitAssistantResponse([]);
+          refreshConversation();
         } else {
           throw new ApiError(503, "LAIKA stream ended before completion");
         }
       }
     } catch (err) {
       if (controller.signal.aborted) {
-        await finalizeAfterAbort();
+        clearStreamingUi();
+        setLaikaStatus(null);
+        setStopNotice(true);
+        setTimeout(() => setStopNotice(false), 2500);
+        refreshConversation();
       } else {
         setLaikaError(err instanceof ApiError ? err.message : "ไม่สามารถเชื่อมต่อ LAIKA ได้");
         setLaikaStatus(null);
-        await persistEntry({
-          ...baseEntry,
-          laikaStreaming: false,
-          streamingNodeId: undefined,
-        }, { save: false, refresh: true });
+        refreshConversation();
       }
     } finally {
       if (abortRef.current === controller) {
@@ -615,29 +568,12 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     const entry = await ensureFullEntry();
     const path = buildActivePath(entry.tree);
     const rootUser = path.find((n) => n.role === "user");
-    if (!rootUser) return;
-
-    const assistant = createNode({
-      role: "assistant",
-      content: "",
-      parentId: rootUser.id,
-      laikaIntent: intent,
-    });
-    const tree = addNode(entry.tree, assistant);
-    const updated: CollectionEntry = {
-      ...entry,
-      tree,
-      laikaIntent: intent,
-      updatedAt: new Date().toISOString(),
-    };
-    await persistEntry(updated);
 
     await runLaikaAssist({
-      assistantNodeId: assistant.id,
-      userContent: rootUser.content,
+      mode: "new",
+      userContent: rootUser?.content || entry.content || "",
       intent,
-      baseEntry: updated,
-      historyBefore: [],
+      parentNodeId: undefined,
       webSearch,
     });
   }
@@ -649,29 +585,13 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     const entry = await ensureFullEntry();
     const intent = defaultIntentForEntry(entry.type, entry.laikaIntent);
     const leaf = getActiveLeaf(entry.tree);
-    if (!leaf || leaf.role !== "assistant") return;
-
-    const userNode = createNode({ role: "user", content: text, parentId: leaf.id });
-    let tree = addNode(entry.tree, userNode);
-    const assistant = createNode({ role: "assistant", content: "", parentId: userNode.id });
-    tree = addNode(tree, assistant);
-
-    const historyBefore = getHistoryBeforeNode(tree, userNode.id);
-
-    const withNodes: CollectionEntry = {
-      ...entry,
-      tree,
-      updatedAt: new Date().toISOString(),
-    };
-    await persistEntry(withNodes);
-    setScrollToBottomTick((t) => t + 1);
+    if (!leaf) return;
 
     await runLaikaAssist({
-      assistantNodeId: assistant.id,
+      mode: "follow_up",
       userContent: text,
       intent,
-      baseEntry: withNodes,
-      historyBefore,
+      parentNodeId: leaf.id,
       webSearch,
     });
   }
@@ -679,20 +599,16 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   async function handleRetry(assistantNodeId: string) {
     if (!session || laikaLoading) return;
     const entry = await ensureFullEntry();
-    const userNode = getUserNodeForAssistant(entry.tree, assistantNodeId);
     const assistant = entry.tree.nodes[assistantNodeId];
-    if (!userNode || !assistant) return;
+    if (!assistant) return;
 
-    const path = buildActivePath(entry.tree);
-    const historyBefore = path.slice(0, path.findIndex((n) => n.id === assistantNodeId));
     const intent = assistant.laikaIntent ?? defaultIntentForEntry(entry.type, entry.laikaIntent);
 
     await runLaikaAssist({
-      assistantNodeId,
-      userContent: userNode.content,
+      mode: "retry",
+      userContent: "",
       intent,
-      baseEntry: entry,
-      historyBefore,
+      nodeId: assistantNodeId,
       webSearch,
     });
   }
@@ -706,70 +622,30 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     const node = entry.tree.nodes[userNodeId];
     if (!node || node.role !== "user") return;
 
-    if (userCompose?.mode === "edit") {
-      // Edit in-place: update content, then retry last assistant
-      let tree = updateNode(entry.tree, userNodeId, { content: trimmed });
-      const assistant = getChildren(tree, userNodeId).find((n) => n.role === "assistant");
-      if (assistant) {
-        tree = updateNode(tree, assistant.id, { content: "", laikaSources: undefined });
-      }
-      const updated = { ...entry, tree, updatedAt: new Date().toISOString() };
-      await persistEntry(updated);
-      setUserCompose(null);
-      setEditDraft("");
+    setUserCompose(null);
+    setEditDraft("");
 
-      const historyBefore = getHistoryBeforeNode(updated.tree, userNodeId);
-      const intent = defaultIntentForEntry(entry.type, entry.laikaIntent);
+    if (userCompose?.mode === "edit") {
       await runLaikaAssist({
-        assistantNodeId: assistant?.id ?? "",
+        mode: "edit",
         userContent: trimmed,
-        intent,
-        baseEntry: updated,
-        historyBefore,
+        intent: defaultIntentForEntry(entry.type, entry.laikaIntent),
+        nodeId: userNodeId,
         webSearch,
       });
       return;
     }
 
-    // Branch mode: create a sibling variant (existing behavior)
+    // Branch mode
     const spot = session.userSpotsById[userNodeId];
-    if (spot && !spot.canCreateBranch) {
-      return;
-    }
-
-    const sibling = createNode({
-      role: "user",
-      content: trimmed,
-      parentId: node.parentId,
-    });
-    let tree = addNode(entry.tree, sibling);
-    tree = selectSibling(tree, node.parentId, sibling.id);
-
-    const assistant = createNode({
-      role: "assistant",
-      content: "",
-      parentId: sibling.id,
-    });
-    tree = addNode(tree, assistant);
-
-    const updated = {
-      ...entry,
-      tree,
-      updatedAt: new Date().toISOString(),
-    };
-    await persistEntry(updated);
-    setUserCompose(null);
-    setEditDraft("");
-
-    const historyBefore = getHistoryBeforeNode(updated.tree, sibling.id);
-    const intent = defaultIntentForEntry(entry.type, entry.laikaIntent);
+    if (spot && !spot.canCreateBranch) return;
 
     await runLaikaAssist({
-      assistantNodeId: assistant.id,
+      mode: "branch",
       userContent: trimmed,
-      intent,
-      baseEntry: updated,
-      historyBefore,
+      intent: defaultIntentForEntry(entry.type, entry.laikaIntent),
+      nodeId: userNodeId,
+      parentNodeId: node.parentId,
       webSearch,
     });
   }
@@ -819,16 +695,6 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     setEditDraft("");
   }
 
-  function siblingNodesForDisplay(
-    node: ChatNode,
-    spot?: StudioChatSession["userSpotsById"][string],
-  ): ChatNode[] {
-    if (!spot || spot.siblingCount <= 1) return [node];
-    return spot.siblingIds.map(
-      (id) => session?.messages.find((m) => m.id === id) ?? { ...node, id },
-    );
-  }
-
   if (entryLoading || !session) {
     return (
       <div className="flex h-screen overflow-hidden bg-bg text-text">
@@ -841,7 +707,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   }
 
   const awaitingLaika = !hasLaikaConversation(session);
-  const canType = hasLaikaConversation(session) && !laikaLoading && !branchSwitching;
+  const canType = hasLaikaConversation(session) && !branchSwitching;
 
   const lastUserIdx = (() => {
     for (let i = session.messages.length - 1; i >= 0; i--) {
@@ -877,7 +743,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
         </header>
 
         <div ref={chatScrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-          <div className="mx-auto flex w-full max-w-[80%] flex-col gap-4">
+          <div className="relative mx-auto flex w-full max-w-[80%] flex-col gap-4">
             {session.messages.map((node, index) => {
               const prevMessage = index > 0 ? session.messages[index - 1] : null;
               const showDateDivider =
@@ -887,7 +753,6 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
 
               if (node.role === "user") {
                 const spot = session.userSpotsById[node.id];
-                const siblings = siblingNodesForDisplay(node, spot);
                 const sibIdx = spot?.siblingIndex ?? 0;
                 const isComposing = userCompose?.nodeId === node.id;
 
@@ -931,7 +796,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
                       ) : (
                         <>
                           <div className="flex items-end gap-2">
-                            <UserMessageTimestamp node={node} siblings={siblings} />
+                            <UserMessageTimestamp node={node} />
                             <div
                               data-chat-user-node={node.id}
                               className="rounded-2xl rounded-tr-md border border-teal/25 bg-teal/10 px-4 py-2.5"
@@ -954,7 +819,8 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
                               onEdit={index === lastUserIdx ? () => openUserCompose(node.id, "edit") : undefined}
                               onCreateBranch={() => openUserCompose(node.id, "branch")}
                               canCreateBranch={spot?.canCreateBranch ?? false}
-                              disabled={laikaLoading || branchSwitching}
+                              disabled={branchSwitching}
+                              streaming={laikaLoading}
                             />
                           </div>
                         </>
@@ -996,33 +862,14 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
                           size="chat"
                         />
                       )}
-                      {node.laikaSources && node.laikaSources.length > 0 && !isStreaming && (
-                        <div className="mt-3 border-t border-white/10 pt-2.5">
-                          <p className="font-mono mb-1.5 text-[0.52rem] tracking-[0.12em] text-muted">
-                            อ้างอิง
-                          </p>
-                          <ul className="space-y-1">
-                            {node.laikaSources.map((source) => (
-                              <li
-                                key={`${source.source_id}-${source.page ?? "na"}`}
-                                className="font-section-thai text-[0.78rem] text-text/65"
-                              >
-                                {source.title}
-                                {source.page != null && (
-                                  <span className="text-muted"> · หน้า {source.page}</span>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
                     </div>
                       {!isStreaming && (
                         <div className="mt-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                           <AssistantMessageActions
                             onCopy={() => copyText(node.content)}
                             onRetry={index === lastAssistantIdx ? () => handleRetry(node.id) : undefined}
-                            disabled={laikaLoading}
+                            disabled={false}
+                            streaming={laikaLoading}
                           />
                         </div>
                       )}
@@ -1064,6 +911,8 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
           onStop={handleStopGeneration}
           onWebSearchChange={setWebSearch}
           onModeChange={setLaikaMode}
+          showScrollButton={showScrollButton}
+          onScrollToBottom={handleScrollToBottom}
         />
       </div>
 
