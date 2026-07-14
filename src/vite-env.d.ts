@@ -2,7 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string;
-  /** Same OAuth Web client ID as backend `GOOGLE_CLIENT_ID` (public; not the secret). */
+  /** Same OAuth Web client ID as backend `GOOGLE_CLIENT_ID` */
   readonly GOOGLE_CLIENT_ID: string;
 }
 

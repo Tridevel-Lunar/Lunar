@@ -8,27 +8,15 @@ import {
 import {
   IoArrowDownCircleOutline,
   IoArrowForward,
-  IoDiamondOutline,
   IoGameControllerOutline,
   IoRocketOutline,
 } from "react-icons/io5";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
 import type { User } from "@/lib/api";
-import { ARENA_PAGE, FEATURED_MISSION } from "./arena-data";
+import { ARENA_PAGE, FEATURED_MISSION_1 } from "./arena-data";
 
 const ARENA_BG = "/space-hero-earth.png";
-
-function CreditsPill({ amount }: { amount: number }) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-cyan/35 bg-cyan/10 px-3 py-1.5 shadow-[0_0_18px_rgba(0,229,255,0.12)]">
-      <IoDiamondOutline className="text-sm text-cyan" />
-      <span className="font-mono text-[0.62rem] tracking-[0.08em] text-text/90">
-        {amount.toLocaleString("en-US")} Space Credits
-      </span>
-    </div>
-  );
-}
 
 function MissionImagePlaceholder() {
   return (
@@ -48,16 +36,16 @@ function MissionImagePlaceholder() {
 }
 
 function MissionCard() {
-  const mission = FEATURED_MISSION;
+  const mission = FEATURED_MISSION_1;
 
   return (
     <article className="overflow-hidden rounded-2xl border border-cyan/40 bg-[#060e1c]/78 shadow-[0_0_40px_rgba(0,229,255,0.12),0_12px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl">
       <div className="grid gap-0 lg:grid-cols-[minmax(240px,0.9fr)_1.2fr]">
         <div className="flex flex-col border-b border-white/10 p-5 lg:border-b-0 lg:border-r lg:border-white/10 lg:p-6">
-          <p className="font-mono text-[0.65rem] tracking-[0.18em] text-cyan text-glow-cyan-sm">
+          <p className="font-mono text-[0.78rem] tracking-[0.18em] text-cyan text-glow-cyan-sm">
             {mission.code}
           </p>
-          <h3 className="font-display mt-2 text-[clamp(1.35rem,2.4vw,1.85rem)] font-bold tracking-[0.06em] text-text">
+          <h3 className="font-display mt-1 text-[clamp(1.35rem,2.4vw,1.85rem)] font-bold tracking-[0.06em] text-text">
             {mission.title}
           </h3>
           <p className="font-section-thai mt-1.5 text-[0.85rem] text-text/70">
@@ -79,6 +67,9 @@ function MissionCard() {
             </div>
             <p className="font-section-thai text-[0.82rem] leading-relaxed text-text/80">
               {mission.details}
+            </p>
+            <p className="font-section-thai text-[0.82rem] leading-relaxed text-text/80 mt-2">
+              <span className="font-display font-semibold tracking-[0.16em] text-cyan">HINT:</span> {mission.hint}
             </p>
           </section>
 
@@ -170,7 +161,6 @@ export default function ArenaDemo({ user }: { user: User }) {
 
         <header className="relative z-[1] flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] bg-bg/40 px-5 py-3 backdrop-blur-md">
           <div className="flex flex-wrap items-center gap-3">
-            <CreditsPill amount={ARENA_PAGE.credits} />
             <div className="flex items-center gap-2.5">
               <IoGameControllerOutline className="text-xl text-cyan drop-shadow-[0_0_10px_rgba(0,229,255,0.55)]" />
               <h1 className="font-display text-[1.35rem] font-bold tracking-[0.18em] text-text">
@@ -208,15 +198,6 @@ export default function ArenaDemo({ user }: { user: User }) {
               <p className="font-section-thai mt-1 max-w-2xl text-[0.88rem] text-text/65">
                 {ARENA_PAGE.subtitle}
               </p>
-            </div>
-
-            <div className="border-b border-white/10">
-              <button
-                type="button"
-                className="font-display relative -mb-px border-b-2 border-cyan px-1 pb-2 text-[0.72rem] font-semibold tracking-[0.18em] text-cyan text-glow-cyan-sm"
-              >
-                {ARENA_PAGE.tab}
-              </button>
             </div>
 
             <MissionCard />

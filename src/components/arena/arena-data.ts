@@ -5,6 +5,7 @@ export interface ArenaMission {
   subtitle: string;
   level: string;
   details: string;
+  hint: string;
   objectiveLead: string;
   objectiveHighlight: string;
   youWillDoIntro: string;
@@ -15,24 +16,23 @@ export interface ArenaMission {
 }
 
 export const ARENA_PAGE = {
-  title: "การลงมือปฏิบัติ",
-  subtitle: "พัฒนาเทคโนโลยีอวกาศของคุณ",
-  tab: "MISSIONS",
-  credits: 1200,
+  title: "สนามประลองความสามารถด้วยการปฏิบัติ",
+  subtitle: "ลงมือออกแบบ ควบคุม และพัฒนาระบบดาวเทียมให้ดำเนินการตามเป้าหมายได้าำเร็จด้วยด้วยความรู้ที่ได้จาก SPACE ",
 };
 
-export const FEATURED_MISSION: ArenaMission = {
+export const FEATURED_MISSION_1: ArenaMission = {
   id: "leo-orbital-launch",
   code: "MISSION 01",
   title: "LEO ORBITAL LAUNCH",
   subtitle: "ภารกิจปล่อยดาวเทียมเข้าสู่วงโคจรต่ำรอบโลก",
   level: "BEGINNER",
   details:
-    "เรียนรู้ Cubesat 101 ครบแล้ว คุณจะเข้าใจพื้นฐานของดาวเทียม ระบบการทำงาน และหลักการสำคัญที่ทำให้ดาวเทียมทำงานได้จริง",
+    "ตอนนี้ดาวเทียม x กำลังเตรียมพร้อมเข้าสู่การปล่อยตัวสู่วงโคจรต่ำของโลก คุณได้รับหน้าที่ออกแบบระบบต่าง ๆ ของดาวเทียมให้สามารถโคจรบนระดับวงโคจรต่ำได้สำเร็จผ่านแบบจำลอง",
+  hint: "ต่อยอดความรู้จากบทเรียน Cubesat 101",
   objectiveLead: "ออกแบบลำดับคำสั่งให้",
   objectiveHighlight: "ดาวเทียมสามารถเข้าสู่วงโคจรโลกได้สำเร็จ",
   youWillDoIntro:
-    "ต่อ Code Block เพื่อควบคุมระบบต่าง ๆ ของดาวเทียมให้ทำงานร่วมกันได้จริง เช่น:",
+    "เขียนโปรแกรมในรูปแบบ visual codeing เพื่อควบคุมระบบต่าง ๆ ของดาวเทียมให้ทำงานร่วมกันได้จริง ได้แก่",
   youWillDo: [
     "ควบคุมระบบพลังงานและ Payload",
     "ตั้งค่าและตรวจเช็คความเสถียรวงโคจร",
