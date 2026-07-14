@@ -1,24 +1,15 @@
-import "katex/dist/katex.min.css";
-
 import { memo } from "react";
 import Markdown from "react-markdown";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 
-/** Renders LAIKA assistant bubbles (GFM, math, tables, syntax highlight). */
+/** Renders LAIKA assistant bubbles (GFM, plain markdown). */
 
 type LaikaMarkdownProps = {
   content: string;
   size?: "default" | "chat";
 };
-
-const REMARK_PLUGINS = [remarkGfm, remarkMath];
-const REHYPE_PLUGINS: Parameters<typeof Markdown>[0]["rehypePlugins"] = [
-  [rehypeKatex, { throwOnError: false, strict: false }],
-];
 
 const MARKDOWN_COMPONENTS = {
   p: ({ children }: { children?: React.ReactNode }) => (
@@ -43,28 +34,6 @@ const MARKDOWN_COMPONENTS = {
   em: ({ children }: { children?: React.ReactNode }) => (
     <em className="text-text/80">{children}</em>
   ),
-  table: ({ children }: { children?: React.ReactNode }) => (
-    <div className="laika-table-wrap mb-3 max-w-full overflow-x-auto rounded-lg border border-white/10 last:mb-0">
-      <table className="laika-table min-w-full border-collapse text-left">{children}</table>
-    </div>
-  ),
-  thead: ({ children }: { children?: React.ReactNode }) => (
-    <thead className="bg-white/[0.06]">{children}</thead>
-  ),
-  tbody: ({ children }: { children?: React.ReactNode }) => (
-    <tbody className="divide-y divide-white/10">{children}</tbody>
-  ),
-  tr: ({ children }: { children?: React.ReactNode }) => (
-    <tr className="border-b border-white/10 last:border-b-0">{children}</tr>
-  ),
-  th: ({ children }: { children?: React.ReactNode }) => (
-    <th className="whitespace-nowrap px-3 py-2 font-mono text-[0.72rem] font-medium tracking-wide text-cyan/90">
-      {children}
-    </th>
-  ),
-  td: ({ children }: { children?: React.ReactNode }) => (
-    <td className="px-3 py-2 align-top text-text/85">{children}</td>
-  ),
   code: ({
     className,
     children,
@@ -75,23 +44,12 @@ const MARKDOWN_COMPONENTS = {
   }) => {
     const isBlock = className?.includes("language-");
     if (isBlock) {
-      const lang = className?.replace("language-", "") ?? "";
-      const codeString = String(children).replace(/\n$/, "");
       return (
-        <SyntaxHighlighter
-          style={oneDark}
-          language={lang}
-          PreTag="div"
-          customStyle={{
-            margin: 0,
-            borderRadius: "0.5rem",
-            fontSize: "0.82em",
-            background: "#0d1117",
-          }}
-          codeTagProps={{ style: { fontFamily: "inherit" } }}
-        >
-          {codeString}
-        </SyntaxHighlighter>
+        <pre className="mb-3 overflow-x-auto rounded-lg border border-white/10 bg-white/[0.04] p-3 last:mb-0">
+          <code className="block font-mono text-[0.82em] text-cyan" {...props}>
+            {children}
+          </code>
+        </pre>
       );
     }
     return (
@@ -113,6 +71,30 @@ const MARKDOWN_COMPONENTS = {
       {children}
     </blockquote>
   ),
+  table: ({ children }: { children?: React.ReactNode }) => (
+    <div className="laika-table-wrap mb-3 overflow-x-auto last:mb-0">
+      <table className="laika-table w-full border-collapse text-[0.82rem]">
+        {children}
+      </table>
+    </div>
+  ),
+  thead: ({ children }: { children?: React.ReactNode }) => (
+    <thead className="border-b border-white/15">{children}</thead>
+  ),
+  tbody: ({ children }: { children?: React.ReactNode }) => (
+    <tbody>{children}</tbody>
+  ),
+  tr: ({ children }: { children?: React.ReactNode }) => (
+    <tr className="border-b border-white/[0.06] last:border-0">{children}</tr>
+  ),
+  th: ({ children }: { children?: React.ReactNode }) => (
+    <th className="px-3 py-2 text-left font-semibold text-text/90">
+      {children}
+    </th>
+  ),
+  td: ({ children }: { children?: React.ReactNode }) => (
+    <td className="px-3 py-2 text-text/80">{children}</td>
+  ),
 };
 
 function LaikaMarkdown({
@@ -131,8 +113,8 @@ function LaikaMarkdown({
   return (
     <div className={`laika-markdown font-section-thai ${textClass}`}>
       <Markdown
-        remarkPlugins={REMARK_PLUGINS}
-        rehypePlugins={REHYPE_PLUGINS}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeKatex]}
         components={MARKDOWN_COMPONENTS}
       >
         {content}

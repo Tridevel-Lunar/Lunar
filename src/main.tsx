@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import "katex/dist/katex.min.css";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
