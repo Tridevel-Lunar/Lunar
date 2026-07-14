@@ -7,8 +7,7 @@ export type LaikaStatusPhase =
   | "reasoning"
   | "tool_searching"
   | "tool_searching_web"
-  | "generating"
-  | "typing";
+  | "generating";
 
 export const LAIKA_STATUS_MESSAGES: Record<LaikaStatusPhase, string> = {
   embedding: "กำลังวิเคราะห์คำถาม…",
@@ -18,7 +17,6 @@ export const LAIKA_STATUS_MESSAGES: Record<LaikaStatusPhase, string> = {
   tool_searching: "กำลังค้นหาในคลังความรู้…",
   tool_searching_web: "กำลังค้นหาจากอินเทอร์เน็ต…",
   generating: "กำลังสร้างคำตอบ…",
-  typing: "กำลังพิมพ์…",
 };
 
 export function laikaStatusLabel(phase: LaikaStatusPhase): string {

@@ -1,8 +1,9 @@
-import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { micromark } from "micromark";
+import { gfm, gfmHtml } from "micromark-extension-gfm";
+import { math, mathHtml } from "micromark-extension-math";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import {
-  HiOutlineArrowLeft,
-} from "react-icons/hi2";
+import { HiOutlineArrowLeft, } from "react-icons/hi2";
 import { IoRocketOutline } from "react-icons/io5";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
@@ -21,7 +22,6 @@ import {
   type CollectionEntry,
   type LaikaIntent,
 } from "@/components/studio/data/studio-data";
-import { laikaStatusLabel } from "@/components/studio/data/laika-status";
 import LaikaTypingStatus from "@/components/studio/chat/LaikaTypingStatus";
 import { LaikaAvatar, TypeBadge } from "@/components/studio/shared/studio-shared";
 import { isSameChatCalendarDay } from "@/lib/chat-timestamp";
@@ -44,6 +44,7 @@ import {
   sessionToComposerEntry,
   type StudioChatSession,
 } from "@/lib/studio-conversation";
+import { buildContextUsageEstimate, type ContextUsageEstimate } from "@/lib/laika-context";
 import { resolveDeepestVisibleUserNodeId, isChatScrolledToBottom, scrollChatToBottom, scrollUserBubbleToTop } from "@/lib/studio-visible-focus";
 import {
   addNode,
@@ -88,8 +89,6 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   const entryRef = useRef<CollectionEntry | null>(null);
   const sessionRef = useRef<StudioChatSession | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const streamingTextRef = useRef("");
-  const streamingFrameRef = useRef<number | null>(null);
   const stickToBottomRef = useRef(true);
 
   const [session, setSession] = useState<StudioChatSession | null>(null);
@@ -102,7 +101,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   const [laikaLoading, setLaikaLoading] = useState(false);
   const [laikaError, setLaikaError] = useState<string | null>(null);
   const [laikaStatus, setLaikaStatus] = useState<string | null>(null);
-  const [laikaHealth, setLaikaHealth] = useState<LaikaHealth | null>(null);
+  const [stopNotice, setStopNotice] = useState(false);
   const [branchMapOpen, setBranchMapOpen] = useState(false);
   const [userCompose, setUserCompose] = useState<{
     nodeId: string;
@@ -115,6 +114,24 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   const [mapFocusUserId, setMapFocusUserId] = useState<string | null>(null);
   const [webSearch, setWebSearch] = useState(false);
   const [laikaMode, setLaikaMode] = useState<"standard" | "extra">("standard");
+  const [laikaHealth, setLaikaHealth] = useState<LaikaHealth | null>(null);
+
+  // Memoised context usage estimate — stable reference unless deps change
+  const contextUsage = useMemo<ContextUsageEstimate>(() => {
+    const msg = session?.messages ?? [];
+    const entry = entryRef.current;
+    return buildContextUsageEstimate({
+      health: laikaHealth,
+      intent: (session?.laikaIntent as LaikaIntent) ?? "ask-anything",
+      entryContent: entry?.content ?? "",
+      currentContent: streamingText,
+      draft: editDraft,
+      historyMessages: msg as ChatNode[],
+      topK: 5,
+      webSearch,
+      mode: laikaMode,
+    });
+  }, [laikaHealth, session?.messages, session?.laikaIntent, streamingText, editDraft, webSearch, laikaMode]);
 
   const loadConversation = useCallback(async () => {
     if (!collectionId) return;
@@ -136,6 +153,10 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     void loadConversation();
   }, [loadConversation]);
 
+  useEffect(() => {
+    getLaikaHealth().then(setLaikaHealth).catch(() => setLaikaHealth(null));
+  }, []);
+
   const loadBranchMap = useCallback(async () => {
     if (!collectionId) return;
     setBranchMapLoading(true);
@@ -155,12 +176,6 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     if (!branchMapOpen) return;
     void loadBranchMap();
   }, [branchMapOpen, loadBranchMap]);
-
-  useEffect(() => {
-    getLaikaHealth()
-      .then(setLaikaHealth)
-      .catch(() => setLaikaHealth(null));
-  }, []);
 
   useEffect(() => {
     sessionRef.current = session;
@@ -342,25 +357,42 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   useEffect(() => {
     return () => {
       abortRef.current?.abort();
+      abortRef.current = null;
+      streamingDivRef.current = null;
+      entryRef.current = null;
+      sessionRef.current = null;
       shutdownLaikaAssistWs();
     };
   }, []);
 
+  // Clear refs on collection change to free stale references.
+  useEffect(() => {
+    return () => {
+      entryRef.current = null;
+      sessionRef.current = null;
+    };
+  }, [collectionId]);
+
+  const streamingDivRef = useRef<HTMLDivElement | null>(null);
+
   function scheduleStreamingUi(text: string) {
-    streamingTextRef.current = text;
-    if (streamingFrameRef.current !== null) return;
-    streamingFrameRef.current = requestAnimationFrame(() => {
-      streamingFrameRef.current = null;
-      setStreamingText(streamingTextRef.current);
-    });
+    if (streamingDivRef.current) {
+      streamingDivRef.current.innerHTML = micromark(text, {
+        allowDangerousHtml: false,
+        extensions: [gfm(), math()],
+        htmlExtensions: [gfmHtml(), mathHtml()],
+      });
+    } else {
+      setStreamingText(micromark(text, {
+        allowDangerousHtml: false,
+        extensions: [gfm(), math()],
+        htmlExtensions: [gfmHtml(), mathHtml()],
+      }));
+    }
   }
 
   function clearStreamingUi() {
-    streamingTextRef.current = "";
-    if (streamingFrameRef.current !== null) {
-      cancelAnimationFrame(streamingFrameRef.current);
-      streamingFrameRef.current = null;
-    }
+    streamingDivRef.current = null;
     setStreamingText("");
   }
 
@@ -401,6 +433,8 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
 
   function handleStopGeneration() {
     abortRef.current?.abort();
+    setStopNotice(true);
+    setTimeout(() => setStopNotice(false), 2500);
   }
 
   function mergeStreamText(accumulated: string, fromServer?: string): string {
@@ -526,16 +560,15 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
           entry_content: baseEntry.content,
           messages: toLaikaHistory(historyBefore),
           client_now: new Date().toISOString(),
-          web_search: webSearch,          mode: laikaMode,        },
+          web_search: webSearch,          mode: laikaMode,
+          collection_id: collectionId,
+          assistant_node_id: assistantNodeId,        },
         {
           onStatus: (_phase, message) => {
             setLaikaStatus((prev) => (prev === message ? prev : message));
           },
           onToken: (delta) => {
             responseText += delta;
-            setLaikaStatus((prev) =>
-              prev === laikaStatusLabel("typing") ? prev : laikaStatusLabel("typing"),
-            );
             scheduleStreamingUi(responseText);
           },
           onDone: ({ sources, response, truncated }) => {
@@ -946,10 +979,23 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
                       {isStreaming && !assistantContent && (
                         <LaikaTypingStatus message={laikaStatus} />
                       )}
-                      <LaikaMarkdown
-                        content={assistantContent}
-                        size="chat"
-                      />
+                      {stopNotice && (
+                        <p className="font-section-thai mb-1 text-[0.78rem] text-muted-foreground/70">
+                          ถูกหยุดแล้ว
+                        </p>
+                      )}
+                      {isStreaming ? (
+                        <div
+                          ref={streamingDivRef}
+                          className="micromark-stream font-section-thai text-[0.88rem] leading-relaxed text-text/85"
+                          dangerouslySetInnerHTML={{ __html: assistantContent }}
+                        />
+                      ) : (
+                        <LaikaMarkdown
+                          content={assistantContent}
+                          size="chat"
+                        />
+                      )}
                       {node.laikaSources && node.laikaSources.length > 0 && !isStreaming && (
                         <div className="mt-3 border-t border-white/10 pt-2.5">
                           <p className="font-mono mb-1.5 text-[0.52rem] tracking-[0.12em] text-muted">
@@ -1005,14 +1051,13 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
 
         <StudioChatComposer
           entry={sessionToComposerEntry(session)}
-          laikaHealth={laikaHealth}
           laikaLoading={laikaLoading}
           laikaError={laikaError}
           awaitingLaika={awaitingLaika}
           canType={canType}
-          streamingText={streamingText}
           webSearch={webSearch}
           laikaMode={laikaMode}
+          contextUsage={contextUsage}
           onOpenBranchMap={() => setBranchMapOpen(true)}
           onLaikaIntent={handleLaikaIntent}
           onSend={handleSend}
@@ -1028,7 +1073,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
         branchMapLoading={branchMapLoading}
         branchMapError={branchMapError}
         focusUserId={mapFocusUserId}
-        onClose={() => setBranchMapOpen(false)}
+        onClose={() => { setBranchMapOpen(false); setBranchMap(null); }}
         onRetry={() => void loadBranchMap()}
         onSelectNode={handleBranchMapSelect}
       />
