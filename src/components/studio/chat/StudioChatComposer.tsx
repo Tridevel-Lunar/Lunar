@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { HiOutlinePaperAirplane, HiStop } from "react-icons/hi2";
 import { IoGlobeOutline } from "react-icons/io5";
 import { TbSitemap } from "react-icons/tb";
 
 import ContextUsageRing from "@/components/studio/chat/ContextUsageRing";
+import type { ContextUsageEstimate } from "@/lib/laika-context";
+
 import {
   Select,
   SelectContent,
@@ -19,20 +21,16 @@ import {
   type CollectionEntry,
   type LaikaIntent,
 } from "@/components/studio/data/studio-data";
-import { buildContextUsageEstimate } from "@/lib/laika-context";
-import { buildActivePath, defaultIntentForEntry } from "@/lib/studio-tree";
-import type { LaikaHealth } from "@/lib/api";
 
 type StudioChatComposerProps = {
   entry: CollectionEntry;
-  laikaHealth: LaikaHealth | null;
   laikaLoading: boolean;
   laikaError: string | null;
   awaitingLaika: boolean;
   canType: boolean;
-  streamingText: string;
   webSearch: boolean;
   laikaMode: "standard" | "extra";
+  contextUsage?: ContextUsageEstimate;
   onOpenBranchMap: () => void;
   onLaikaIntent: (intent: LaikaIntent) => void;
   onSend: (text: string) => void;
@@ -44,14 +42,13 @@ type StudioChatComposerProps = {
 /** Composer footer — local draft state so keystrokes do not re-render the message list. */
 export default function StudioChatComposer({
   entry,
-  laikaHealth,
   laikaLoading,
   laikaError,
   awaitingLaika,
   canType,
-  streamingText,
   webSearch,
   laikaMode,
+  contextUsage,
   onOpenBranchMap,
   onLaikaIntent,
   onSend,
@@ -64,30 +61,6 @@ export default function StudioChatComposer({
   const intents =
     entry.type === "learn" ? LEARN_INTENTS : entry.type === "idea" ? IDEA_INTENTS : NOTE_INTENTS;
 
-  const contextUsage = useMemo(() => {
-    const path = buildActivePath(entry.tree);
-    const historyMessages = path.map((n) => ({
-      id: n.id,
-      role: n.role,
-      content:
-        entry.laikaStreaming && n.id === entry.streamingNodeId
-          ? streamingText || n.content
-          : n.content,
-      createdAt: n.createdAt,
-      laikaIntent: n.laikaIntent,
-      laikaSources: n.laikaSources,
-    }));
-    return buildContextUsageEstimate({
-      health: laikaHealth,
-      intent: defaultIntentForEntry(entry.type, entry.laikaIntent),
-      entryContent: entry.content,
-      currentContent: "",
-      draft,
-      historyMessages,
-      webSearch,
-      mode: laikaMode,
-    });
-  }, [draft, entry, laikaHealth, streamingText, webSearch, laikaMode]);
 
   function handleSend() {
     const text = draft.trim();
@@ -137,7 +110,6 @@ export default function StudioChatComposer({
               <TbSitemap className="text-xl" />
             </button>
           </HintTooltip>
-          
           <div className="flex h-12 grow items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-1.5 focus-within:border-amber/30">
             {!awaitingLaika && laikaMode === "standard" && (
               <HintTooltip content="ค้นหาจากอินเทอร์เน็ต (DuckDuckGo)">
@@ -233,7 +205,9 @@ export default function StudioChatComposer({
               </HintTooltip>
             )}
           </div>
-          {!awaitingLaika && <ContextUsageRing usage={contextUsage} />}
+          {contextUsage && (
+            <ContextUsageRing usage={contextUsage} />
+          )}
         </div>
       </div>
     </footer>

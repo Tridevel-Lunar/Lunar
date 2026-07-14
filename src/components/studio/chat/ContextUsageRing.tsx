@@ -35,6 +35,14 @@ function formatTokenCount(value: number): string {
   return String(value);
 }
 
+function formatPercent(part: number, total: number): string {
+  if (total <= 0) return "0%";
+  return `${Math.round((part / total) * 100)}%`;
+}
+
+/** Segments that belong to the System group. */
+const SYSTEM_KEYS = new Set(["system", "rag", "tool_loop", "reserved"]);
+
 export default function ContextUsageRing({ usage, className = "" }: ContextUsageRingProps) {
   const size = 28;
   const stroke = 3;
@@ -44,6 +52,10 @@ export default function ContextUsageRing({ usage, className = "" }: ContextUsage
   const dashOffset = circumference * (1 - fill);
   const color = usageRingColor(fill);
   const percent = Math.round(fill * 100);
+
+  const systemSegments = usage.segments.filter((s) => SYSTEM_KEYS.has(s.key));
+  const userSegments = usage.segments.filter((s) => !SYSTEM_KEYS.has(s.key));
+  const total = usage.inputBudget;
 
   return (
     <Popover>
@@ -82,14 +94,20 @@ export default function ContextUsageRing({ usage, className = "" }: ContextUsage
         sideOffset={8}
         className="w-64 gap-0 rounded-xl border-border bg-popover p-3 text-left shadow-xl ring-1 ring-cyan/10"
       >
+        {/* Header */}
         <p className="font-mono text-[0.58rem] tracking-[0.14em] text-muted-foreground uppercase">
           Context window
         </p>
-        <p className="font-section-thai mt-1 text-[0.82rem] text-popover-foreground">
-          {formatTokenCount(usage.usedInput)} / {formatTokenCount(usage.inputBudget)} input tokens
-          <span className="text-muted-foreground"> ({percent}%)</span>
-        </p>
+        <div className="mt-1 flex items-baseline gap-2">
+          <span className="font-en text-[1.15rem] font-bold text-popover-foreground">
+            {percent}%
+          </span>
+          <span className="font-section-thai text-[0.72rem] text-muted-foreground">
+            ({formatTokenCount(usage.usedInput)} / {formatTokenCount(usage.inputBudget)})
+          </span>
+        </div>
 
+        {/* Progress bar */}
         <div className="mt-2 flex h-1.5 w-full overflow-hidden rounded-full bg-white/[0.1]">
           {usage.segments.map((segment) => (
             <div
@@ -116,30 +134,97 @@ export default function ContextUsageRing({ usage, className = "" }: ContextUsage
           )}
         </div>
 
+        {/* Model info */}
         <p className="font-mono mt-1.5 text-[0.52rem] text-muted-foreground">
-          {usage.llmModel} · window {formatTokenCount(usage.contextWindow)} · reserve output{" "}
+          {usage.llmModel} · window {formatTokenCount(usage.contextWindow)} · reserve{" "}
           {formatTokenCount(usage.reservedOutput)}
         </p>
 
-        <ul className="mt-2.5 space-y-1.5 border-t border-border pt-2">
-          {usage.segments.map((segment) => (
-            <li
-              key={segment.key}
-              className="flex items-center justify-between gap-2 font-section-thai text-[0.72rem] text-popover-foreground/75"
-            >
-              <span className="flex items-center gap-1.5 truncate">
-                <span
-                  className="block h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: segmentColor(segment.key) }}
-                />
-                <span className="truncate">{segment.label}</span>
-              </span>
-              <span className="font-mono shrink-0 text-[0.62rem] text-muted-foreground">
-                {segment.tokens}
-              </span>
-            </li>
-          ))}
-        </ul>
+        {/* System group */}
+        {systemSegments.length > 0 && (
+          <div className="mt-2.5 border-t border-border pt-2">
+            <p className="font-mono mb-1.5 text-[0.55rem] tracking-[0.1em] text-muted-foreground/60 uppercase">
+              System
+            </p>
+            <ul className="space-y-1">
+              {systemSegments.map((segment) => (
+                <li
+                  key={segment.key}
+                  className="flex items-center justify-between gap-2 font-section-thai text-[0.72rem] text-popover-foreground/75"
+                >
+                  <span className="flex items-center gap-1.5 truncate">
+                    <span
+                      className="block h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: segmentColor(segment.key) }}
+                    />
+                    <span className="truncate">{segment.label}</span>
+                  </span>
+                  <span className="font-mono shrink-0 text-[0.6rem] text-muted-foreground">
+                    {formatPercent(segment.tokens, total)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* User Context group */}
+        {userSegments.length > 0 && (
+          <div className="mt-2 border-t border-border pt-2">
+            <p className="font-mono mb-1.5 text-[0.55rem] tracking-[0.1em] text-muted-foreground/60 uppercase">
+              User Context
+            </p>
+            <ul className="space-y-1">
+              {userSegments.map((segment) => (
+                <li
+                  key={segment.key}
+                  className="flex items-center justify-between gap-2 font-section-thai text-[0.72rem] text-popover-foreground/75"
+                >
+                  <span className="flex items-center gap-1.5 truncate">
+                    <span
+                      className="block h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: segmentColor(segment.key) }}
+                    />
+                    <span className="truncate">{segment.label}</span>
+                  </span>
+                  <span className="font-mono shrink-0 text-[0.6rem] text-muted-foreground">
+                    {formatPercent(segment.tokens, total)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Reserved + remaining row */}
+        {(usage.reservedOutput > 0 || usage.remainingInput > 0) && (
+          <div className="mt-2 border-t border-border pt-2">
+            <ul className="space-y-1">
+              {usage.reservedOutput > 0 && (
+                <li className="flex items-center justify-between gap-2 font-section-thai text-[0.72rem] text-popover-foreground/75">
+                  <span className="flex items-center gap-1.5 truncate">
+                    <span className="block h-2 w-2 shrink-0 rounded-full bg-[#334155]" />
+                    <span className="truncate">Reserved output</span>
+                  </span>
+                  <span className="font-mono shrink-0 text-[0.6rem] text-muted-foreground">
+                    {formatPercent(usage.reservedOutput, total)}
+                  </span>
+                </li>
+              )}
+              {usage.remainingInput > 0 && (
+                <li className="flex items-center justify-between gap-2 font-section-thai text-[0.72rem] text-popover-foreground/75">
+                  <span className="flex items-center gap-1.5 truncate">
+                    <span className="block h-2 w-2 shrink-0 rounded-full bg-white/[0.12]" />
+                    <span className="truncate">Available</span>
+                  </span>
+                  <span className="font-mono shrink-0 text-[0.6rem] text-muted-foreground">
+                    {formatPercent(usage.remainingInput, total)}
+                  </span>
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
 
         {usage.historyTrimmedCount > 0 && (
           <p className="font-section-thai mt-2 text-[0.68rem] leading-snug text-amber/90">
