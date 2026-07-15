@@ -1,8 +1,6 @@
-import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
-const StarField = lazy(() => import("./StarField"));
-
-type ModuleId = "learn" | "build" | "launch";
+type ModuleId = "space" | "arena" | "studio";
 
 interface ModuleData {
   id: ModuleId;
@@ -17,36 +15,36 @@ interface ModuleData {
 
 const MODULES: ModuleData[] = [
   {
-    id: "learn",
+    id: "space",
     step: "01",
-    title: "LEARN",
+    title: "SPACE",
     titleTh: "เรียนรู้",
-    tagline: "Space Technology Fundamentals",
+    tagline: "Interactive Learning",
     description:
-      "ปูพื้นฐานผ่านบทเรียน interactive ตั้งแต่ฟิสิกส์วงโคจร โครงสร้างดาวเทียม จนถึงระบบสื่อสาร",
-    bullets: ["Interactive lessons", "Visual simulations", "Structured path"],
+      "ปูพื้นฐานวิศวกรรมอวกาศแบบ interactive จำลองโครงสร้าง CubeSat 3 มิติ เชื่อมต่อระบบฝังตัว คำนวณฟิสิกส์วงโคจร และเขียนโปรแกรมควบคุม autopilot",
+    bullets: ["3D Model — CubeSat 101", "Embedded System — OBC/EPS", "Physics — Orbit & Power Budget", "Programming — Autopilot Logic"],
     accent: "#00e5ff",
   },
   {
-    id: "build",
+    id: "arena",
     step: "02",
-    title: "BUILD",
-    titleTh: "สร้าง",
-    tagline: "Design Your Own Satellite",
+    title: "ARENA",
+    titleTh: "ลงมือปฏิบัติ",
+    tagline: "Build & Mission Simulation",
     description:
-      "ลงมือออกแบบระบบดาวเทียม วางโครงสร้างภารกิจ และทดสอบการทำงานใน sandbox ก่อนใช้จริง",
-    bullets: ["Mission design", "Subsystem builder", "Simulation sandbox"],
+      "หลังจากเข้าใจ concept พื้นฐานแล้ว มาลองสร้างตรรกะควบคุมดาวเทียมด้วย Blockly และทดสอบภารกิจในสภาพแวดล้อมจำลองที่ทำงานร่วมกับ Physics Engine",
+    bullets: ["Visual Coding — Blockly drag & drop", "Simulation — Digital twin sandbox"],
     accent: "#7dd3fc",
   },
   {
-    id: "launch",
+    id: "studio",
     step: "03",
-    title: "LAUNCH",
-    titleTh: "ปล่อย",
-    tagline: "Share Ideas, Connect Experts",
+    title: "STUDIO",
+    titleTh: "สร้างสรรค์ต่อ",
+    tagline: "Launch, Portfolio & LAIKA",
     description:
-      "เก็บไอเดีย พัฒนาต่อยอด และในอนาคตเชื่อมต่อกับผู้เชี่ยวชาญเพื่อสร้างคุณค่าให้กับโปรเจกต์",
-    bullets: ["Idea vault", "Community feedback", "Expert connect"],
+      "เก็บผลงาน วางแผนพัฒนา และต่อยอดไอเดียกับ LAIKA ผู้ช่วย AI ที่ให้คำปรึกษา วิเคราะห์แนวคิด และเชื่อมโยงคุณค่าสู่นวัตกรรมอวกาศ",
+    bullets: ["LAIKA — AI mentor with RAG", "Conversation tree & idea vault", "Portfolio & career pathway"],
     accent: "#a78bfa",
   },
 ];
@@ -120,18 +118,6 @@ function ModuleCard({
 export default function PlatformSection() {
   const [activeId, setActiveId] = useState<ModuleId>("learn");
   const sectionRef = useRef<HTMLElement>(null);
-  const [starsActive, setStarsActive] = useState(false);
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => setStarsActive(entry.isIntersecting),
-      { rootMargin: "120px" },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
 
   return (
     <section
@@ -139,29 +125,17 @@ export default function PlatformSection() {
       id="platform"
       className="relative min-h-screen overflow-hidden bg-bg px-6 py-32 text-text"
     >
-      {starsActive && (
-        <Suspense fallback={null}>
-          <StarField />
-        </Suspense>
-      )}
-
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(3,8,18,0.6)_70%,#030812_100%)]"
-        aria-hidden
-      />
-
-      <div className="relative z-[1] mx-auto max-w-[1200px]">
+      <div className="relative mx-auto max-w-[1200px]">
         <div className="mb-20 text-center">
           <div className="font-ui-mono mb-7 inline-flex items-center gap-2.5 text-[0.72rem] tracking-[0.3em] text-cyan/85">
             <span className="glow-dot-cyan h-1.5 w-1.5 rounded-full bg-cyan" />
             PLATFORM
           </div>
           <h2 className="font-section-thai m-0 mb-5 text-[clamp(2.4rem,5vw,3.6rem)] leading-[1.15] font-light tracking-tight text-text">
-            เส้นทางสู่จักรวาล
+            แพลตฟอร์ม LUNAR
           </h2>
           <p className="font-section-thai mx-auto m-0 max-w-[560px] text-[1.05rem] leading-relaxed font-light text-text/50">
-            สามขั้นตอนที่ออกแบบมาเพื่อพาคุณจากพื้นฐาน สู่การลงมือสร้าง
-            และปล่อยไอเดียของตัวเองสู่โลกจริง
+            ตั้งแต่เรียนรู้ทฤษฎี ลงมือทดสอบ ไปจนถึงการต่อยอดไอเดียด้วย AI ทุกอย่างในที่เดียว
           </p>
         </div>
 

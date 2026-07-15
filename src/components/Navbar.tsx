@@ -88,9 +88,9 @@ export default function Navbar() {
       ) : (
         <Link
           to="/register"
-          className={`${outlineBtnClass} border border-cyan text-cyan transition-all hover:bg-cyan hover:text-bg`}
+          className="btn-clip font-mono border-2 border-cyan bg-cyan/15 px-6 py-2.5 text-[0.72rem] font-bold tracking-[0.12em] uppercase text-cyan no-underline transition-all hover:bg-cyan hover:text-bg hover:shadow-[0_0_25px_rgba(0,229,255,0.35)]"
         >
-          ENROLL NOW
+          ลงทะเบียนฟรี
         </Link>
       )}
     </nav>

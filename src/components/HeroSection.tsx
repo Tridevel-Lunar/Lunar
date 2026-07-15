@@ -1,8 +1,10 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const SpaceCanvas = lazy(() => import("./SpaceCanvas"));
 
 export default function HeroSection() {
+  const navigate = useNavigate();
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 100);
@@ -25,45 +27,30 @@ export default function HeroSection() {
       <div
         className={`relative z-[3] flex min-h-screen flex-col items-center justify-center px-6 py-24 text-center transition-[opacity,transform] duration-[1.2s] ease-out pointer-events-none ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
       >
-        <div className="font-mono mb-8 text-[0.75rem] tracking-[0.35em] text-cyan/80 uppercase">
-          Thailand Deep Tech Space Program
+        <div className="font-mono mb-8 text-[0.72rem] tracking-[0.35em] text-cyan/70 uppercase">
+          Learn · Build · Launch
         </div>
 
-        <h1 className="text-glow-cyan-lg m-0 text-[clamp(4rem,14vw,9rem)] leading-none font-extralight tracking-[0.18em] text-text">
+        <h1 className="m-0 text-[clamp(4rem,14vw,9rem)] leading-none font-extralight tracking-[0.18em] text-text">
           LUNAR
         </h1>
 
         <p className="mt-8 max-w-[640px] text-[1.05rem] leading-relaxed text-text/70">
-          แพลตฟอร์มเรียนรู้เทคโนโลยีอวกาศสำหรับคนไทย
+          แพลตฟอร์มเรียนรู้เทคโนโลยีอวกาศด้วย Interactive
         </p>
 
-        <div className="pointer-events-auto mt-12 flex flex-wrap justify-center gap-4">
-          <PrimaryBtn label="เริ่มเรียนรู้" />
-          <SecondaryBtn label="เกี่ยวกับเรา" />
+        <div className="pointer-events-auto mt-12">
+          <button
+            type="button"
+            onClick={() => navigate("/register")}
+            className="font-mono cursor-pointer border border-cyan/50 bg-cyan/10 px-10 py-3.5 text-[0.82rem] tracking-[0.12em] text-cyan uppercase backdrop-blur-sm transition-all hover:bg-cyan hover:text-bg"
+          >
+            เริ่มเรียนรู้
+          </button>
         </div>
       </div>
     </section>
   );
 }
 
-function PrimaryBtn({ label }: { label: string }) {
-  return (
-    <button
-      type="button"
-      className="font-mono cursor-pointer border border-cyan/50 bg-cyan/10 px-10 py-3.5 text-[0.82rem] tracking-[0.12em] text-cyan uppercase backdrop-blur-sm transition-all hover:bg-cyan hover:text-bg hover:shadow-[0_0_30px_rgba(0,229,255,0.4)]"
-    >
-      {label}
-    </button>
-  );
-}
 
-function SecondaryBtn({ label }: { label: string }) {
-  return (
-    <button
-      type="button"
-      className="font-mono cursor-pointer border border-text/18 bg-text/[0.03] px-10 py-3.5 text-[0.82rem] tracking-[0.12em] text-text/60 uppercase backdrop-blur-sm transition-all hover:text-text"
-    >
-      {label}
-    </button>
-  );
-}
