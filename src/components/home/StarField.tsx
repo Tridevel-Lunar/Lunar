@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { runThreeLoop, disposeScene } from "@/components/why-space/useThreeScene";
+import { runThreeLoop, disposeScene } from "@/components/home/why-space/useThreeScene";
 
 export default function StarField() {
   const mountRef = useRef<HTMLDivElement | null>(null);

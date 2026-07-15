@@ -1,14 +1,10 @@
-import { useEffect } from "react";
-
 import SpaceDemo from "@/components/space/SpaceDemo";
 import { useAuthUser } from "@/routes/useAuthUser";
+import { usePageTitle } from "@/lib/use-page-title";
 
 export default function Space() {
   const user = useAuthUser();
-
-  useEffect(() => {
-    document.title = "Space";
-  }, []);
+  usePageTitle("Space");
 
   return <SpaceDemo user={user} />;
 }

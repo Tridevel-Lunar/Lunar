@@ -7,6 +7,7 @@ import AuthErrorMessage from "@/components/auth/AuthErrorMessage";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import AuthShell from "@/components/AuthShell";
 import { apiFetch } from "@/lib/api";
+import { usePageTitle } from "@/lib/use-page-title";
 
 const labelClass = "mb-1.5 block text-[0.85rem]";
 
@@ -17,6 +18,7 @@ const submitClass =
   "auth-btn-shine relative w-full overflow-hidden border border-cyan bg-cyan px-4 py-3 font-mono text-[0.72rem] tracking-[0.12em] text-bg uppercase transition-[transform,box-shadow,opacity] not-disabled:hover:-translate-y-px not-disabled:hover:shadow-[0_4px_24px_rgba(0,229,255,0.35)] disabled:cursor-wait disabled:opacity-70";
 
 export default function Register() {
+  usePageTitle("Register");
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
