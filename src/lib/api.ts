@@ -96,6 +96,7 @@ export type User = {
   id: string;
   email: string;
   display_name: string | null;
+  picture: string | null;
   role: string;
   created_at: string;
 };
