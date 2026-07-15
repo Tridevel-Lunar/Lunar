@@ -79,7 +79,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   const entryRef = useRef<CollectionEntry | null>(null);
   const sessionRef = useRef<StudioChatSession | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const autoFollowRef = useRef(true);
+  const followStreamRef = useRef(true);
 
   const [session, setSession] = useState<StudioChatSession | null>(null);
   const [entryLoading, setEntryLoading] = useState(true);
@@ -100,8 +100,6 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   } | null>(null);
   const [editDraft, setEditDraft] = useState("");
   const [scrollToUserNodeId, setScrollToUserNodeId] = useState<string | null>(null);
-  const [scrollToBottomTick, setScrollToBottomTick] = useState(0);
-  const [scrollAfterDoneTick, setScrollAfterDoneTick] = useState(0);
   const [mapFocusUserId, setMapFocusUserId] = useState<string | null>(null);
   const [webSearch, setWebSearch] = useState(false);
   const [laikaMode, setLaikaMode] = useState<"standard" | "extra">("standard");
@@ -220,7 +218,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
 
     const onWheel = (e: WheelEvent) => {
       if (e.deltaY < 0) {
-        autoFollowRef.current = false;
+        followStreamRef.current = false;
         setShowScrollButton(true);
       }
     };
@@ -232,7 +230,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     const onTouchMove = (e: TouchEvent) => {
       const y = e.touches[0]?.clientY;
       if (touchY != null && y != null && y > touchY + 4) {
-        autoFollowRef.current = false;
+        followStreamRef.current = false;
         setShowScrollButton(true);
       }
       if (y != null) touchY = y;
@@ -269,7 +267,6 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     if (!container) return;
 
     const nodeId = scrollToUserNodeId;
-    autoFollowRef.current = false;
     setShowScrollButton(true);
     const frame = requestAnimationFrame(() => {
       const el = container.querySelector(`[data-chat-user-node="${nodeId}"]`);
@@ -282,38 +279,9 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     return () => cancelAnimationFrame(frame);
   }, [scrollToUserNodeId, session, updateMapFocusUser]);
 
-  // One-shot scroll to bottom after send — instant, re-engage auto-follow.
-  useLayoutEffect(() => {
-    if (scrollToBottomTick === 0) return;
-    const container = chatScrollRef.current;
-    if (!container) return;
-    autoFollowRef.current = true;
-    setShowScrollButton(false);
-    scrollChatToBottom(container, "auto");
-    window.setTimeout(updateMapFocusUser, 400);
-  }, [scrollToBottomTick, updateMapFocusUser]);
 
-  // Follow LAIKA stream while auto-follow is engaged.
-  useLayoutEffect(() => {
-    if (!session?.laikaStreaming || !autoFollowRef.current) return;
-    const container = chatScrollRef.current;
-    if (!container) return;
-    scrollChatToBottom(container, "auto");
-  }, [streamingText, laikaStatus, session?.laikaStreaming]);
 
-  // After stream done — scroll once more when references/footer render (if still at bottom).
-  useLayoutEffect(() => {
-    if (scrollAfterDoneTick === 0) return;
-    const container = chatScrollRef.current;
-    if (!container) return;
-    const jump = () => scrollChatToBottom(container, "auto");
-    jump();
-    const frame = requestAnimationFrame(() => {
-      jump();
-      updateMapFocusUser();
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [scrollAfterDoneTick, updateMapFocusUser]);
+
 
   // Open chat / switch collection — jump to latest messages (no smooth follow during stream).
   useLayoutEffect(() => {
@@ -321,7 +289,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     const container = chatScrollRef.current;
     if (!container) return;
 
-    autoFollowRef.current = true;
+    followStreamRef.current = true;
     setShowScrollButton(false);
     const jump = () => scrollChatToBottom(container, "auto");
     jump();
@@ -373,12 +341,6 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     setStreamingText("");
   }
 
-  function bumpScrollAfterDoneIfStuck() {
-    if (autoFollowRef.current) {
-      setScrollAfterDoneTick((t) => t + 1);
-    }
-  }
-
   function handleStopGeneration() {
     abortRef.current?.abort();
     setStopNotice(true);
@@ -388,7 +350,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   function handleScrollToBottom() {
     const container = chatScrollRef.current;
     if (!container) return;
-    autoFollowRef.current = true;
+    followStreamRef.current = true;
     setShowScrollButton(false);
     scrollChatToBottom(container, "smooth");
   }
@@ -508,7 +470,12 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
                 hasLaika: true,
               };
             });
-            setScrollToBottomTick((t) => t + 1);
+            followStreamRef.current = true;
+            setShowScrollButton(false);
+            requestAnimationFrame(() => {
+              const c = chatScrollRef.current;
+              if (c) scrollChatToBottom(c, "smooth");
+            });
           },
           onStatus: (_phase, message) => {
             setLaikaStatus((prev) => (prev === message ? prev : message));
@@ -516,12 +483,19 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
           onToken: (delta) => {
             responseText += delta;
             scheduleStreamingUi(responseText);
+            if (followStreamRef.current) {
+              const c = chatScrollRef.current;
+              if (c) scrollChatToBottom(c, "auto");
+            }
           },
           onDone: () => {
             setLaikaStatus(null);
             clearStreamingUi();
             refreshConversation();
-            bumpScrollAfterDoneIfStuck();
+            if (followStreamRef.current) {
+              const c = chatScrollRef.current;
+              if (c) scrollChatToBottom(c, "auto");
+            }
           },
         },
         controller.signal,

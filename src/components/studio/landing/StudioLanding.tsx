@@ -4,6 +4,7 @@ import { IoRocketOutline } from "react-icons/io5";
 import ModuleSidebar from "@/components/app/ModuleSidebar";
 import CollectionGrid from "@/components/studio/landing/CollectionGrid";
 import LaikaHeroGreeting from "@/components/studio/landing/LaikaHeroGreeting";
+import StarField from "@/components/studio/landing/StarField";
 import type { CollectionEntry } from "@/components/studio/data/studio-data";
 import { ApiError } from "@/lib/api";
 import { listCollections } from "@/lib/studio-storage";
@@ -59,7 +60,9 @@ export default function StudioLanding({ user }: StudioLandingProps) {
         </header>
 
         <main className="flex min-h-0 flex-1 flex-col justify-center-safe overflow-auto">
-          <div className="flex flex-1 flex-col items-center justify-center px-5 py-8">
+          <div className="flex flex-1 flex-col items-center justify-center px-5 py-8 relative overflow-clip">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.06)_0%,transparent_60%)]" aria-hidden />
+            <StarField />
             <LaikaHeroGreeting
               collectionsReady={!loading}
               hasCollections={collections.length > 0}
