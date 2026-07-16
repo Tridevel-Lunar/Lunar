@@ -597,3 +597,44 @@ export async function deleteKnowledgeSource(sourceId: string): Promise<void> {
     throw new ApiError(response.status, detail);
   }
 }
+
+/* ── Arena missions (Blockly attempt save/load) ── */
+
+export type ArenaMissionPack = {
+  id: string;
+  toolboxId: string;
+  title: string;
+  code: string;
+  level: string;
+  playable: boolean;
+  allowedOps: string[];
+  limits: {
+    maxBlocks: number;
+    maxDepth: number;
+    maxSteps: number;
+    wallMs: number;
+  };
+};
+
+export type ArenaAttempt = {
+  mission_id: string;
+  ast: Record<string, unknown> | null;
+};
+
+export function getArenaMission(missionId: string): Promise<ArenaMissionPack> {
+  return apiFetch<ArenaMissionPack>(`/arena/missions/${missionId}`);
+}
+
+export function getArenaAttempt(missionId: string): Promise<ArenaAttempt> {
+  return apiFetch<ArenaAttempt>(`/arena/missions/${missionId}/attempt`);
+}
+
+export function saveArenaAttempt(
+  missionId: string,
+  ast: Record<string, unknown>,
+): Promise<ArenaAttempt> {
+  return apiFetch<ArenaAttempt>(`/arena/missions/${missionId}/attempt`, {
+    method: "PUT",
+    body: JSON.stringify({ ast }),
+  });
+}

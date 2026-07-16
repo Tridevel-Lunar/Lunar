@@ -69,7 +69,7 @@ Vite เปิดเผยเฉพาะชื่อ `GOOGLE_CLIENT_ID` (ผ่
 | Product module | Landing tab (`PlatformSection`) | Route | เนื้อหาหลัก |
 |----------------|--------------------------------|-------|-------------|
 | **Space** | LEARN (เรียนรู้) | `/space` | 3D Model, Embedded, Physics, Programming |
-| **Arena** | BUILD (สร้าง) | _(planned)_ | Visual Coding, Simulation |
+| **Arena** | BUILD (สร้าง) | `/arena`, `/arena/mission/:missionId` | Visual Coding (Blockly), Mission Feedback (mock) |
 | **Studio** | LAUNCH (ปล่อย) | `/studio` | พอร์ตโฟลิโอ, LAIKA, ต่อยอดไอเดีย |
 
 ฟีเจอร์ LAIKA / LLM / RAG จะเรียก backend API — ไม่ implement ใน frontend โดยตรง
@@ -103,6 +103,51 @@ Studio แยกเป็น landing + chat ต่อ collection:
 | `src/components/studio/landing/` | `StudioLanding`, `LaikaHeroGreeting`, `CollectionGrid` |
 | `src/components/studio/chat/` | `StudioChatView`, composer, branch map |
 
+### Arena (Visual Coding)
+
+Mission hub + Blockly workspace for **MISSION 01 — LEO Orbital Launch**. Stage: **UI + mock save** (no interpreter / `POST .../runs` / DB yet). Design reference: workspace `visual-programming-system-design v2.md`.
+
+| Route | หน้าที่ |
+|-------|---------|
+| `/arena` | Mission carousel (`ArenaDemo`) — brief + CTA |
+| `/arena/mission/:missionId` | Mission shell: header (back, code/title, **90:00 timer**) + `MissionActivity` |
+
+Playable id: `leo-orbital-launch` only. `coming-soon` shows a not-ready message.
+
+| ใน scope | นอก scope (ถัดไป) |
+|----------|-------------------|
+| M01 Blockly toolbox + Thai blocks → JSON AST | Tree-walking interpreter + `POST /arena/missions/:id/runs` |
+| `GET` mission pack · `GET`/`PUT` attempt (in-memory BE) | Persist attempts in PostgreSQL |
+| Save / Clear / Submit stub | Real grading + `RunResult` |
+| Result column mock (simulate / dashboard / outcome) | R3F frame replay, live metrics |
+| VIEW select: รายละเอียดภารกิจ \| เขียนโค้ดบล็อก | Extra mission tabs / submit flow |
+
+**UI layout (coding view)**
+
+- Top bar (`ArenaMission`): back · mission code/title · countdown timer  
+- VIEW dropdown (`MissionActivity`): switches detail vs Blockly — `SelectContent` uses `z-[100]` so it stacks above Blockly toolbox (`z-index: 70`)  
+- Split: Blockly ~`1.5fr` · Result ~`1fr` (`lg:grid-cols-[minmax(0,1.5fr)_minmax(260px,1fr)]`)  
+- Blockly terms: **toolbox** = category list · **flyout** = block palette · **workspace** = canvas  
+
+**Lib / components**
+
+| Path | บทบาท |
+|------|--------|
+| `src/pages/Arena.tsx` · `ArenaMission.tsx` | Routes |
+| `src/components/arena/arena-data.ts` | Static mission copy |
+| `src/components/arena/ArenaDemo.tsx` | Hub carousel |
+| `src/components/arena/mission/MissionActivity.tsx` | Detail / coding views, save/clear |
+| `src/components/arena/blockly/BlocklyEditor.tsx` | Blockly inject + theme |
+| `src/components/arena/blockly/blocks/m01.ts` | M01 block defs |
+| `src/components/arena/blockly/toolboxes/m01-beginner.ts` | Category toolbox |
+| `src/components/arena/blockly/toAst.ts` · `fromAst.ts` | Workspace ↔ AST |
+| `src/components/arena/blockly/blockly-toolbox.css` | Toolbox/flyout styling (class `.blocklyToolbox`) |
+| `src/components/arena/feedback/MissionFeedbackMock.tsx` | Mock result panels |
+| `src/ast/types.ts` | AST / pack types (mirror BE) |
+| `src/lib/api.ts` | `getArenaMission` · `getArenaAttempt` · `saveArenaAttempt` |
+
+**Backend (mock):** `GET/PUT /arena/missions/{id}/attempt` — in-memory per user; see [backend/docs/api.md](../../backend/docs/api.md#arena).
+
 ## Directory Map
 
 ```
@@ -113,19 +158,23 @@ frontend/
 │   ├── main.tsx           # createRoot + BrowserRouter
 │   ├── App.tsx            # React Router routes
 │   ├── index.css          # Fonts, CSS variables, Tailwind
-│   ├── pages/             # Home, Login, Register, Space, Studio
+│   ├── pages/             # Home, Login, Register, Space, Arena, ArenaMission, Studio
 │   ├── routes/            # ProtectedRoute, GuestRoute, useAuthUser
+│   ├── ast/               # Arena AST type contracts
 │   ├── components/
 │   │   ├── auth/          # GoogleSignInButton, GoogleOneTap, LoginForm, ...
+│   │   ├── arena/         # ArenaDemo, mission/, blockly/, feedback/
 │   │   ├── space/, studio/
 │   │   └── ...            # Landing sections, Navbar, SpaceCanvas
 │   ├── lib/
-│   │   ├── api.ts         # User type, API helpers
+│   │   ├── api.ts         # User type, studio + arena API helpers
 │   │   ├── auth.ts        # tryRefreshSession, getCurrentUser, clearSession, Google sign-in
 │   │   ├── googleIdentity.ts  # GIS script load, initialize, renderButton, One Tap
 │   │   └── constants.ts   # API_URL
 │   └── types/
 │       └── google-identity.d.ts
+├── public/
+│   └── blockly/media/     # Blockly trashcan / zoom icons
 ├── docs/
 ├── tailwind.config.ts
 └── tsconfig.json          # @/* → src/*
@@ -139,7 +188,7 @@ frontend/
 - **Canvas / WebGL** — `React.lazy()` + `<Suspense>` สำหรับ browser-only (ดู `HeroSection` → `SpaceCanvas`)
 - **Auth** — httpOnly cookies (`lunar_token` + `lunar_refresh`) จาก FastAPI; เรียก `/api/auth/*` (Vite proxy)
 - **Google Sign-In** — Google Identity Services (`gsi/client`); credential ส่งไป `POST /auth/google/onetap`
-- **Route guards** — `GuestRoute` (login/register) · `ProtectedRoute` (space/studio)
+- **Route guards** — `GuestRoute` (login/register) · `ProtectedRoute` (space/arena/studio)
 - **Styling** — Tailwind v4 utilities เป็นหลัก; `@theme` tokens ใน `index.css`
 
 ### Auth flow
