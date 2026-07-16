@@ -7,6 +7,7 @@ import { IoPlanetOutline } from "react-icons/io5";
 import { GiCube, GiOrbital } from "react-icons/gi";
 import { TbBlocks } from "react-icons/tb";
 import { IoHardwareChipOutline } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
 import type { User } from "@/lib/api";
@@ -105,12 +106,12 @@ function SpaceHero() {
 
       <div className="relative z-[1] grid gap-4 p-4 lg:grid-cols-[1fr_auto] lg:p-5">
         <div className="max-w-sm pt-1">
-          <p className="font-section-thai mb-1 text-[0.72rem] text-cyan/80">{CURRENT_COURSE.tag}</p>
+          <p className="font-section-thai mb-1 text-[0.85rem] text-cyan/80">{CURRENT_COURSE.tag}</p>
           <h2 className="font-display mb-0.5 text-[clamp(1.6rem,3vw,2.2rem)] font-bold tracking-wide text-text">
             {CURRENT_COURSE.title}
           </h2>
-          <p className="font-section-thai mb-2 text-[0.88rem] text-text/70">{CURRENT_COURSE.subtitle}</p>
-          <p className="font-section-thai text-[0.8rem] leading-relaxed text-muted">
+          <p className="font-section-thai mb-2 text-[1rem] text-text/70">{CURRENT_COURSE.subtitle}</p>
+          <p className="font-section-thai text-[0.95rem] leading-relaxed text-muted">
             {CURRENT_COURSE.description}
           </p>
         </div>
@@ -125,7 +126,7 @@ function SpaceHero() {
               <p className="font-display text-base font-bold text-cyan">
                 {CURRENT_COURSE.completedLessons}/{CURRENT_COURSE.totalLessons}
               </p>
-              <p className="font-mono text-[0.5rem] tracking-wider text-muted">Lessons</p>
+              <p className="font-mono text-[0.6rem] tracking-wider text-muted">Lessons</p>
             </div>
           </div>
         </div>
@@ -136,10 +137,10 @@ function SpaceHero() {
               <GiCube className="text-2xl text-cyan drop-shadow-[0_0_10px_rgba(0,229,255,0.5)]" />
             </div>
             <div>
-              <p className="font-display text-[0.85rem] font-semibold tracking-wide text-text">
+              <p className="font-display text-[1rem] font-semibold tracking-wide text-text">
                 {CURRENT_COURSE.title}
               </p>
-              <p className="font-section-thai text-[0.72rem] text-muted">
+              <p className="font-section-thai text-[0.85rem] text-muted">
                 บทเรียนทั้งหมด {CURRENT_COURSE.totalLessons} บท
               </p>
             </div>
@@ -160,7 +161,7 @@ function SpaceHero() {
 
           <button
             type="button"
-            className="btn-clip font-mono shrink-0 cursor-pointer border border-cyan/50 bg-cyan/10 px-5 py-2.5 text-[0.62rem] tracking-[0.12em] text-cyan transition hover:bg-cyan hover:text-bg"
+            className="btn-clip font-mono shrink-0 cursor-pointer border border-cyan/50 bg-cyan/10 px-6 py-3 text-[0.72rem] tracking-[0.12em] text-cyan transition hover:bg-cyan hover:text-bg"
           >
             CONTINUE LEARNING →
           </button>
@@ -187,10 +188,10 @@ function TopicRow({ topic }: { topic: SpaceTopic }) {
         <TopicIcon type={topic.icon} accent={topic.accent} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-display text-[0.82rem] font-semibold tracking-[0.1em] text-text">
+        <p className="font-display text-[0.95rem] font-semibold tracking-[0.1em] text-text">
           {topic.title}
         </p>
-        <p className="font-section-thai mt-0.5 text-[0.78rem] leading-snug text-muted">
+        <p className="font-section-thai mt-0.5 text-[0.88rem] leading-snug text-muted">
           {topic.description}
         </p>
       </div>
@@ -199,7 +200,9 @@ function TopicRow({ topic }: { topic: SpaceTopic }) {
   );
 }
 
-export default function SpaceDemo({ user }: { user: User }) {
+export default function SpaceCourse({ user }: { user: User }) {
+  const navigate = useNavigate();
+
   const today = new Date().toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -213,6 +216,13 @@ export default function SpaceDemo({ user }: { user: User }) {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-3">
           <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => navigate("/space")}
+              className="cursor-pointer text-lg text-text/40 transition hover:text-cyan"
+            >
+              ←
+            </button>
             <IoPlanetOutline className="text-xl text-cyan" />
             <h1 className="font-display text-[1.35rem] font-bold tracking-[0.18em] text-text">SPACE</h1>
           </div>
