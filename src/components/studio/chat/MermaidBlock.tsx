@@ -10,15 +10,31 @@ export default function MermaidBlock({ chart }: MermaidBlockProps) {
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || error) return;
+    if (!el) return;
 
     let cancelled = false;
+
+    // Clear previous content before rendering
+    el.innerHTML = "";
+
     (async () => {
       try {
         const { default: mermaid } = await import("mermaid");
         if (cancelled) return;
+
         mermaid.initialize({ startOnLoad: false, theme: "dark" });
-        const { svg } = await mermaid.render("mermaid-svg-" + Math.random().toString(36).slice(2), chart);
+
+        // Validate syntax first — mermaid.render can leak error DOM on failure
+        try {
+          await mermaid.parse(chart);
+        } catch {
+          if (!cancelled) setError(true);
+          return;
+        }
+        if (cancelled) return;
+
+        const id = "mermaid-svg-" + Math.random().toString(36).slice(2);
+        const { svg } = await mermaid.render(id, chart);
         if (!cancelled && el) {
           el.innerHTML = svg;
         }
@@ -28,7 +44,7 @@ export default function MermaidBlock({ chart }: MermaidBlockProps) {
     })();
 
     return () => { cancelled = true; };
-  }, [chart, error]);
+  }, [chart]);
 
   if (error) {
     return (
