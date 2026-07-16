@@ -126,7 +126,7 @@ export default function StudioChatComposer({
           </HintTooltip>
           <div className="flex h-12 grow items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-1.5 focus-within:border-amber/30">
             {!awaitingLaika && laikaMode === "standard" && (
-              <HintTooltip content="ค้นหาจากอินเทอร์เน็ต (DuckDuckGo)">
+              <HintTooltip content="ค้นหาจากอินเทอร์เน็ต">
                 <button
                   type="button"
                   onClick={() => onWebSearchChange(!webSearch)}

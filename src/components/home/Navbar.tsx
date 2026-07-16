@@ -5,14 +5,21 @@ import { clearSession, getCurrentUser } from "@/lib/auth";
 import type { User } from "@/lib/api";
 
 const NAV_LINKS = [
-  { label: "WHY SPACE", href: "/#why-space" },
-  { label: "RESEARCH", href: "/#research" },
-  { label: "PLATFORM", href: "/#platform" },
-  { label: "JOIN US", href: "/#join-us" },
+  { label: "WHY SPACE", href: "why-space" },
+  { label: "RESEARCH", href: "research" },
+  { label: "PLATFORM", href: "platform" },
+  { label: "JOIN US", href: "join-us" },
 ] as const;
 
+function scrollToSection(id: string) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
 const navLinkClass =
-  "font-mono text-[0.72rem] tracking-[0.12em] text-text/50 no-underline transition-colors hover:text-cyan";
+  "font-mono text-[0.72rem] tracking-[0.12em] text-text/50 no-underline transition-colors hover:text-cyan cursor-pointer";
 
 const outlineBtnClass =
   "btn-clip font-mono px-5 py-2.5 text-[0.72rem] tracking-[0.12em] uppercase no-underline transition-colors";
@@ -62,9 +69,15 @@ export default function Navbar() {
       <ul className="flex list-none gap-10">
         {NAV_LINKS.map((item) => (
           <li key={item.href}>
-            <Link to={item.href} className={navLinkClass}>
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={() => scrollToSection(item.href)}
+              onKeyDown={(e) => { if (e.key === "Enter") scrollToSection(item.href); }}
+              className={navLinkClass}
+            >
               {item.label}
-            </Link>
+            </span>
           </li>
         ))}
       </ul>
@@ -88,9 +101,9 @@ export default function Navbar() {
       ) : (
         <Link
           to="/register"
-          className={`${outlineBtnClass} border border-cyan text-cyan transition-all hover:bg-cyan hover:text-bg`}
+          className="btn-clip font-mono border-2 border-cyan bg-cyan/15 px-6 py-2.5 text-[0.72rem] font-bold tracking-[0.12em] uppercase text-cyan no-underline transition-all hover:bg-cyan hover:text-bg hover:shadow-[0_0_25px_rgba(0,229,255,0.35)]"
         >
-          ENROLL NOW
+          ลงทะเบียนฟรี
         </Link>
       )}
     </nav>

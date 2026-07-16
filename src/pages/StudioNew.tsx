@@ -1,14 +1,10 @@
-import { useEffect } from "react";
-
 import StudioNewCollection from "@/components/studio/landing/StudioNewCollection";
 import { useAuthUser } from "@/routes/useAuthUser";
+import { usePageTitle } from "@/lib/use-page-title";
 
 export default function StudioNew() {
   const user = useAuthUser();
-
-  useEffect(() => {
-    document.title = "Studio";
-  }, []);
+  usePageTitle("Studio");
 
   return <StudioNewCollection user={user} />;
 }

@@ -6,63 +6,24 @@ import {
 import { IoPlanetOutline } from "react-icons/io5";
 import { GiCube, GiOrbital } from "react-icons/gi";
 import { TbBlocks } from "react-icons/tb";
-import { IoHardwareChipOutline } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
 import type { User } from "@/lib/api";
 import { CURRENT_COURSE, SPACE_TOPICS, type SpaceTopic } from "./space-data";
 
+
 const SPACE_HERO_EARTH = "/space-hero-earth.png";
-
-function ProgressRing({
-  value,
-  max,
-  size = 72,
-}: {
-  value: number;
-  max: number;
-  size?: number;
-}) {
-  const stroke = 5;
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const pct = max > 0 ? value / max : 0;
-
-  return (
-    <svg width={size} height={size} className="-rotate-90">
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke="rgba(255,255,255,0.08)"
-        strokeWidth={stroke}
-      />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke="#00e5ff"
-        strokeWidth={stroke}
-        strokeLinecap="round"
-        strokeDasharray={c}
-        strokeDashoffset={c * (1 - pct)}
-        className="drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]"
-      />
-    </svg>
-  );
-}
 
 function TopicIcon({ type, accent }: { type: SpaceTopic["icon"]; accent: string }) {
   const className = "text-[1.9rem]";
   const style = { color: accent, filter: `drop-shadow(0 0 12px ${accent}66)` };
 
   switch (type) {
-    case "model":
+    case "overview":
+      return <IoPlanetOutline className={className} style={style} />;
+    case "anatomy":
       return <GiCube className={className} style={style} />;
-    case "embedded":
-      return <IoHardwareChipOutline className={className} style={style} />;
     case "physics":
       return <GiOrbital className={className} style={style} />;
     case "programming":
@@ -105,29 +66,14 @@ function SpaceHero() {
 
       <div className="relative z-[1] grid gap-4 p-4 lg:grid-cols-[1fr_auto] lg:p-5">
         <div className="max-w-sm pt-1">
-          <p className="font-section-thai mb-1 text-[0.72rem] text-cyan/80">{CURRENT_COURSE.tag}</p>
+          <p className="font-section-thai mb-1 text-[0.85rem] text-cyan/80">{CURRENT_COURSE.tag}</p>
           <h2 className="font-display mb-0.5 text-[clamp(1.6rem,3vw,2.2rem)] font-bold tracking-wide text-text">
             {CURRENT_COURSE.title}
           </h2>
-          <p className="font-section-thai mb-2 text-[0.88rem] text-text/70">{CURRENT_COURSE.subtitle}</p>
-          <p className="font-section-thai text-[0.8rem] leading-relaxed text-muted">
+          <p className="font-section-thai mb-2 text-[1rem] text-text/70">{CURRENT_COURSE.subtitle}</p>
+          <p className="font-section-thai text-[0.95rem] leading-relaxed text-muted">
             {CURRENT_COURSE.description}
           </p>
-        </div>
-
-        <div className="flex flex-col items-end gap-3">
-          <div className="relative flex items-center justify-center">
-            <ProgressRing
-              value={CURRENT_COURSE.completedLessons}
-              max={CURRENT_COURSE.totalLessons}
-            />
-            <div className="absolute text-center">
-              <p className="font-display text-base font-bold text-cyan">
-                {CURRENT_COURSE.completedLessons}/{CURRENT_COURSE.totalLessons}
-              </p>
-              <p className="font-mono text-[0.5rem] tracking-wider text-muted">Lessons</p>
-            </div>
-          </div>
         </div>
 
         <GlassCard className="col-span-full flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
@@ -136,11 +82,8 @@ function SpaceHero() {
               <GiCube className="text-2xl text-cyan drop-shadow-[0_0_10px_rgba(0,229,255,0.5)]" />
             </div>
             <div>
-              <p className="font-display text-[0.85rem] font-semibold tracking-wide text-text">
+              <p className="font-display text-[1rem] font-semibold tracking-wide text-text">
                 {CURRENT_COURSE.title}
-              </p>
-              <p className="font-section-thai text-[0.72rem] text-muted">
-                บทเรียนทั้งหมด {CURRENT_COURSE.totalLessons} บท
               </p>
             </div>
           </div>
@@ -160,7 +103,7 @@ function SpaceHero() {
 
           <button
             type="button"
-            className="btn-clip font-mono shrink-0 cursor-pointer border border-cyan/50 bg-cyan/10 px-5 py-2.5 text-[0.62rem] tracking-[0.12em] text-cyan transition hover:bg-cyan hover:text-bg"
+            className="btn-clip font-mono shrink-0 cursor-pointer border border-cyan/50 bg-cyan/10 px-6 py-3 text-[0.72rem] tracking-[0.12em] text-cyan transition hover:bg-cyan hover:text-bg"
           >
             CONTINUE LEARNING →
           </button>
@@ -187,19 +130,34 @@ function TopicRow({ topic }: { topic: SpaceTopic }) {
         <TopicIcon type={topic.icon} accent={topic.accent} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-display text-[0.82rem] font-semibold tracking-[0.1em] text-text">
+        <p className="font-display text-[0.95rem] font-semibold tracking-[0.1em] text-text">
           {topic.title}
         </p>
-        <p className="font-section-thai mt-0.5 text-[0.78rem] leading-snug text-muted">
+        <p className="font-section-thai mt-0.5 text-[0.88rem] leading-snug text-muted">
           {topic.description}
         </p>
+        <div className="mt-2 flex items-center gap-2">
+          <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${topic.progress}%`,
+                background: topic.accent,
+                boxShadow: `0 0 8px ${topic.accent}66`,
+              }}
+            />
+          </div>
+          <span className="font-mono text-[0.55rem] tracking-wider text-text/40">{topic.progress}%</span>
+        </div>
       </div>
       <span className="pr-2 text-xl text-text/25 transition group-hover:text-cyan/70">›</span>
     </button>
   );
 }
 
-export default function SpaceDemo({ user }: { user: User }) {
+export default function SpaceCourse({ user }: { user: User }) {
+  const navigate = useNavigate();
+
   const today = new Date().toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -213,6 +171,13 @@ export default function SpaceDemo({ user }: { user: User }) {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-3">
           <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => navigate("/space", { state: { tab: "courses" } })}
+              className="cursor-pointer text-lg text-text/40 transition hover:text-cyan"
+            >
+              ←
+            </button>
             <IoPlanetOutline className="text-xl text-cyan" />
             <h1 className="font-display text-[1.35rem] font-bold tracking-[0.18em] text-text">SPACE</h1>
           </div>

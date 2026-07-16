@@ -1,14 +1,10 @@
-import { useEffect } from "react";
-
 import ArenaDemo from "@/components/arena/ArenaDemo";
 import { useAuthUser } from "@/routes/useAuthUser";
+import { usePageTitle } from "@/lib/use-page-title";
 
 export default function Arena() {
   const user = useAuthUser();
-
-  useEffect(() => {
-    document.title = "Arena";
-  }, []);
+  usePageTitle("Arena");
 
   return <ArenaDemo user={user} />;
 }

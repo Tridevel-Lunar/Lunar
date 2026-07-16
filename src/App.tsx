@@ -23,7 +23,7 @@ export default function App() {
         <Route path="/register" element={<Register />} />
       </Route>
       <Route element={<ProtectedRoute />}>
-        <Route path="/space" element={<Space />} />
+        <Route path="/space/*" element={<Space />} />
         <Route path="/arena" element={<Arena />} />
         <Route path="/arena/mission/:missionId" element={<ArenaMission />} />
         <Route path="/studio" element={<Studio />} />

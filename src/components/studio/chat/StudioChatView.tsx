@@ -479,6 +479,10 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
           },
           onStatus: (_phase, message) => {
             setLaikaStatus((prev) => (prev === message ? prev : message));
+            if (followStreamRef.current) {
+              const c = chatScrollRef.current;
+              if (c) scrollChatToBottom(c, "auto");
+            }
           },
           onToken: (delta) => {
             responseText += delta;
@@ -492,10 +496,12 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
             setLaikaStatus(null);
             clearStreamingUi();
             refreshConversation();
-            if (followStreamRef.current) {
-              const c = chatScrollRef.current;
-              if (c) scrollChatToBottom(c, "auto");
-            }
+            requestAnimationFrame(() => {
+              if (followStreamRef.current) {
+                const c = chatScrollRef.current;
+                if (c) scrollChatToBottom(c, "auto");
+              }
+            })
           },
         },
         controller.signal,

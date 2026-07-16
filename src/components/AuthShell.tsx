@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 
 import { useMotionReady } from "@/lib/useMotionReady";
 
-const StarField = lazy(() => import("@/components/StarField"));
+const StarField = lazy(() => import("@/components/home/StarField"));
 
 type AuthShellProps = {
   title: string;

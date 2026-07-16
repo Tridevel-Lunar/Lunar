@@ -71,7 +71,7 @@ export default function BackofficeSidebar({
       <div className="mb-5 flex shrink-0 items-center gap-2.5">
         <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-teal/30">
           <img
-            src={DEFAULT_AVATAR_URL}
+            src={user.picture || DEFAULT_AVATAR_URL}
             alt=""
             className="absolute inset-0 h-full w-full object-cover object-top"
           />
