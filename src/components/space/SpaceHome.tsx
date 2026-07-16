@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   HiOutlineBell,
   HiOutlineCalendar,
@@ -14,7 +14,9 @@ import { CURRENT_COURSE, SPACE_TOPICS } from "./space-data";
 type SpaceTab = "home" | "courses";
 
 export default function SpaceHome({ user }: { user: User }) {
-  const [tab, setTab] = useState<SpaceTab>("home");
+  const location = useLocation();
+  const initialTab = (location.state as { tab?: SpaceTab } | null)?.tab ?? "home";
+  const [tab, setTab] = useState<SpaceTab>(initialTab);
 
   const today = new Date().toLocaleDateString("en-US", {
     month: "short",
@@ -178,13 +180,10 @@ function CoursesView() {
           <p className="font-section-thai mt-0.5 text-[0.82rem] text-text/50">
             {CURRENT_COURSE.description}
           </p>
-          <div className="mt-3 flex gap-3">
+          <div className="mt-3">
             <span className="inline-flex items-center gap-1.5 rounded-md border border-cyan/20 bg-cyan/[0.06] px-2.5 py-1 font-mono text-[0.6rem] tracking-wider text-cyan/80">
               <IoPlanetOutline className="text-[0.65rem]" />
               {SPACE_TOPICS.length} Modules
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 font-mono text-[0.6rem] tracking-wider text-text/50">
-              {CURRENT_COURSE.totalLessons} Lessons
             </span>
           </div>
           <div className="mt-2 flex items-center gap-3">

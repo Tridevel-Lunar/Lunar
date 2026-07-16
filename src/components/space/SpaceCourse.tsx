@@ -12,47 +12,8 @@ import ModuleSidebar from "@/components/app/ModuleSidebar";
 import type { User } from "@/lib/api";
 import { CURRENT_COURSE, SPACE_TOPICS, type SpaceTopic } from "./space-data";
 
+
 const SPACE_HERO_EARTH = "/space-hero-earth.png";
-
-function ProgressRing({
-  value,
-  max,
-  size = 72,
-}: {
-  value: number;
-  max: number;
-  size?: number;
-}) {
-  const stroke = 5;
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const pct = max > 0 ? value / max : 0;
-
-  return (
-    <svg width={size} height={size} className="-rotate-90">
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke="rgba(255,255,255,0.08)"
-        strokeWidth={stroke}
-      />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke="#00e5ff"
-        strokeWidth={stroke}
-        strokeLinecap="round"
-        strokeDasharray={c}
-        strokeDashoffset={c * (1 - pct)}
-        className="drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]"
-      />
-    </svg>
-  );
-}
 
 function TopicIcon({ type, accent }: { type: SpaceTopic["icon"]; accent: string }) {
   const className = "text-[1.9rem]";
@@ -115,21 +76,6 @@ function SpaceHero() {
           </p>
         </div>
 
-        <div className="flex flex-col items-end gap-3">
-          <div className="relative flex items-center justify-center">
-            <ProgressRing
-              value={CURRENT_COURSE.completedLessons}
-              max={CURRENT_COURSE.totalLessons}
-            />
-            <div className="absolute text-center">
-              <p className="font-display text-base font-bold text-cyan">
-                {CURRENT_COURSE.completedLessons}/{CURRENT_COURSE.totalLessons}
-              </p>
-              <p className="font-mono text-[0.6rem] tracking-wider text-muted">Lessons</p>
-            </div>
-          </div>
-        </div>
-
         <GlassCard className="col-span-full flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-cyan/25 bg-cyan/5">
@@ -138,9 +84,6 @@ function SpaceHero() {
             <div>
               <p className="font-display text-[1rem] font-semibold tracking-wide text-text">
                 {CURRENT_COURSE.title}
-              </p>
-              <p className="font-section-thai text-[0.85rem] text-muted">
-                บทเรียนทั้งหมด {CURRENT_COURSE.totalLessons} บท
               </p>
             </div>
           </div>
@@ -193,6 +136,19 @@ function TopicRow({ topic }: { topic: SpaceTopic }) {
         <p className="font-section-thai mt-0.5 text-[0.88rem] leading-snug text-muted">
           {topic.description}
         </p>
+        <div className="mt-2 flex items-center gap-2">
+          <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${topic.progress}%`,
+                background: topic.accent,
+                boxShadow: `0 0 8px ${topic.accent}66`,
+              }}
+            />
+          </div>
+          <span className="font-mono text-[0.55rem] tracking-wider text-text/40">{topic.progress}%</span>
+        </div>
       </div>
       <span className="pr-2 text-xl text-text/25 transition group-hover:text-cyan/70">›</span>
     </button>
@@ -217,7 +173,7 @@ export default function SpaceCourse({ user }: { user: User }) {
           <div className="flex items-center gap-2.5">
             <button
               type="button"
-              onClick={() => navigate("/space")}
+              onClick={() => navigate("/space", { state: { tab: "courses" } })}
               className="cursor-pointer text-lg text-text/40 transition hover:text-cyan"
             >
               ←

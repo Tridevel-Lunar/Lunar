@@ -5,6 +5,7 @@ export interface SpaceTopic {
   description: string;
   accent: string;
   icon: "overview" | "anatomy" | "physics" | "programming";
+  progress: number;
 }
 
 export const CURRENT_COURSE = {
@@ -12,9 +13,7 @@ export const CURRENT_COURSE = {
   title: "CUBESAT FOR BEGINNER",
   subtitle: "พื้นฐานดาวเทียม",
   description: "เรียนรู้ส่วนประกอบและการทำงานของดาวเทียม CubeSat",
-  totalLessons: 12,
-  completedLessons: 7,
-  progress: 68,
+  progress: 0,
 };
 
 export const SPACE_TOPICS: SpaceTopic[] = [
@@ -25,6 +24,7 @@ export const SPACE_TOPICS: SpaceTopic[] = [
     description: "เรียนรู้แนวคิดพื้นฐานของดาวเทียมและบทบาทในชีวิตประจำวัน",
     accent: "#00e5ff",
     icon: "overview",
+    progress: 0,
   },
   {
     id: "anatomy",
@@ -34,6 +34,7 @@ export const SPACE_TOPICS: SpaceTopic[] = [
       "ศึกษาส่วนประกอบต่าง ๆ ของ CubeSat และการทำงานร่วมกันของแต่ละระบบ",
     accent: "#7dd3fc",
     icon: "anatomy",
+    progress: 0,
   },
   {
     id: "physics",
@@ -42,6 +43,7 @@ export const SPACE_TOPICS: SpaceTopic[] = [
     description: "เรียนพื้นฐานฟิสิกส์ที่เกี่ยวข้องกับการทำงานของดาวเทียมในวงโคจร",
     accent: "#a78bfa",
     icon: "physics",
+    progress: 0,
   },
   {
     id: "programming",
@@ -51,5 +53,6 @@ export const SPACE_TOPICS: SpaceTopic[] = [
       "เรียนการเขียนโปรแกรมแบบบล็อก เพื่อสั่งให้ดาวเทียมทำงาน",
     accent: "#ffab00",
     icon: "programming",
+    progress: 0,
   },
 ];
