@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   HiOutlineBell,
   HiOutlineCalendar,
@@ -130,13 +131,13 @@ function MissionCard({ mission }: { mission: ArenaMission }) {
           </div>
         </div>
 
-        <button
-          type="button"
-          className="group inline-flex items-center justify-center gap-2 rounded-lg border border-cyan/60 bg-gradient-to-r from-cyan to-[#4df0ff] px-6 py-3 font-section-thai text-[0.95rem] font-medium text-bg shadow-[0_0_28px_rgba(0,229,255,0.45)] transition hover:brightness-110"
+        <Link
+          to={`/arena/mission/${mission.id}`}
+          className="group inline-flex items-center justify-center gap-2 rounded-lg border border-cyan/60 bg-gradient-to-r from-cyan to-[#4df0ff] px-6 py-3 font-section-thai text-[0.95rem] font-medium text-bg no-underline shadow-[0_0_28px_rgba(0,229,255,0.45)] transition hover:brightness-110"
         >
           {mission.ctaLabel}
           <IoArrowForward className="text-base transition group-hover:translate-x-0.5" />
-        </button>
+        </Link>
       </div>
     </article>
   );

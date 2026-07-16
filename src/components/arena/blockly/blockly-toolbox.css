@@ -1,0 +1,176 @@
+/* Blockly toolbox (v12+) — align with ModuleSidebar */
+
+[data-blockly-editor] {
+  position: relative;
+  overflow: hidden !important;
+}
+
+[data-blockly-editor] .injectionDiv {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+[data-blockly-editor] .blocklySvg {
+  overflow: hidden !important;
+}
+
+[data-blockly-editor] .blocklyToolbox,
+[data-blockly-editor] .blocklyToolboxDiv {
+  background-color: rgba(2, 6, 15, 0.96) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 0.65rem 0.75rem !important;
+  /* Slightly wider than content-sized default for Thai labels */
+  width: 10rem !important;
+  min-width: 7rem !important;
+  max-width: 11rem !important;
+  box-sizing: border-box !important;
+  backdrop-filter: blur(10px);
+  overflow: hidden !important;
+}
+
+[data-blockly-editor] .blocklyToolboxCategoryGroup,
+[data-blockly-editor] .blocklyToolboxContents {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+[data-blockly-editor] .blocklyToolboxCategoryContainer {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+[data-blockly-editor] .blocklyToolboxCategory,
+[data-blockly-editor] .blocklyTreeRow {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 2.35rem !important;
+  margin: 0 !important;
+  padding: 0.5rem 0.65rem !important;
+  border-radius: 0.5rem !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-sizing: border-box;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+[data-blockly-editor] .blocklyToolboxCategory:not(.blocklyToolboxSelected):hover,
+[data-blockly-editor] .blocklyTreeRow:not(.blocklyTreeSelected):hover {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+[data-blockly-editor] .blocklyToolboxCategory.blocklyToolboxSelected,
+[data-blockly-editor] .blocklyTreeRow.blocklyTreeSelected,
+[data-blockly-editor] .blocklyToolboxSelected {
+  border-color: rgba(0, 229, 255, 0.5) !important;
+  background: rgba(0, 229, 255, 0.1) !important;
+  background-color: rgba(0, 229, 255, 0.1) !important;
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.12);
+}
+
+[data-blockly-editor] .blocklyTreeRowContentContainer {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  min-width: 0;
+}
+
+[data-blockly-editor] .blocklyToolboxCategoryIcon,
+[data-blockly-editor] .blocklyToolboxCategoryIconClosed,
+[data-blockly-editor] .blocklyToolboxCategoryIconOpen,
+[data-blockly-editor] .blocklyTreeIcon,
+[data-blockly-editor] .blocklyTreeIconClosed,
+[data-blockly-editor] .blocklyTreeIconOpen {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+}
+
+[data-blockly-editor] .blocklyToolboxCategory::before,
+[data-blockly-editor] .blocklyTreeRow::before {
+  content: "";
+  flex-shrink: 0;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 9999px;
+  background: rgba(0, 229, 255, 0.4);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
+}
+
+[data-blockly-editor] .blocklyToolboxCategory.blocklyToolboxSelected::before,
+[data-blockly-editor] .blocklyTreeRow.blocklyTreeSelected::before {
+  background: #00e5ff;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.55);
+}
+
+[data-blockly-editor] .blocklyToolboxCategoryLabel,
+[data-blockly-editor] .blocklyTreeLabel {
+  font-family: "Sarabun", "Noto Sans Thai", sans-serif !important;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em;
+  line-height: 1.25 !important;
+  color: rgba(232, 237, 245, 0.55) !important;
+  padding: 0 !important;
+  white-space: normal !important;
+}
+
+[data-blockly-editor] .blocklyToolboxCategory:hover .blocklyToolboxCategoryLabel,
+[data-blockly-editor] .blocklyTreeRow:hover .blocklyTreeLabel {
+  color: rgba(232, 237, 245, 0.8) !important;
+}
+
+[data-blockly-editor] .blocklyToolboxSelected .blocklyToolboxCategoryLabel,
+[data-blockly-editor] .blocklyToolboxCategory.blocklyToolboxSelected .blocklyToolboxCategoryLabel,
+[data-blockly-editor] .blocklyTreeSelected .blocklyTreeLabel {
+  color: #00e5ff !important;
+}
+
+[data-blockly-editor] .blocklyFlyoutBackground {
+  fill: #070d18 !important;
+  fill-opacity: 0.98 !important;
+  filter: drop-shadow(1px 0 0 rgba(237, 234, 234, 0.66));
+}
+
+[data-blockly-editor] .blocklyFlyout {
+  overflow: hidden !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  box-sizing: border-box;
+}
+
+/*
+ * Flyout scrollbar sits on the right edge of the palette (= "middle" of the editor).
+ * Hide it — wheel still scrolls the flyout when block lists are long.
+ */
+[data-blockly-editor] .blocklyFlyoutScrollbar,
+[data-blockly-editor] .blocklyFlyout .blocklyScrollbarVertical,
+[data-blockly-editor] .blocklyFlyout .blocklyScrollbarBackground,
+[data-blockly-editor] .blocklyFlyout .blocklyScrollbarHandle {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+[data-blockly-editor] .blocklyMainBackground {
+  stroke: none !important;
+}
+
+[data-blockly-editor] .blocklyScrollbarHorizontal {
+  display: none !important;
+}

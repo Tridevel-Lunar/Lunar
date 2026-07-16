@@ -6,6 +6,7 @@ import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Arena from "@/pages/Arena";
+import ArenaMission from "@/pages/ArenaMission";
 import Space from "@/pages/Space";
 import Studio from "@/pages/Studio";
 import StudioChat from "@/pages/StudioChat";
@@ -24,6 +25,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route path="/space" element={<Space />} />
         <Route path="/arena" element={<Arena />} />
+        <Route path="/arena/mission/:missionId" element={<ArenaMission />} />
         <Route path="/studio" element={<Studio />} />
         <Route path="/studio/new" element={<StudioNew />} />
         <Route path="/studio/chat/:collectionId" element={<StudioChat />} />
