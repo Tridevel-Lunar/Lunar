@@ -165,7 +165,7 @@ function CoursesView() {
       </h2>
 
       <Link
-        to="/space/course/cubesat-101"
+        to="/space/course/cubesat-for-beginner"
         className="group flex items-center gap-4 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 no-underline transition hover:border-cyan/25 hover:bg-white/[0.05] backdrop-blur-2xl"
       >
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-cyan/25 bg-cyan/5">
@@ -173,7 +173,7 @@ function CoursesView() {
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-display text-[0.95rem] font-semibold tracking-wide text-text">
-            CUBESAT 101
+            CUBESAT FOR BEGINNER
           </p>
           <p className="font-section-thai mt-0.5 text-[0.82rem] text-text/50">
             {CURRENT_COURSE.description}

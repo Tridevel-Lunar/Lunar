@@ -6,7 +6,6 @@ import {
 import { IoPlanetOutline } from "react-icons/io5";
 import { GiCube, GiOrbital } from "react-icons/gi";
 import { TbBlocks } from "react-icons/tb";
-import { IoHardwareChipOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
@@ -60,10 +59,10 @@ function TopicIcon({ type, accent }: { type: SpaceTopic["icon"]; accent: string 
   const style = { color: accent, filter: `drop-shadow(0 0 12px ${accent}66)` };
 
   switch (type) {
-    case "model":
+    case "overview":
+      return <IoPlanetOutline className={className} style={style} />;
+    case "anatomy":
       return <GiCube className={className} style={style} />;
-    case "embedded":
-      return <IoHardwareChipOutline className={className} style={style} />;
     case "physics":
       return <GiOrbital className={className} style={style} />;
     case "programming":
