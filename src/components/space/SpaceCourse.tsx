@@ -6,7 +6,7 @@ import {
 import { IoPlanetOutline } from "react-icons/io5";
 import { GiCube, GiOrbital } from "react-icons/gi";
 import { TbBlocks } from "react-icons/tb";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
 import type { User } from "@/lib/api";
@@ -113,11 +113,21 @@ function SpaceHero() {
   );
 }
 
-function TopicRow({ topic }: { topic: SpaceTopic }) {
+function TopicRow({
+  topic,
+  onOpen,
+}: {
+  topic: SpaceTopic;
+  onOpen: (topicId: string) => void;
+}) {
+  const isAvailable = topic.id === "overview" || topic.id === "anatomy";
+
   return (
     <button
       type="button"
-      className="group flex w-full cursor-pointer items-center gap-3.5 rounded-xl border border-white/[0.08] bg-white/[0.03] p-3 text-left transition hover:border-white/15 hover:bg-white/[0.05]"
+      onClick={() => isAvailable && onOpen(topic.id)}
+      disabled={!isAvailable}
+      className="group flex w-full cursor-pointer items-center gap-3.5 rounded-xl border border-white/[0.08] bg-white/[0.03] p-3 text-left transition hover:border-white/15 hover:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-50"
     >
       <div
         className="w-1 shrink-0 self-stretch rounded-full"
@@ -157,6 +167,7 @@ function TopicRow({ topic }: { topic: SpaceTopic }) {
 
 export default function SpaceCourse({ user }: { user: User }) {
   const navigate = useNavigate();
+  const { courseId = "cubesat-for-beginner" } = useParams<{ courseId: string }>();
 
   const today = new Date().toLocaleDateString("en-US", {
     month: "short",
@@ -203,7 +214,13 @@ export default function SpaceCourse({ user }: { user: User }) {
             <SpaceHero />
             <div className="space-y-2">
               {SPACE_TOPICS.map((topic) => (
-                <TopicRow key={topic.id} topic={topic} />
+                <TopicRow
+                  key={topic.id}
+                  topic={topic}
+                  onOpen={(topicId) =>
+                    navigate(`/space/course/${courseId}/lesson/${topicId}`)
+                  }
+                />
               ))}
             </div>
           </div>
