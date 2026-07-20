@@ -1,206 +1,128 @@
-# LUNAR — Functional Specification
+# LUNAR Frontend Functional Spec
 
-เอกสารรายละเอียดฟังก์ชันระดับโปรแกรม (อ้างอิง proposal §7.4)  
-บริบท product: [concept.md](concept.md) · tech stack: [stack.md](stack.md)
+Functional specification of what the current frontend delivers.
 
-## 7.4.1 Input / Output Specification
+## Product Modules
 
-| | รายละเอียด |
-|---|------------|
-| **Input** | การกระทำต่าง ๆ ของผู้ใช้งานบนแพลตฟอร์ม (คลิก, ลาก, ปรับ slider, เขียนบล็อก, ส่งคำถาม LAIKA ฯลฯ) |
-| **Output** | การตอบสนองของระบบต่อการกระทำของผู้ใช้ (UI feedback, progress, ผลจำลอง, ข้อความ error/success, คำแนะนำ AI) |
+- **Space** (Learn): content and activity entry points for space technology learning
+- **Arena** (Build): Blockly mission coding and simulation result feedback
+- **Studio** (Launch): user collections and LAIKA-assisted thinking workspace
 
-## 7.4.2 Functional Specification — ภาพรวม
+## User Input / Output
 
-| Module | Tagline | บทบาทหลัก |
-|--------|---------|-----------|
-| **Space** | Learn | เรียนรู้ทฤษฎีพื้นฐานวิศวกรรมอวกาศแบบ Interactive · เรียน 4 ด้าน |
-| **Arena** | Build & Mission Simulation | สร้างตรรกะ Blockly + จำลองภารกิจในสภาพแวดล้อมอวกาศ |
-| **Studio** | Launch, Tech-Transfer & Venture | เก็บผลงาน · LAIKA ช่วยต่อยอดไอเดีย · (อนาคต) แผนธุรกิจ / tech transfer |
+- Input: clicks, text entry, block drag/drop, route navigation, LAIKA prompts
+- Output: UI transitions, auth/session handling, mission outcomes, streamed LAIKA responses, validation/error messages
 
----
+## Authentication
 
-## ฟีเจอร์ที่ 1: Space (Learn)
+### Supported Methods
 
-ระบบเรียนรู้ทฤษฎีพื้นฐานวิศวกรรมอวกาศแบบ **Interactive Learning** — เรียนองค์ความรู้ **4 ด้าน**
+- Email/password login and register
+- Google sign-in (One Tap + button)
 
-### 1. โมเดล 3 มิติ (3D Model — Spatial Learning)
+### Behavior
 
-| รายการ | รายละเอียด |
-|--------|------------|
-| **กิจกรรม** | หมุนดู CubeSat 101 แบบ 360° (Three.js / R3F) |
-| **Exploded View** | ปรับ Slider แยกชิ้นส่วนแบบระเบิดวงแหวน — เรียนรู้โครงสร้างภายนอก |
-| **Interactive detail** | คลิกชิ้นส่วน (เช่น Camera Payload) เพื่อเรียนรู้หน้าที่และการเชื่อมต่อ |
+- Session uses backend-set cookies
+- Protected routes redirect unauthenticated users to `/login?next=...`
+- Expired access token triggers silent refresh before failing
 
-**Output:** ความเข้าใจโครงสร้างกายภาพ · progress ตามกิจกรรมที่ทำครบ
+## Space Module
 
-### 2. ระบบฝังตัว (Embedded System — Schematic Architecture)
+### Routes
 
-| รายการ | รายละเอียด |
-|--------|------------|
-| **กิจกรรม** | ลากเส้นจำลองสัญญาณ Data Bus และพลังงาน |
-| **องค์ประกอบ** | เชื่อม OBC (On-Board Computer), EPS (Electrical Power System), กล้องถ่ายภาพ (Payload) เข้าล็อกที่ถูกต้อง |
-| **เป้าหมาย** | จำลองการไหลของข้อมูล — ผู้เรียนเข้าใจในระดับพื้นฐานว่าระบบทำงานอย่างไร |
+- `/space`
+- `/space/course/:courseId`
 
-**Output:** แผนผังที่เชื่อมถูกต้อง / feedback เมื่อผิด
+### Frontend Responsibilities
 
-### 3. ฟิสิกส์ (Physics — Simulation-Based Trial)
+- Show module home and course view navigation
+- Maintain protected access and consistent module shell UI
+- Render educational sections and interactive module entry points
 
-| รายการ | รายละเอียด |
-|--------|------------|
-| **กิจกรรม** | แผงควบคุมปรับตัวแปรแบบ real-time |
-| **เนื้อหา** | กฎพลังงาน · วงโคจรระดับต่ำ (LEO) · จัดสรร Power Budget · สถานการณ์เข้าเงามืดของโลก (Eclipse) |
+## Arena Module
 
-**Output:** กราฟ/ตัวเลข power · สถานะวงโคจร · checkpoint
+### Routes
 
-**Backend:** คำนวณ orbital / power budget (Poliastro, PyEphem) — ดู [backend/docs/development.md](../../backend/docs/development.md)
+- `/arena`
+- `/arena/mission/:missionId`
 
-### 4. การเขียนโปรแกรม (Programming — Algorithmic Thinking)
+### Current Mission Scope
 
-| รายการ | รายละเอียด |
-|--------|------------|
-| **กิจกรรม** | กระดานเขียนคำสั่งควบคุมแบบภาพ (Google Blockly) |
-| **เป้าหมาย** | ต่อบล็อก Logic ชุดแรกให้ดาวเทียม (Autopilot) ทำงานได้ในขอบเขตที่กำหนด |
+- Active playable mission: `leo-orbital-launch`
+- Placeholder mission(s) can be listed as non-playable
 
-**Output:** บล็อกที่ compile/validate ผ่าน · preview พฤติกรรม
+### Functional Behavior
 
-### Space — Progress model
+1. Load mission pack and latest saved attempt
+2. Let user edit Blockly program
+3. Save AST draft to backend
+4. Submit simulation run job
+5. Poll run status until finished/failed
+6. Render result summary/dashboard/outcome
+7. Highlight related block when backend returns `error.blockId`
 
-```
-เรียนครบกิจกรรมใน 4 ด้าน → บันทึก progress → เปิด Arena เมื่อพร้อม
-```
+### In Scope
 
----
+- Blockly editor and toolbox
+- Attempt persistence
+- Async run feedback panel
 
-## ฟีเจอร์ที่ 2: Arena (Build & Mission Simulation)
+### Deferred
 
-ห้องจำลองสถานการณ์ทางอวกาศ — ผู้เรียนสร้างตรรกะการทำงานของดาวเทียมด้วย Blockly แล้วนำเข้า simulation engine บน backend เพื่อให้ภารกิจสำเร็จ
+- 3D replay visualization in mission feedback
 
-**สถานะปัจจุบัน (M01 — LEO Orbital Launch):** Blockly editor + save attempt + async run (RQ) + structured feedback panel. **3D preview ยังไม่ implement.**
+## Studio Module
 
-### Blockly Code Editor
+### Routes
 
-| บล็อก / ความสามารถ | รายละเอียด |
-|---------------------|------------|
-| **Stable Orbit Loop** | ลูปตรวจเช็คความเสถียรวงโคจร |
-| **Fault Tolerance** | ควบคุมอุปกรณ์ยามฉุกเฉิน |
-| **Payload control** | สั่งเปิด/ปิด Payload ตามปริมาณพลังงานที่มี |
-| **Editor UX** | ลากวางบล็อกซ้อนกัน — สไตล์ Google Blockly |
+- `/studio`
+- `/studio/new`
+- `/studio/chat/:collectionId`
 
-**Input:** การจัดเรียง/แก้ไขบล็อก  
-**Output:** JSON AST → `PUT .../attempt` (draft) หรือ `POST .../runs` (simulate)
+### Landing
 
-### Mission Feedback Window (Physics Reality Check)
+- Show LAIKA greeting hero
+- Show user collection list
+- Support create/open collection flow
 
-| รายการ | สถานะ | รายละเอียด |
-|--------|--------|------------|
-| **Summary / dashboard / outcome** | ✓ live | แสดง `RunResult` จาก backend (metrics, pass/fail checks, Thai messages) |
-| **Block highlight** | ✓ live | เน้นบล็อกจาก `error.blockId` เมื่อ logic ผิด |
-| **3D preview** | deferred | ดาวเทียม 3D วิ่งรอบโลกควบคู่กับ code ที่รัน |
-| **Simulation Engine** | ✓ live (M01) | discrete M01 world บน backend — ไม่ใช่ Poliastro เต็มรูปแบบ |
+### Chat Workspace
 
-```
-Blockly → POST /runs → Redis/RQ → arena_worker → RunResult
-       → poll GET /runs/{job_id} → MissionFeedback (metrics / errors)
-       → (future) R3F frame replay
-```
+- Load selected collection conversation
+- Stream LAIKA response tokens (SSE)
+- Support intent-based prompts
+- Support follow-up, retry, edit, and branch interactions
+- Provide branch map dialog and branch switching
+- Support optional web-search flag and LAIKA mode selection (`standard` / `extra`)
 
----
+### Rendering
 
-## ฟีเจอร์ที่ 3: Studio (Launch, Tech-Transfer & Venture)
+- Streaming markdown render during generation
+- Stable markdown render after completion
+- Math support (KaTeX)
+- Mermaid diagrams in fenced code blocks (`mermaid`)
 
-หลังภารกิจ Arena สำเร็จ → **Launch** เก็บในพอร์ตโฟลิโอ Studio ของผู้เรียน
+## Backoffice (Frontend Surface)
 
-### พอร์ตโฟลิโอ & ประวัติภารกิจ
+### Routes
 
-- เก็บผลงาน / mission log ที่ทำสำเร็จ
-- แสดงความก้าวหน้าและผลจำลองย้อนหลัง
+- `/backoffice/users`
+- `/backoffice/knowledge`
 
-### LAIKA (AI Mentor)
+### Functional Coverage
 
-| รายการ | รายละเอียด |
-|--------|------------|
-| **บทบาท** | Mentor ภาษาไทยสุภาพ เป็นกลาง — ช่วยสรุป/อธิบาย/ต่อยอดโน้ตและไอเดีย (ไม่ใช้คำลงท้ายเจาะจงเพศ) |
-| **โทนการสนทนา** | รู้ชื่อผู้เรียน (จากบัญชี) · รู้เวลาและช่วงห่างจากข้อความก่อนหน้า · ไม่ทักทายซ้ำทุกตอบ · ต้อนรับกลับเมื่อหายไปหลายวัน |
-| **LLM** | Gemini / Groq / Ollama (backend config) |
-| **RAG** | อ้างอิงเอกสารวิศวกรรม / NASA CubeSat ฯลฯ — ลด hallucination |
+- User role management view
+- Knowledge catalog/list/detail
+- Upload, patch, ingest, sync-manifest, delete actions through backend APIs
 
-**Studio landing:** ข้อความ hero แบบ static + typewriter (ไม่เรียก LLM) — สุ่มข้อความ casual / ต้อนรับกลับตาม last visit
+## Error Handling and UX Rules
 
-**Studio chat:** multi-turn tree + `POST /laika/assist/stream` พร้อมประวัติและ timestamp
+- API errors surface human-readable Thai messages where possible
+- LAIKA stream abort is handled gracefully without crashing UI
+- Loading and empty states are shown for protected routes and async data
+- Mission and chat pages keep local state coherent during retries and branch switches
 
-**Input:** คำถาม / ไอเดีย / ผลงานจากผู้เรียน  
-**Output:** คำแนะนำ · คำถามชวนคิด · แนวทางพัฒนาต่อ · `sources[]`
+## Non-Functional Notes
 
-### Roadmap (อนาคต)
-
-- ฟอร์ม **แผนพัฒนาต่อยอดไอเดีย** (venture / tech transfer)
-- ช่องทาง **จับคู่ผู้เชี่ยวชาญ** สำหรับคำปรึกษาด้าน IP / เทคโนโลยีอวกาศ
-
----
-
-## การแมป Landing ↔ Product
-
-| Landing (`PlatformSection`) | Module | Spec section |
-|-----------------------------|--------|--------------|
-| LEARN | **Space** | § Space — 4 domains |
-| BUILD | **Arena** | § Blockly + Simulation |
-| LAUNCH | **Studio** | § Portfolio + LAIKA |
-
----
-
-## ฟีเจอร์ที่ 4: Authentication
-
-ระบบเข้าสู่ระบบและสมัครสมาชิก — รองรับ email/password และ Google Sign-In
-
-### Email / Password
-
-| รายการ | รายละเอียด |
-|--------|------------|
-| **Register** | สร้างบัญชีด้วย email + password (≥ 8 ตัวอักษร) |
-| **Login** | เข้าสู่ระบบด้วย email + password |
-| **Session** | httpOnly cookies `lunar_token` (access JWT) + `lunar_refresh` (refresh token) จาก backend |
-| **Refresh** | access หมดอายุ → `POST /api/auth/refresh` อัตโนมัติ (rotate refresh token) |
-| **Protected routes** | `/space`, `/studio`, `/backoffice` — redirect ไป `/login?next=...` ถ้ายังไม่ login |
-
-**Input:** email, password, display name (optional)  
-**Output:** session cookies · redirect ไป `/space` (หรือ `?next=` path)
-
-### Google Sign-In (GIS)
-
-| รายการ | รายละเอียด |
-|--------|------------|
-| **One Tap** | แสดงอัตโนมัติบนหน้า guest (`/login`, `/register`) — optional |
-| **Sign-in button** | ปุ่ม Google อย่างเป็นทางการ (`renderButton`) บน login/register |
-| **Flow** | GIS คืน credential JWT → `POST /api/auth/google/onetap` → backend verify + upsert user |
-| **Config** | `GOOGLE_CLIENT_ID` เดียวกันทั้ง frontend/backend และ OAuth client ใน Google Cloud (workspace `.env`) |
-
-**Input:** การเลือกบัญชี Google  
-**Output:** session cookies · redirect ไป `/space` (หรือ `?next=` path)
-
-**หมายเหตุ:** GIS ทำงานใน browser; การสร้าง/ค้นหาผู้ใช้ใน PostgreSQL อยู่ที่ backend — ต้องมี DB รันอยู่ login จึงจะสำเร็จ
-
-### Auth — Route guards & silent refresh
-
-```
-GuestRoute     → /login, /register  (redirect ถ้า login แล้ว)
-ProtectedRoute → /space, /studio, /arena, /backoffice  (redirect /login?next= ถ้ายังไม่ login)
-
-API 401 (access หมดอายุ)
-  → tryRefreshSession() → POST /api/auth/refresh
-  → retry request หรือ redirect login ถ้า refresh ล้มเหลว
-```
-
-## Implementation notes (สำหรับ dev)
-
-| ส่วน | Frontend | Backend |
-|------|----------|---------|
-| 3D / Canvas | Three.js, R3F, `.glb` assets | — |
-| Blockly | Blockly editor, block defs, poll run UI | validate · RQ enqueue · interpreter · M01 world |
-| Physics / orbit | แสดง metrics (3D deferred) | discrete M01 rules (Poliastro later) |
-| LAIKA | chat UI ใน Studio | FastAPI → RAG → Gemini |
-| Auth (email) | LoginForm, Register, route guards, `tryRefreshSession` | `/auth/register`, `/auth/login`, `/auth/refresh`, JWT cookies |
-| Auth (Google) | GIS One Tap + `renderButton` → `googleIdentity.ts` | `/auth/google/onetap`, token verify |
-| Progress | UI state, lesson completion | PostgreSQL (users, progress) |
-
-เมื่อ implement API ใหม่ บันทึก contract ใน `backend/docs/api.md`
+- SPA architecture (no server components)
+- Browser-only API communication (`fetch`, cookie credentials)
+- Route-level access guards and auth-aware retry logic

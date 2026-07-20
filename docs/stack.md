@@ -1,100 +1,75 @@
-# LUNAR Frontend — Tech Stack
+# LUNAR Frontend Stack
 
-รายละเอียดเครื่องมือที่ใช้และวางแผนใช้ฝั่ง frontend
+Current technology stack used by the frontend application.
 
-**Backend stack:** [../../backend/docs/development.md](../../backend/docs/development.md)  
-**Workspace Docker:** [../../docs/docker-dev.md](../../docs/docker-dev.md)
+## Core
 
-## ภาษา
+- **Build tool**: Vite 7
+- **UI runtime**: React 19
+- **Routing**: React Router 7
+- **Language**: TypeScript
+- **Package manager**: npm
 
-| ภาษา | การใช้งาน |
-|------|-----------|
-| **TypeScript / JavaScript** | Logic หน้าบ้าน, state management |
-| **HTML5 / CSS3** | โครงสร้างเว็บ, UI layout |
+## Styling and UI
 
-## Framework & UI
+- Tailwind CSS v4
+- Radix UI primitives (`dialog`, `popover`, `select`, `tooltip`, `slot`)
+- Utility helpers: `clsx`, `tailwind-merge`, `class-variance-authority`
+- Animation: `framer-motion`, `tw-animate-css`
+- Icons: `react-icons`, `lucide-react`
 
-| เครื่องมือ | สถานะ | บทบาท |
-|-----------|--------|--------|
-| **Vite 7 + React Router 7** | ใช้อยู่ | SPA framework — React 19, client-side routing |
-| **Tailwind CSS v4** | ใช้อยู่ | Styling หลัก — `@theme` tokens, utilities; CSS เฉพาะ auth pseudo-elements + keyframes |
-| **Shadcn/ui** (base-vega) | ใช้อยู่ | Dialog, Button — Radix/Base UI + Tailwind tokens |
-| **Framer Motion** | ใช้อยู่ | แอนิเมชัน auth — card entrance, ปุ่ม, error message |
-| **react-icons** | ใช้อยู่ | ไอคอนทั่วไปใน UI |
-| **micromark** + extensions | ใช้อยู่ | Real-time Markdown streaming (GFM, math, tables) — ใช้ใน LAIKA Studio chat |
-| **react-markdown** + KaTeX | ใช้อยู่ | Final Markdown renderer พร้อม math + GFM (หลัง stream จบ) |
+## 3D / Visualization
+
+- `three`
+- `@react-three/fiber`
+- `@react-three/drei`
+
+Used for Space visuals and canvas-based experiences.
+
+## Arena Visual Coding
+
+- `blockly` (v13)
+- Custom block definitions and toolbox assets under:
+  - `src/components/arena/blockly/*`
+  - `public/blockly/media/*`
+
+Flow: Blockly workspace -> AST -> backend run APIs -> frontend result rendering.
+
+## Studio AI Chat Rendering
+
+- Streaming markdown parser: `micromark` + GFM/math extensions
+- Final markdown renderer: `react-markdown`
+- Markdown plugins: `remark-gfm`, `remark-math`
+- Math rendering: `rehype-katex` + `katex`
+- Diagram rendering: `mermaid` (lazy-loaded in chat code blocks)
 
 ## Authentication
 
-| เครื่องมือ | สถานะ | บทบาท |
-|-----------|--------|--------|
-| **FastAPI auth API** | ใช้อยู่ | register, login, refresh, `/auth/me`, logout — httpOnly cookies `lunar_token` + `lunar_refresh` |
-| **Google Identity Services (GIS)** | ใช้อยู่ | One Tap + `renderButton` — โหลด `accounts.google.com/gsi/client` |
-| **`googleIdentity.ts`** | ใช้อยู่ | โหลด GIS script, `initialize()`, `renderGoogleSignInButton()`, `promptGoogleOneTap()` |
-| **`auth.ts`** | ใช้อยู่ | `tryRefreshSession()`, `getCurrentUser()`, Google sign-in → `/auth/google/onetap` |
+- Cookie-based auth against backend endpoints
+- Google Identity Services via browser script (`accounts.google.com/gsi/client`)
+- Frontend auth helpers in `src/lib/auth.ts`
 
-### Google Sign-In flow
+## Tooling and Quality
 
-```
-Browser (GIS)  →  credential JWT
-Frontend       →  POST /api/auth/google/onetap  (credentials: include)
-Backend        →  verify token, upsert user in PostgreSQL, Set-Cookie (access + refresh)
-Frontend       →  navigate to /space (or ?next=)
+- ESLint 9 + TypeScript ESLint
+- React hooks and react-refresh lint plugins
+- Vite React plugin
+- Type definitions for React/Node/Three
 
-Access token หมดอายุ → `apiFetch` / `getCurrentUser` เรียก `POST /auth/refresh` แล้ว retry
-```
+## Architecture Notes
 
-- Client ID: `GOOGLE_CLIENT_ID` เดียวกันทั้ง frontend (GIS) และ backend (verify) — ตั้งใน workspace `.env`
-- ไม่ใช้ client secret ฝั่ง frontend
-- ปุ่ม login ใช้ `google.accounts.id.renderButton()` (ไม่ใช่ custom popup)
+- SPA with route guards (`GuestRoute`, `ProtectedRoute`)
+- API layer centralized in `src/lib/api.ts`
+- Feature-oriented component organization:
+  - `components/space`
+  - `components/arena`
+  - `components/studio`
+  - `components/backoffice`
 
-## 3D & Assets
+## Environment Contract
 
-| เครื่องมือ | บทบาท |
-|-----------|--------|
-| **Blender** | สร้าง 3D assets นอก repo — Chassis, OBC, Solar Panel, Camera Payload |
-| **Three.js / React Three Fiber (R3F)** | ใช้อยู่ — โหลด `.gltf` / `.glb` จาก Blender แสดง 360° บนเบราว์เซอร์ |
-| **KiCad** | ออกแบบอุปกรณ์อิเล็กทรอนิกส์ (นอก repo) — อ้างอิงใน Embedded System module |
+- `VITE_API_URL` (optional; defaults to `/api`)
+- `VITE_PROXY_TARGET` (dev proxy target)
+- `GOOGLE_CLIENT_ID` (public GIS client ID)
 
-Export จาก Blender → `public/models/` หรือ CDN (เมื่อมี)
-
-## Arena — Visual Programming
-
-| เครื่องมือ | บทบาท |
-|-----------|--------|
-| **Google Blockly** (`blockly` ^13) | ห้องแล็บลากวางบล็อก — Visual Programming Interface |
-
-- Blockly workspace → JSON AST → `PUT /arena/missions/:id/attempt` (draft in `arena_attempts`)
-- Custom blocks: `components/arena/blockly/blocks/m01.ts` · toolbox: `toolboxes/m01-beginner.ts`
-- Toolbox CSS: `blockly-toolbox.css` — class **`.blocklyToolbox`** (Blockly 13; not `.blocklyToolboxDiv`)
-- Run: `POST /arena/missions/{id}/runs` → `{ job_id }` → poll `GET .../runs/{job_id}` → `RunResult` ใน `MissionFeedback` (ยังไม่มี 3D)
-- Client helpers: `submitArenaRun`, `waitForArenaRun`, `runArenaMission` (`src/lib/api.ts`)
-- ไม่ execute physics หนักฝั่ง browser
-
-## Studio — LAIKA
-
-| ส่วน | ที่รัน |
-|------|--------|
-| UI landing / แชท / branch map | Frontend |
-| Collections + conversation tree | **Backend** (PostgreSQL) |
-| LLM + RAG | **Backend** (Gemini / Groq / Ollama) |
-
-Frontend เรียก API เท่านั้น — ไม่ฝัง API keys. แชทส่งประวัติพร้อม `created_at` และ `client_now`; ชื่อผู้เรียน inject ฝั่ง backend จาก session
-
-## สรุปการแบ่งงาน FE ↔ BE
-
-| งาน | Frontend | Backend |
-|-----|----------|---------|
-| UI / State | ✓ | |
-| Auth UI + route guards | ✓ | |
-| Google GIS (browser) | ✓ | |
-| Google token verify + user upsert | | ✓ |
-| 3D viewer (R3F) | ✓ | |
-| Blockly editor | ✓ (M01 toolbox + AST save/load) | pack metadata |
-| Attempt save/load | ✓ `PUT/GET .../attempt` | ✓ `arena_attempts` (PostgreSQL) |
-| Run job queue | — | ✓ Redis (`arena-runs`) |
-| Run block code / simulation | ✓ poll + feedback UI | ✓ `arena_worker` → `execute_run()` |
-| Orbital / physics calc | | discrete M01 world (Poliastro later) |
-| LAIKA LLM + RAG | แสดงผล | ✓ |
-| Satellite imagery API | แสดงผล | ✓ |
-| PostgreSQL (users, progress) | | ✓ |
+`vite.config.ts` explicitly exposes only `VITE_*` and `GOOGLE_CLIENT_ID`.

@@ -1,95 +1,109 @@
-# 🌙 LUNAR — Space Technology Learning Platform
+# LUNAR Frontend
 
-แพลตฟอร์มการเรียนรู้เทคโนโลยีอวกาศ — ทำให้อวกาศจับต้องได้และเห็นภาพนำไปใช้จริงในไทย
+Frontend app for LUNAR learning platform (Space, Arena, Studio, LAIKA chat).
 
-**ฟีเจอร์หลัก:** **Space** (เรียนรู้) · **Arena** (ลงมือปฏิบัติ) · **Studio** (สร้างสรรค์ต่อ + LAIKA)  
-รายละเอียด: [docs/concept.md](docs/concept.md)
-
-> Repo นี้เป็น **git submodule** ใน workspace [lunar-dev](https://github.com/Tridevel-Lunar/lunar-dev) — แนะนำรันทั้ง stack จาก workspace root
+This repository is a submodule inside the workspace `lunar-dev`.
 
 ## Quick Start
 
-### Docker (recommended)
+### Run with Docker (recommended)
 
-จาก workspace root (`lunar-dev`):
+From workspace root (`lunar-dev`):
 
 ```bash
-cp .env.example .env          # ครั้งแรก — ใส่ GOOGLE_CLIENT_ID ถ้าใช้ Google Sign-In
-docker compose up --build     # frontend + backend + postgres + redis + arena_worker
+cp .env.example .env
+docker compose up --build
 ```
 
-App: http://localhost:3000 · API ผ่าน Vite proxy `/api`  
-รายละเอียด: [../../docs/docker-dev.md](../../docs/docker-dev.md)
+- App: `http://localhost:3000`
+- API: frontend calls `/api/*` and Vite proxy forwards to backend
+- Full setup guide: `../../docs/docker-dev.md`
 
-### Local (frontend only)
-
-ต้องมี backend + PostgreSQL รันอยู่ (Docker หรือ uvicorn แยก):
+### Run frontend only (local)
 
 ```bash
 npm install
-npm run dev          # Vite — http://localhost:3000
+npm run dev
 ```
 
-ตั้ง `GOOGLE_CLIENT_ID` ใน env ของ Vite process (หรือใช้ Docker ที่ compose ส่งค่าให้แล้ว)  
-ดู [docs/development.md](docs/development.md#environment)
+Default dev URL: `http://localhost:3000`
 
 ## Requirements
 
-- Node.js 18.17+, npm 9+
-- Backend API + PostgreSQL (auth / Studio / LAIKA)
-- Workspace clone: `git clone --recurse-submodules …` แล้ว checkout `develop` ใน submodule นี้
+- Node.js 18.17+
+- npm 9+
+- Backend running (for auth, Space data, Arena runs, Studio/LAIKA)
 
-## Tech Stack
+## Environment
 
-- **Vite 7** + **React 19** + **React Router 7**
-- Tailwind CSS v4, TypeScript
-- Three.js / React Three Fiber (Blender → `.gltf`)
-- Framer Motion, react-icons
-- Google Identity Services (Sign in with Google) — env: `GOOGLE_CLIENT_ID`
-- Backend: Python **FastAPI** — ดู [../backend/docs/development.md](../backend/docs/development.md)
-- Fonts: Syne, Space Mono, Noto Sans Thai, Orbitron, Sarabun, Space Grotesk
+- `GOOGLE_CLIENT_ID`: enables Google Sign-In UI (GIS)
+- `VITE_API_URL`: API base URL (default `/api`)
+- `VITE_PROXY_TARGET`: Vite dev proxy target (default `http://localhost:8000`)
 
-## Routes
+`vite.config.ts` exposes only `GOOGLE_CLIENT_ID` and `VITE_*` to the browser.
 
-| Path | Access | หน้า |
-|------|--------|------|
-| `/` | Public | Landing |
-| `/login`, `/register` | Guest | Auth (email/password + Google) |
-| `/space`, `/studio`, `/arena` | Protected | Product modules |
-| `/dashboard` | Redirect | → `/space` |
+## Main Routes
 
-## Landing Sections
+- Public: `/`
+- Guest only: `/login`, `/register`
+- Protected:
+  - `/space` and `/space/course/:courseId`
+  - `/arena`
+  - `/arena/mission/:missionId`
+  - `/studio`
+  - `/studio/new`
+  - `/studio/chat/:collectionId`
+  - `/backoffice/users`
+  - `/backoffice/knowledge`
 
-| Section | เนื้อหา |
-|---------|---------|
-| **Hero** | Animated space canvas |
-| **Why Space** | ทำไมอวกาศสำคัญต่อไทย / เศรษฐกิจอวกาศ |
-| **Platform** | LEARN → Space · BUILD → Arena · LAUNCH → Studio |
-| **Join** | Enrollment + email signup |
+## Product Modules
+
+- **Space**: learning home + course pages
+- **Arena**: Blockly mission flow (attempt save/load + async run feedback)
+- **Studio**: collection workspace + LAIKA streaming chat (branch-aware)
+
+## Key Frontend Features
+
+- React 19 + React Router 7 SPA
+- Cookie-based auth with silent refresh retry (`/auth/refresh`)
+- Google One Tap + Google Sign-In button
+- LAIKA SSE chat streaming (`/laika/assist/stream`)
+- Markdown + math rendering and Mermaid diagram blocks in assistant messages
+- Arena M01 visual coding with Blockly
 
 ## Project Structure
 
-```
-src/
-  main.tsx, App.tsx, index.css
-  pages/              Home, Login, Register, Space, Studio, Arena
-  routes/             ProtectedRoute, GuestRoute
-  components/
-    auth/             GoogleSignInButton, GoogleOneTap, LoginForm
-    space/, studio/, arena/   Module demos
-    HeroSection.tsx, Navbar.tsx, ...
-  lib/
-    api.ts, auth.ts, googleIdentity.ts, constants.ts
-  types/
-    google-identity.d.ts
-docs/
-  concept.md, functional-spec.md, development.md, stack.md
+```text
+frontend/
+  src/
+    App.tsx
+    pages/
+    components/
+      arena/
+      studio/
+      space/
+      auth/
+    lib/
+      api.ts
+      auth.ts
+      studio-storage.ts
+      studio-tree.ts
+    ast/
+  docs/
+    development.md
+    functional-spec.md
+    stack.md
 ```
 
-## Docs
+## Scripts
 
-- [concept.md](docs/concept.md) — วิสัยทัศน์ + product model
-- [functional-spec.md](docs/functional-spec.md) — ฟีเจอร์ Space / Arena / Studio + auth
-- [stack.md](docs/stack.md) — tech stack FE/BE, 3D pipeline, Blockly
-- [development.md](docs/development.md) — commands, architecture, auth, code style
-- Workspace Docker: [../../docs/docker-dev.md](../../docs/docker-dev.md)
+- `npm run dev`
+- `npm run build`
+- `npm run preview`
+- `npm run lint`
+
+## References
+
+- Development guide: `docs/development.md`
+- Functional spec: `docs/functional-spec.md`
+- Stack details: `docs/stack.md`
