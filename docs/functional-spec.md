@@ -74,7 +74,9 @@
 
 ## ฟีเจอร์ที่ 2: Arena (Build & Mission Simulation)
 
-ห้องจำลองสถานการณ์ทางอวกาศ — ผู้เรียนสร้างตรรกะการทำงานของดาวเทียมด้วย Blockly แล้วนำเข้าสภาพแวดล้อมจำลองเพื่อให้ภารกิจสำเร็จ
+ห้องจำลองสถานการณ์ทางอวกาศ — ผู้เรียนสร้างตรรกะการทำงานของดาวเทียมด้วย Blockly แล้วนำเข้า simulation engine บน backend เพื่อให้ภารกิจสำเร็จ
+
+**สถานะปัจจุบัน (M01 — LEO Orbital Launch):** Blockly editor + save attempt + async run (RQ) + structured feedback panel. **3D preview ยังไม่ implement.**
 
 ### Blockly Code Editor
 
@@ -86,19 +88,21 @@
 | **Editor UX** | ลากวางบล็อกซ้อนกัน — สไตล์ Google Blockly |
 
 **Input:** การจัดเรียง/แก้ไขบล็อก  
-**Output:** AST / mission script ส่งไป Simulation Engine
+**Output:** JSON AST → `PUT .../attempt` (draft) หรือ `POST .../runs` (simulate)
 
 ### Mission Feedback Window (Physics Reality Check)
 
-| รายการ | รายละเอียด |
-|--------|------------|
-| **3D preview** | ดาวเทียม 3D วิ่งรอบโลกควบคู่กับ code ที่รัน |
-| **Simulation Engine** | จำลองตามกฎฟิสิกส์ — sync กับบล็อกที่ผู้เรียนเขียน |
-| **สำเร็จ** | แสดง Orbital Data / ผลลัพธ์ที่ถูกต้อง |
-| **ไม่สำเร็จ** | แสดง error message อธิบายว่าตรรกะหรือเงื่อนไขใดผิด |
+| รายการ | สถานะ | รายละเอียด |
+|--------|--------|------------|
+| **Summary / dashboard / outcome** | ✓ live | แสดง `RunResult` จาก backend (metrics, pass/fail checks, Thai messages) |
+| **Block highlight** | ✓ live | เน้นบล็อกจาก `error.blockId` เมื่อ logic ผิด |
+| **3D preview** | deferred | ดาวเทียม 3D วิ่งรอบโลกควบคู่กับ code ที่รัน |
+| **Simulation Engine** | ✓ live (M01) | discrete M01 world บน backend — ไม่ใช่ Poliastro เต็มรูปแบบ |
 
 ```
-Blockly → Backend Simulation Engine → 3D + metrics / errors
+Blockly → POST /runs → Redis/RQ → arena_worker → RunResult
+       → poll GET /runs/{job_id} → MissionFeedback (metrics / errors)
+       → (future) R3F frame replay
 ```
 
 ---
@@ -180,7 +184,7 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 
 ```
 GuestRoute     → /login, /register  (redirect ถ้า login แล้ว)
-ProtectedRoute → /space, /studio, /backoffice  (redirect /login?next= ถ้ายังไม่ login)
+ProtectedRoute → /space, /studio, /arena, /backoffice  (redirect /login?next= ถ้ายังไม่ login)
 
 API 401 (access หมดอายุ)
   → tryRefreshSession() → POST /api/auth/refresh
@@ -192,8 +196,8 @@ API 401 (access หมดอายุ)
 | ส่วน | Frontend | Backend |
 |------|----------|---------|
 | 3D / Canvas | Three.js, R3F, `.glb` assets | — |
-| Blockly | Blockly editor, block defs | validate / run mission script |
-| Physics / orbit | แสดงผล 3D + charts | Poliastro, PyEphem, power calc |
+| Blockly | Blockly editor, block defs, poll run UI | validate · RQ enqueue · interpreter · M01 world |
+| Physics / orbit | แสดง metrics (3D deferred) | discrete M01 rules (Poliastro later) |
 | LAIKA | chat UI ใน Studio | FastAPI → RAG → Gemini |
 | Auth (email) | LoginForm, Register, route guards, `tryRefreshSession` | `/auth/register`, `/auth/login`, `/auth/refresh`, JWT cookies |
 | Auth (Google) | GIS One Tap + `renderButton` → `googleIdentity.ts` | `/auth/google/onetap`, token verify |

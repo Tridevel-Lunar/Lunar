@@ -15,6 +15,7 @@ export type BlocklyEditorHandle = {
   seedStart: () => void;
   loadAst: (ast: ProgramAst | Record<string, unknown> | null) => void;
   getWorkspace: () => Blockly.WorkspaceSvg | null;
+  highlightBlock: (blockId: string | null) => void;
 };
 
 type Props = {
@@ -79,6 +80,18 @@ const BlocklyEditor = forwardRef<BlocklyEditorHandle, Props>(function BlocklyEdi
       astToWorkspace(ws, ast);
     },
     getWorkspace: () => workspaceRef.current,
+    highlightBlock: (blockId) => {
+      const ws = workspaceRef.current;
+      if (!ws) return;
+      ws.highlightBlock(blockId);
+      if (blockId) {
+        const block = ws.getBlockById(blockId);
+        if (block) {
+          block.select();
+          ws.centerOnBlock?.(blockId);
+        }
+      }
+    },
   }));
 
   useEffect(() => {

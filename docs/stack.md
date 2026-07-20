@@ -64,10 +64,11 @@ Export จาก Blender → `public/models/` หรือ CDN (เมื่อ�
 |-----------|--------|
 | **Google Blockly** (`blockly` ^13) | ห้องแล็บลากวางบล็อก — Visual Programming Interface |
 
-- Blockly workspace → JSON AST → `PUT /arena/missions/:id/attempt` (บันทึก draft, in-memory BE)
+- Blockly workspace → JSON AST → `PUT /arena/missions/:id/attempt` (draft in `arena_attempts`)
 - Custom blocks: `components/arena/blockly/blocks/m01.ts` · toolbox: `toolboxes/m01-beginner.ts`
 - Toolbox CSS: `blockly-toolbox.css` — class **`.blocklyToolbox`** (Blockly 13; not `.blocklyToolboxDiv`)
-- รันจำลอง (`POST .../runs`) ยังไม่เปิด — Result panel เป็น mock (`MissionFeedbackMock`)
+- Run: `POST /arena/missions/{id}/runs` → `{ job_id }` → poll `GET .../runs/{job_id}` → `RunResult` ใน `MissionFeedback` (ยังไม่มี 3D)
+- Client helpers: `submitArenaRun`, `waitForArenaRun`, `runArenaMission` (`src/lib/api.ts`)
 - ไม่ execute physics หนักฝั่ง browser
 
 ## Studio — LAIKA
@@ -90,9 +91,10 @@ Frontend เรียก API เท่านั้น — ไม่ฝัง API
 | Google token verify + user upsert | | ✓ |
 | 3D viewer (R3F) | ✓ | |
 | Blockly editor | ✓ (M01 toolbox + AST save/load) | pack metadata |
-| Attempt save/load | ✓ `PUT/GET .../attempt` | ✓ in-memory (no DB yet) |
-| Orbital / physics calc | | ✓ (Poliastro, PyEphem) — planned for runs |
-| Run block code / simulation | ส่ง request (planned) | ✓ (planned) |
+| Attempt save/load | ✓ `PUT/GET .../attempt` | ✓ `arena_attempts` (PostgreSQL) |
+| Run job queue | — | ✓ Redis (`arena-runs`) |
+| Run block code / simulation | ✓ poll + feedback UI | ✓ `arena_worker` → `execute_run()` |
+| Orbital / physics calc | | discrete M01 world (Poliastro later) |
 | LAIKA LLM + RAG | แสดงผล | ✓ |
 | Satellite imagery API | แสดงผล | ✓ |
 | PostgreSQL (users, progress) | | ✓ |

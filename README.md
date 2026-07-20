@@ -15,7 +15,7 @@
 
 ```bash
 cp .env.example .env          # ครั้งแรก — ใส่ GOOGLE_CLIENT_ID ถ้าใช้ Google Sign-In
-docker compose up --build     # frontend + backend + PostgreSQL
+docker compose up --build     # frontend + backend + postgres + redis + arena_worker
 ```
 
 App: http://localhost:3000 · API ผ่าน Vite proxy `/api`  
@@ -55,7 +55,7 @@ npm run dev          # Vite — http://localhost:3000
 |------|--------|------|
 | `/` | Public | Landing |
 | `/login`, `/register` | Guest | Auth (email/password + Google) |
-| `/space`, `/studio` | Protected | Product modules |
+| `/space`, `/studio`, `/arena` | Protected | Product modules |
 | `/dashboard` | Redirect | → `/space` |
 
 ## Landing Sections
@@ -72,11 +72,11 @@ npm run dev          # Vite — http://localhost:3000
 ```
 src/
   main.tsx, App.tsx, index.css
-  pages/              Home, Login, Register, Space, Studio
+  pages/              Home, Login, Register, Space, Studio, Arena
   routes/             ProtectedRoute, GuestRoute
   components/
     auth/             GoogleSignInButton, GoogleOneTap, LoginForm
-    space/, studio/   Module demos
+    space/, studio/, arena/   Module demos
     HeroSection.tsx, Navbar.tsx, ...
   lib/
     api.ts, auth.ts, googleIdentity.ts, constants.ts

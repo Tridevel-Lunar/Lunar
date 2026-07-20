@@ -9,12 +9,12 @@ import {
   IoSaveOutline,
 } from "react-icons/io5";
 
-import type { ProgramAst } from "@/ast/types";
+import type { ProgramAst, RunResult } from "@/ast/types";
 import type { ArenaMission } from "@/components/arena/arena-data";
 import BlocklyEditor, {
   type BlocklyEditorHandle,
 } from "@/components/arena/blockly/BlocklyEditor";
-import MissionFeedbackMock from "@/components/arena/feedback/MissionFeedbackMock";
+import MissionFeedback from "@/components/arena/feedback/MissionFeedback";
 import {
   Select,
   SelectContent,
@@ -26,6 +26,7 @@ import {
   ApiError,
   getArenaAttempt,
   getArenaMission,
+  runArenaMission,
   saveArenaAttempt,
 } from "@/lib/api";
 
@@ -114,6 +115,9 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [runResult, setRunResult] = useState<RunResult | null>(null);
+  const [running, setRunning] = useState(false);
+  const [runMessage, setRunMessage] = useState<string | null>(null);
 
   const editorRef = useRef<BlocklyEditorHandle>(null);
 
@@ -130,6 +134,9 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
         ]);
         if (cancelled) return;
         setInitialAst(attempt.ast);
+        if (attempt.last_result) {
+          setRunResult(attempt.last_result as RunResult);
+        }
         setLoaded(true);
       } catch (err) {
         if (cancelled) return;
@@ -165,11 +172,44 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
     }
   }
 
+  async function handleRun() {
+    const ast = editorRef.current?.toAst() ?? { type: "program", body: [] };
+    setRunning(true);
+    setRunMessage(null);
+    editorRef.current?.highlightBlock(null);
+    try {
+      const result = await runArenaMission(
+        mission.id,
+        ast as Record<string, unknown>,
+      );
+      setRunResult(result as RunResult);
+      if (result.error?.blockId) {
+        editorRef.current?.highlightBlock(result.error.blockId);
+      }
+      if (result.status === "passed") {
+        setRunMessage("จำลองสำเร็จ");
+      } else if (result.status === "failed") {
+        setRunMessage("จำลองแล้ว — ยังไม่ผ่านเงื่อนไข");
+      } else if (result.status === "timeout") {
+        setRunMessage("หมดเวลาจำลอง");
+      } else {
+        setRunMessage(result.error?.messageTh ?? "จำลองพบข้อผิดพลาด");
+      }
+    } catch (err) {
+      setRunMessage(
+        err instanceof ApiError ? err.message : "ส่งภารกิจไม่สำเร็จ",
+      );
+    } finally {
+      setRunning(false);
+    }
+  }
+
   function handleClear() {
     const ok = window.confirm("ล้างโค้ดบล็อกทั้งหมดในเวิร์กสเปซ?");
     if (!ok) return;
     editorRef.current?.clear();
     editorRef.current?.seedStart();
+    editorRef.current?.highlightBlock(null);
   }
 
   return (
@@ -253,7 +293,7 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
                 <button
                   type="button"
                   onClick={() => void handleSave()}
-                  disabled={saveState === "saving"}
+                  disabled={saveState === "saving" || running}
                   className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/50 bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 font-section-thai text-[0.85rem] font-medium text-white shadow-[0_0_20px_rgba(245,158,11,0.35)] transition hover:brightness-110 disabled:opacity-60"
                 >
                   <IoSaveOutline className="text-base" />
@@ -262,28 +302,34 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
 
                 <button
                   type="button"
-                  disabled
-                  title="ยังไม่พร้อมในรอบนี้"
-                  className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border border-teal-500/25 bg-teal-500/15 px-4 py-2 font-section-thai text-[0.85rem] text-teal-200/40"
+                  onClick={() => void handleRun()}
+                  disabled={running || !loaded}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-teal-500/50 bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-2 font-section-thai text-[0.85rem] font-medium text-white shadow-[0_0_20px_rgba(20,184,166,0.3)] transition hover:brightness-110 disabled:opacity-60"
                 >
                   <IoRocketOutline className="text-base" />
-                  ส่งภารกิจ
+                  {running ? "กำลังจำลอง…" : "ส่งภารกิจ"}
                 </button>
 
-                {saveMessage && (
+                {(saveMessage || runMessage) && (
                   <span
                     className={`font-section-thai text-[0.75rem] ${
-                      saveState === "error" ? "text-orange-300" : "text-emerald-300/90"
+                      saveState === "error" ||
+                      (runMessage &&
+                        runResult &&
+                        runResult.status !== "passed" &&
+                        !running)
+                        ? "text-orange-300"
+                        : "text-emerald-300/90"
                     }`}
                   >
-                    {saveMessage}
+                    {runMessage ?? saveMessage}
                   </span>
                 )}
               </div>
             </div>
 
             <aside className="min-h-0 min-w-0 overflow-hidden bg-[#040912]/60">
-              <MissionFeedbackMock />
+              <MissionFeedback result={runResult} running={running} />
             </aside>
           </div>
         </>

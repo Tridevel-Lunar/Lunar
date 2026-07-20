@@ -616,9 +616,66 @@ export type ArenaMissionPack = {
   };
 };
 
+export type ArenaRunResult = {
+  status: "passed" | "failed" | "error" | "timeout";
+  passedChecks: string[];
+  failedChecks: string[];
+  error?: {
+    blockId: string;
+    code: string;
+    messageTh: string;
+  } | null;
+  finalWorld: {
+    powerWh: number;
+    payloadOn: boolean;
+    payload_safe: boolean;
+    phase: string;
+    powerBusOn?: boolean;
+    inserted_to_leo?: boolean;
+    sensors?: Record<string, boolean>;
+    orbit: {
+      altitudeKm: number;
+      stability: number;
+      inLeo: boolean;
+    };
+    faults?: unknown[];
+  };
+  metrics: {
+    peakPowerDraw: number;
+    ticks: number;
+    stabilityFinal: number;
+    insertedToLeo: boolean;
+  };
+  frames: Array<{
+    t: number;
+    altitudeKm: number;
+    phase: string;
+    powerWh: number;
+    highlights?: string[];
+  }>;
+  log: Array<{
+    t: number;
+    level: "info" | "warn" | "error";
+    messageTh: string;
+    blockId?: string;
+  }>;
+};
+
+export type ArenaRunJobResponse = {
+  job_id: string;
+  status: "pending" | "running" | "finished" | "failed";
+  mission_id: string;
+};
+
+export type ArenaRunJobStatus = ArenaRunJobResponse & {
+  result?: ArenaRunResult | null;
+  error?: string | null;
+};
+
 export type ArenaAttempt = {
   mission_id: string;
   ast: Record<string, unknown> | null;
+  last_result?: ArenaRunResult | null;
 };
 
 export function getArenaMission(missionId: string): Promise<ArenaMissionPack> {
@@ -637,4 +694,61 @@ export function saveArenaAttempt(
     method: "PUT",
     body: JSON.stringify({ ast }),
   });
+}
+
+export function submitArenaRun(
+  missionId: string,
+  ast: Record<string, unknown>,
+): Promise<ArenaRunJobResponse> {
+  return apiFetch<ArenaRunJobResponse>(`/arena/missions/${missionId}/runs`, {
+    method: "POST",
+    body: JSON.stringify({ ast }),
+  });
+}
+
+export function getArenaRunJob(
+  missionId: string,
+  jobId: string,
+): Promise<ArenaRunJobStatus> {
+  return apiFetch<ArenaRunJobStatus>(
+    `/arena/missions/${missionId}/runs/${jobId}`,
+  );
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+export async function waitForArenaRun(
+  missionId: string,
+  jobId: string,
+  options?: { intervalMs?: number; timeoutMs?: number },
+): Promise<ArenaRunJobStatus> {
+  const intervalMs = options?.intervalMs ?? 500;
+  const timeoutMs = options?.timeoutMs ?? 30_000;
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const status = await getArenaRunJob(missionId, jobId);
+    if (status.status === "finished" || status.status === "failed") {
+      return status;
+    }
+    await sleep(intervalMs);
+  }
+
+  throw new ApiError(408, "หมดเวลารอผลการจำลอง");
+}
+
+export async function runArenaMission(
+  missionId: string,
+  ast: Record<string, unknown>,
+): Promise<ArenaRunResult> {
+  const job = await submitArenaRun(missionId, ast);
+  const status = await waitForArenaRun(missionId, job.job_id);
+  if (status.status === "failed" || !status.result) {
+    throw new ApiError(500, status.error ?? "การจำลองล้มเหลว");
+  }
+  return status.result;
 }
