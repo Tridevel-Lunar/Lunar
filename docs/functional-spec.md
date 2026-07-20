@@ -14,7 +14,7 @@
 
 | Module | Tagline | บทบาทหลัก |
 |--------|---------|-----------|
-| **Space** | Learn | เรียนรู้ทฤษฎีพื้นฐานวิศวกรรมอวกาศแบบ Interactive · เรียน 4 ด้าน |
+| **Space** | Learn | เรียนรู้ทฤษฎีพื้นฐานวิศวกรรมอวกาศแบบ Interactive · **Courses** ประกอบด้วย **Modules** (ปัจจุบัน 4 โมดูลใน CubeSat course) |
 | **Arena** | Build & Mission Simulation | สร้างตรรกะ Blockly + จำลองภารกิจในสภาพแวดล้อมอวกาศ |
 | **Studio** | Launch, Tech-Transfer & Venture | เก็บผลงาน · LAIKA ช่วยต่อยอดไอเดีย · (อนาคต) แผนธุรกิจ / tech transfer |
 
@@ -22,9 +22,24 @@
 
 ## ฟีเจอร์ที่ 1: Space (Learn)
 
-ระบบเรียนรู้ทฤษฎีพื้นฐานวิศวกรรมอวกาศแบบ **Interactive Learning** — เรียนองค์ความรู้ **4 ด้าน**
+ระบบเรียนรู้ทฤษฎีพื้นฐานวิศวกรรมอวกาศแบบ **Interactive Learning**
 
-### 1. โมเดล 3 มิติ (3D Model — Spatial Learning)
+### โครงสร้าง Course / Module
+
+| ชั้น | ความหมาย | ตัวอย่าง |
+|------|----------|---------|
+| **Space** | Product (Learn) | `/space` |
+| **Course** | หลักสูตรที่ลงทะเบียนใน registry | `cubesat-for-beginner` |
+| **Module** | หน้า React แบบ custom ของเพื่อน / ทีม | `physics`, `overview`, `anatomy`, `programming` |
+
+- แต่ละ course มีรายการ modules ตามลำดับใน `course.ts`
+- แต่ละ module ส่งมอบ **custom page** (`lazy` component) ผ่าน `SpaceModuleDefinition.Component` — ไม่บังคับ layout เดียวกัน
+- Route: `/space/course/:courseId/module/:moduleId` → `SpaceModuleRoute` resolve แล้ว render หน้าของโมดูลนั้น
+- รายละเอียดสำหรับ contributor: [`src/components/space/courses/README.md`](../src/components/space/courses/README.md)
+
+เนื้อหาเรียนรู้ที่วางแผนไว้ (map ไปยัง modules ของ course ปัจจุบัน):
+
+### 1. โมเดล 3 มิติ (3D Model — Spatial Learning) · module `anatomy` / overview
 
 | รายการ | รายละเอียด |
 |--------|------------|
@@ -34,7 +49,7 @@
 
 **Output:** ความเข้าใจโครงสร้างกายภาพ · progress ตามกิจกรรมที่ทำครบ
 
-### 2. ระบบฝังตัว (Embedded System — Schematic Architecture)
+### 2. ระบบฝังตัว (Embedded System — Schematic Architecture) · (planned under course modules)
 
 | รายการ | รายละเอียด |
 |--------|------------|
@@ -44,7 +59,7 @@
 
 **Output:** แผนผังที่เชื่อมถูกต้อง / feedback เมื่อผิด
 
-### 3. ฟิสิกส์ (Physics — Simulation-Based Trial)
+### 3. ฟิสิกส์ (Physics — Simulation-Based Trial) · module `physics`
 
 | รายการ | รายละเอียด |
 |--------|------------|
@@ -55,7 +70,7 @@
 
 **Backend:** คำนวณ orbital / power budget (Poliastro, PyEphem) — ดู [backend/docs/development.md](../../backend/docs/development.md)
 
-### 4. การเขียนโปรแกรม (Programming — Algorithmic Thinking)
+### 4. การเขียนโปรแกรม (Programming — Algorithmic Thinking) · module `programming`
 
 | รายการ | รายละเอียด |
 |--------|------------|
@@ -67,8 +82,10 @@
 ### Space — Progress model
 
 ```
-เรียนครบกิจกรรมใน 4 ด้าน → บันทึก progress → เปิด Arena เมื่อพร้อม
+เรียนครบกิจกรรมใน modules ของ course → บันทึก progress → เปิด Arena เมื่อพร้อม
 ```
+
+Progress ใน UI ปัจจุบันเป็น metadata ชั่วคราว (ยังไม่ persist ผ่าน API)
 
 ---
 
@@ -118,7 +135,7 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 |--------|------------|
 | **บทบาท** | Mentor ภาษาไทยสุภาพ เป็นกลาง — ช่วยสรุป/อธิบาย/ต่อยอดโน้ตและไอเดีย (ไม่ใช้คำลงท้ายเจาะจงเพศ) |
 | **โทนการสนทนา** | รู้ชื่อผู้เรียน (จากบัญชี) · รู้เวลาและช่วงห่างจากข้อความก่อนหน้า · ไม่ทักทายซ้ำทุกตอบ · ต้อนรับกลับเมื่อหายไปหลายวัน |
-| **LLM** | Gemini / Groq / Ollama (backend config) |
+| **LLM** | Gemini / DeepSeek / Ollama (backend config) |
 | **RAG** | อ้างอิงเอกสารวิศวกรรม / NASA CubeSat ฯลฯ — ลด hallucination |
 
 **Studio landing:** ข้อความ hero แบบ static + typewriter (ไม่เรียก LLM) — สุ่มข้อความ casual / ต้อนรับกลับตาม last visit
@@ -139,7 +156,7 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 
 | Landing (`PlatformSection`) | Module | Spec section |
 |-----------------------------|--------|--------------|
-| LEARN | **Space** | § Space — 4 domains |
+| LEARN | **Space** | § Space — Courses / Modules |
 | BUILD | **Arena** | § Blockly + Simulation |
 | LAUNCH | **Studio** | § Portfolio + LAIKA |
 

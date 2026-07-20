@@ -55,7 +55,7 @@ npm run dev          # Vite — http://localhost:3000
 |------|--------|------|
 | `/` | Public | Landing |
 | `/login`, `/register` | Guest | Auth (email/password + Google) |
-| `/space`, `/studio` | Protected | Product modules |
+| `/space`, `/space/course/:courseId`, `/space/course/:courseId/module/:moduleId`, `/studio` | Protected | Product modules |
 | `/dashboard` | Redirect | → `/space` |
 
 ## Landing Sections

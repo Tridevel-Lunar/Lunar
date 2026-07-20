@@ -11,6 +11,7 @@ import Space from "@/pages/Space";
 import Studio from "@/pages/Studio";
 import StudioChat from "@/pages/StudioChat";
 import StudioNew from "@/pages/StudioNew";
+import Exp from "@/pages/Exp";
 import BackofficeKnowledge from "@/pages/BackofficeKnowledge";
 import BackofficeUsers from "@/pages/BackofficeUsers";
 
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/backoffice/knowledge" element={<BackofficeKnowledge />} />
       </Route>
       <Route path="/dashboard" element={<Navigate to="/space" replace />} />
+      <Route path="/exp" element={<Exp />} />
     </Routes>
   );
 }
