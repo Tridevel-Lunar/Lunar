@@ -9,6 +9,5 @@ export const overviewModule: SpaceModuleDefinition = {
   description: "เรียนรู้แนวคิดพื้นฐานของดาวเทียมและบทบาทในชีวิตประจำวัน",
   accent: "#00e5ff",
   icon: "overview",
-  progress: 0,
-  Component: lazy(() => import("../PlaceholderModule")),
+  Component: lazy(() => import("./OverviewModule")),
 };
