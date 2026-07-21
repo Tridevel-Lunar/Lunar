@@ -17,8 +17,6 @@ export type SpaceModuleMeta = {
   description: string;
   accent: string;
   icon: string;
-  /** UI-only progress (0–100); not persisted yet. */
-  progress?: number;
 };
 
 /**
@@ -37,8 +35,6 @@ export type SpaceCourseDefinition = {
   title: string;
   subtitle: string;
   description: string;
-  /** UI-only course progress (0–100). */
-  progress?: number;
   /** Ordered module definitions for this course. */
   modules: SpaceModuleDefinition[];
 };

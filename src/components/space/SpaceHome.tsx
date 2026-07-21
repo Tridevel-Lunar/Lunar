@@ -11,6 +11,7 @@ import ModuleSidebar from "@/components/app/ModuleSidebar";
 import type { User } from "@/lib/api";
 import { listCourses } from "@/components/space/core/registry";
 import { spaceCoursePath } from "@/components/space/core/routes";
+import { useSpaceProgress } from "@/components/space/hooks/useSpaceProgress";
 
 type SpaceTab = "home" | "courses";
 
@@ -19,6 +20,7 @@ export default function SpaceHome({ user }: { user: User }) {
   const initialTab = (location.state as { tab?: SpaceTab } | null)?.tab ?? "home";
   const [tab, setTab] = useState<SpaceTab>(initialTab);
   const courses = listCourses();
+  const { courseProgressPercent } = useSpaceProgress();
 
   const today = new Date().toLocaleDateString("en-US", {
     month: "short",
@@ -120,7 +122,7 @@ export default function SpaceHome({ user }: { user: User }) {
                 pointerEvents: tab === "courses" ? "auto" : "none",
               }}
             >
-              <CoursesView courses={courses} />
+              <CoursesView courses={courses} courseProgressPercent={courseProgressPercent} />
             </div>
           </div>
         </main>
@@ -157,8 +159,10 @@ function HomeView({ onGoToCourses }: { onGoToCourses: () => void }) {
 
 function CoursesView({
   courses,
+  courseProgressPercent,
 }: {
   courses: ReturnType<typeof listCourses>;
+  courseProgressPercent: (courseId: string, moduleIds: string[]) => number;
 }) {
   return (
     <div className="ml-auto flex h-full max-w-xl flex-col justify-center px-8 py-10">
@@ -167,7 +171,12 @@ function CoursesView({
       </h2>
 
       <div className="space-y-3">
-        {courses.map((course) => (
+        {courses.map((course) => {
+          const progress = courseProgressPercent(
+            course.id,
+            course.modules.map((m) => m.id),
+          );
+          return (
           <Link
             key={course.id}
             to={spaceCoursePath(course.id)}
@@ -193,17 +202,18 @@ function CoursesView({
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-cyan to-teal"
-                    style={{ width: `${course.progress ?? 0}%` }}
+                    style={{ width: `${progress}%` }}
                   />
                 </div>
                 <span className="font-mono shrink-0 text-[0.6rem] tracking-wider text-cyan">
-                  {course.progress ?? 0}%
+                  {progress}%
                 </span>
               </div>
             </div>
             <span className="text-xl text-text/25 transition group-hover:text-cyan/70">→</span>
           </Link>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

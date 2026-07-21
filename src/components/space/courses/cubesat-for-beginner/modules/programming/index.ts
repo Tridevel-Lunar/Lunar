@@ -9,6 +9,5 @@ export const programmingModule: SpaceModuleDefinition = {
   description: "เรียนการเขียนโปรแกรมแบบบล็อก เพื่อสั่งให้ดาวเทียมทำงาน",
   accent: "#ffab00",
   icon: "programming",
-  progress: 0,
   Component: lazy(() => import("../PlaceholderModule")),
 };

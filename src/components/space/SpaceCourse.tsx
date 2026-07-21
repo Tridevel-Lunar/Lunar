@@ -13,6 +13,7 @@ import type { User } from "@/lib/api";
 import { getCourse } from "@/components/space/core/registry";
 import { spaceHomePath, spaceModulePath } from "@/components/space/core/routes";
 import type { SpaceModuleDefinition } from "@/components/space/core/types";
+import { useSpaceProgress } from "@/components/space/hooks/useSpaceProgress";
 
 const SPACE_HERO_EARTH = "/space-hero-earth.png";
 
@@ -56,12 +57,14 @@ function SpaceHero({
   subtitle,
   description,
   progress,
+  onContinue,
 }: {
   tag: string;
   title: string;
   subtitle: string;
   description: string;
   progress: number;
+  onContinue: () => void;
 }) {
   return (
     <section className="relative min-h-[240px] overflow-hidden rounded-xl border border-white/10">
@@ -114,6 +117,7 @@ function SpaceHero({
 
           <button
             type="button"
+            onClick={onContinue}
             className="btn-clip font-mono shrink-0 cursor-pointer border border-cyan/50 bg-cyan/10 px-6 py-3 text-[0.72rem] tracking-[0.12em] text-cyan transition hover:bg-cyan hover:text-bg"
           >
             CONTINUE LEARNING →
@@ -127,12 +131,13 @@ function SpaceHero({
 function TopicRow({
   module,
   courseId,
+  completed,
 }: {
   module: SpaceModuleDefinition;
   courseId: string;
+  completed: boolean;
 }) {
   const navigate = useNavigate();
-  const progress = module.progress ?? 0;
 
   return (
     <button
@@ -157,19 +162,11 @@ function TopicRow({
         <p className="font-section-thai mt-0.5 text-[0.88rem] leading-snug text-muted">
           {module.description}
         </p>
-        <div className="mt-2 flex items-center gap-2">
-          <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full transition-all"
-              style={{
-                width: `${progress}%`,
-                background: module.accent,
-                boxShadow: `0 0 8px ${module.accent}66`,
-              }}
-            />
-          </div>
-          <span className="font-mono text-[0.55rem] tracking-wider text-text/40">{progress}%</span>
-        </div>
+        {completed && (
+          <p className="font-mono mt-2 text-[0.55rem] tracking-wider text-emerald-400/85">
+            ✓ เสร็จแล้ว
+          </p>
+        )}
       </div>
       <span className="pr-2 text-xl text-text/25 transition group-hover:text-cyan/70">›</span>
     </button>
@@ -180,6 +177,7 @@ export default function SpaceCourse({ user }: { user: User }) {
   const navigate = useNavigate();
   const { courseId = "" } = useParams<{ courseId: string }>();
   const course = getCourse(courseId);
+  const { isModuleCompleted, courseProgressPercent } = useSpaceProgress();
 
   const today = new Date().toLocaleDateString("en-US", {
     month: "short",
@@ -203,6 +201,17 @@ export default function SpaceCourse({ user }: { user: User }) {
         </div>
       </div>
     );
+  }
+
+  const moduleIds = course.modules.map((m) => m.id);
+  const progress = courseProgressPercent(course.id, moduleIds);
+  const nextModule =
+    course.modules.find((m) => !isModuleCompleted(course.id, m.id)) ?? course.modules[0];
+
+  function handleContinue() {
+    if (nextModule) {
+      navigate(spaceModulePath(course.id, nextModule.id));
+    }
   }
 
   return (
@@ -246,11 +255,17 @@ export default function SpaceCourse({ user }: { user: User }) {
               title={course.title}
               subtitle={course.subtitle}
               description={course.description}
-              progress={course.progress ?? 0}
+              progress={progress}
+              onContinue={handleContinue}
             />
             <div className="space-y-2">
               {course.modules.map((module) => (
-                <TopicRow key={module.id} module={module} courseId={course.id} />
+                <TopicRow
+                  key={module.id}
+                  module={module}
+                  courseId={course.id}
+                  completed={isModuleCompleted(course.id, module.id)}
+                />
               ))}
             </div>
           </div>

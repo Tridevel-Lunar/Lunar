@@ -638,3 +638,29 @@ export function saveArenaAttempt(
     body: JSON.stringify({ ast }),
   });
 }
+
+/* ── Space module progress ── */
+
+export type SpaceModuleCompletion = {
+  course_id: string;
+  module_id: string;
+  completed_at: string;
+};
+
+export type SpaceProgress = {
+  completed: SpaceModuleCompletion[];
+};
+
+export function getSpaceProgress(): Promise<SpaceProgress> {
+  return apiFetch<SpaceProgress>("/space/progress");
+}
+
+export function completeSpaceModule(
+  courseId: string,
+  moduleId: string,
+): Promise<SpaceModuleCompletion> {
+  return apiFetch<SpaceModuleCompletion>(
+    `/space/courses/${courseId}/modules/${moduleId}/complete`,
+    { method: "PUT" },
+  );
+}

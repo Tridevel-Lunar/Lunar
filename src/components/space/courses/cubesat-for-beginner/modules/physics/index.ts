@@ -9,6 +9,5 @@ export const physicsModule: SpaceModuleDefinition = {
   description: "เรียนพื้นฐานฟิสิกส์ที่เกี่ยวข้องกับการทำงานของดาวเทียมในวงโคจร",
   accent: "#a78bfa",
   icon: "physics",
-  progress: 0,
   Component: lazy(() => import("./PhysicsModule")),
 };

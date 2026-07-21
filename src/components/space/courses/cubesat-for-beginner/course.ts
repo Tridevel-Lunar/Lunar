@@ -15,6 +15,5 @@ export const cubesatForBeginnerCourse: SpaceCourseDefinition = {
   title: "CUBESAT FOR BEGINNER",
   subtitle: "พื้นฐานดาวเทียม",
   description: "เรียนรู้ส่วนประกอบและการทำงานของดาวเทียม CubeSat",
-  progress: 0,
   modules: [overviewModule, anatomyModule, physicsModule, programmingModule],
 };

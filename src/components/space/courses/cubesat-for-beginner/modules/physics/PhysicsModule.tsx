@@ -89,14 +89,14 @@ export default function PhysicsModule({ user, course, module }: SpaceModulePageP
             </header>
 
             <main className="flex min-h-0 flex-1 overflow-hidden">
-              <div className="relative flex flex-1 flex-col overflow-hidden">
-                <div className="flex-1 p-6 pb-2">
-                  <div ref={slideElRef} className="relative h-full w-full">
-                    <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-lg border border-white/10 bg-black/45 px-3.5 py-2 backdrop-blur-sm">
-                      <p className="font-thai text-[0.9rem] font-bold text-text">{slide.heading}</p>
-                    </div>
-                    {slide.graphic && slide.graphic !== "orbit-sim" ? (
-                      <Suspense fallback={<div className="h-full w-full rounded-lg bg-bg" />}>
+              <div className="relative min-h-0 min-w-0 flex-[2_1_0%] overflow-hidden">
+                <div ref={slideElRef} className="absolute inset-0">
+                  {slide.graphic && slide.graphic !== "orbit-sim" ? (
+                    <>
+                      <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-lg border border-white/10 bg-black/45 px-3.5 py-2 backdrop-blur-sm">
+                        <p className="font-thai text-[0.9rem] font-bold text-text">{slide.heading}</p>
+                      </div>
+                      <Suspense fallback={<div className="h-full w-full bg-bg" />}>
                         <LessonScene
                           type={
                             slide.graphic as
@@ -108,57 +108,86 @@ export default function PhysicsModule({ user, course, module }: SpaceModulePageP
                           }
                         />
                       </Suspense>
-                    ) : slide.graphic === "orbit-sim" ? (
+                    </>
+                  ) : slide.graphic === "orbit-sim" ? (
+                    <>
+                      <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-lg border border-white/10 bg-black/45 px-3.5 py-2 backdrop-blur-sm">
+                        <p className="font-thai text-[0.9rem] font-bold text-text">{slide.heading}</p>
+                      </div>
                       <OrbitSimView />
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="shrink-0 px-6 pb-4">
-                  <div className="mt-2 flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={goPrev}
-                      disabled={slideIdx === 0}
-                      className="flex cursor-pointer items-center gap-1 px-3 py-1.5 font-mono text-[0.65rem] tracking-wider text-text/30 transition hover:text-text disabled:cursor-default disabled:opacity-15"
-                    >
-                      ← ย้อนกลับ
-                    </button>
-                    <span className="font-mono text-[0.55rem] tracking-wider text-text/20">
-                      {slideIdx + 1} / {totalSlides}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={goNext}
-                      disabled={slideIdx >= totalSlides - 1}
-                      className="flex cursor-pointer items-center gap-1 px-3 py-1.5 font-mono text-[0.65rem] tracking-wider text-cyan/60 transition hover:text-cyan disabled:cursor-default disabled:opacity-15"
-                    >
-                      ถัดไป →
-                    </button>
-                  </div>
+                    </>
+                  ) : (
+                    <div className="relative flex h-full w-full flex-col justify-center overflow-hidden bg-[radial-gradient(ellipse_at_30%_40%,rgba(0,229,255,0.12),transparent_55%),radial-gradient(ellipse_at_80%_70%,rgba(167,139,250,0.1),transparent_50%),#030812] px-10 py-12">
+                      <p className="font-mono mb-3 text-[0.65rem] tracking-[0.2em] text-cyan/70 uppercase">
+                        Physics for Space
+                      </p>
+                      <h2 className="font-thai mb-4 max-w-xl text-[clamp(1.6rem,3vw,2.2rem)] font-bold leading-snug text-text">
+                        {slide.heading}
+                      </h2>
+                      <p className="font-section-thai mb-8 max-w-lg text-[1rem] leading-relaxed text-text/65">
+                        สภาพแวดล้อมนอกชั้นบรรยากาศมีอะไรบ้าง และทำไมมันสำคัญตอนออกแบบดาวเทียม
+                      </p>
+                      <div className="grid max-w-2xl gap-3 sm:grid-cols-2">
+                        {[
+                          { title: "แรงโน้มถ่วง", desc: "ทำไมดาวเทียมถึงลอยได้" },
+                          { title: "สนามแม่เหล็ก", desc: "ปกป้องและบอกทิศทาง" },
+                          { title: "ความร้อนและรังสี", desc: "สิ่งที่ทำให้อุปกรณ์เสื่อม" },
+                          { title: "สุญญากาศ", desc: "อากาศบางๆ ที่ยังดึงอยู่" },
+                        ].map((item) => (
+                          <div
+                            key={item.title}
+                            className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur-sm"
+                          >
+                            <p className="font-thai text-[0.95rem] font-semibold text-text">{item.title}</p>
+                            <p className="font-section-thai mt-1 text-[0.82rem] text-text/50">{item.desc}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="font-section-thai mt-8 text-[0.85rem] text-text/40">
+                        กด «ถัดไป» ทางขวาเพื่อเริ่มฉากแรก
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="flex w-[340px] shrink-0 flex-col border-l border-white/[0.06] bg-white/[0.02]">
-                <div className="flex flex-col items-center border-b border-white/[0.06] px-6 pt-8 pb-4">
-                  <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-amber/20">
-                    <img
-                      src={LAIKA_AVATAR_URL}
-                      alt="LAIKA"
-                      className="h-full w-full object-cover object-center"
-                    />
+              <div className="flex min-w-[280px] flex-[1_1_0%] flex-col border-l border-white/[0.06] bg-white/[0.02]">
+                <div className="flex-1 overflow-y-auto px-4 py-5">
+                  {/* LAIKA chat row: avatar | message bubble */}
+                  <div className="flex items-start gap-3">
+                    <div className="flex shrink-0 flex-col items-center gap-1.5">
+                      <div className="h-11 w-11 overflow-hidden rounded-full border-2 border-amber/25 shadow-[0_0_12px_rgba(251,191,36,0.15)]">
+                        <img
+                          src={LAIKA_AVATAR_URL}
+                          alt="LAIKA"
+                          className="h-full w-full object-cover object-center"
+                        />
+                      </div>
+                      <p className="font-mono text-[0.5rem] tracking-wider text-amber/70">LAIKA</p>
+                    </div>
+                    <div className="relative min-w-0 flex-1 rounded-2xl rounded-tl-md border border-amber/15 bg-amber/[0.06] px-3.5 py-3">
+                      <p className="font-section-thai text-[0.88rem] leading-relaxed text-text/85">
+                        <KnowledgeText text={slide.laikaSays} />
+                      </p>
+                    </div>
                   </div>
-                  <p className="font-mono mt-3 text-[0.6rem] tracking-wider text-amber/70">LAIKA</p>
-                </div>
-                <div className="flex-1 overflow-y-auto px-6 py-5">
-                  <div className="rounded-xl border border-amber/10 bg-amber/[0.03] p-4">
-                    <p className="font-section-thai text-[0.92rem] leading-relaxed text-text/80">
-                      <KnowledgeText text={slide.laikaSays} />
+
+                  <div className="mt-5 space-y-3 px-1">
+                    {slide.body.split("\n\n").map((paragraph, i) => (
+                      <p
+                        key={i}
+                        className="font-section-thai text-[0.85rem] leading-relaxed text-text/60"
+                      >
+                        <KnowledgeText text={paragraph} />
+                      </p>
+                    ))}
+                  </div>
+                  <div className="mt-4 rounded-xl border border-violet-400/20 bg-violet-400/[0.06] p-4">
+                    <p className="font-mono mb-2 text-[0.58rem] tracking-wider text-violet-300/80 uppercase">
+                      {slide.graphic ? "ลองเล่นในฉากนี้" : "เริ่มต้นยังไง"}
                     </p>
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    <p className="font-section-thai text-[0.85rem] leading-relaxed text-text/60">
-                      <KnowledgeText text={slide.body} />
+                    <p className="font-section-thai text-[0.82rem] leading-relaxed text-text/70">
+                      {slide.tryThis}
                     </p>
                   </div>
                   <div className="mt-4 rounded-xl border border-cyan/15 bg-cyan/[0.04] p-4">
@@ -170,10 +199,29 @@ export default function PhysicsModule({ user, course, module }: SpaceModulePageP
                     </p>
                   </div>
                 </div>
-                <div className="shrink-0 border-t border-white/[0.06] px-6 py-4">
-                  <p className="font-mono text-center text-[0.5rem] tracking-wider text-text/20">
-                    {module.title} · LUNAR
-                  </p>
+
+                <div className="shrink-0 border-t border-white/[0.06] px-4 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={goPrev}
+                      disabled={slideIdx === 0}
+                      className="flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1.5 font-mono text-[0.65rem] tracking-wider text-text/40 transition hover:bg-white/[0.04] hover:text-text disabled:cursor-default disabled:opacity-20"
+                    >
+                      ← ก่อนหน้า
+                    </button>
+                    <span className="font-mono text-[0.55rem] tracking-wider text-text/30">
+                      {slideIdx + 1} / {totalSlides}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={goNext}
+                      disabled={slideIdx >= totalSlides - 1}
+                      className="flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1.5 font-mono text-[0.65rem] tracking-wider text-cyan/70 transition hover:bg-cyan/10 hover:text-cyan disabled:cursor-default disabled:opacity-20"
+                    >
+                      ถัดไป →
+                    </button>
+                  </div>
                 </div>
               </div>
             </main>
