@@ -9,7 +9,7 @@ import {
 import SimTimeControls from "./SimTimeControls";
 
 /** 2D orbit timeline driven by the shared simulation clock. */
-export default function OrbitSimView() {
+export default function OrbitSimView({ onReset }: { onReset?: () => void }) {
   const simTime = useSimulationTimeSnapshot(100);
   const activePhase = getOrbitSimPhase(simTime);
   const activeIdx = orbitSimPhaseIndex(activePhase);
@@ -56,6 +56,7 @@ export default function OrbitSimView() {
       </div>
 
       <SimTimeControls
+        onReset={onReset}
         footnote={
           <>
             Sunlit/Eclipse จาก geometry วงโคจรจริง · SAA และ Ground Station

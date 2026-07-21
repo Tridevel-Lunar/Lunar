@@ -63,11 +63,7 @@ export type StreamAssistRequest = {
   parent_node_id?: string;
   web_search?: boolean;
   laika_mode?: "standard" | "extra";
-  learning_context?: {
-    course?: string;
-    completed_topics?: string[];
-    arena_missions?: string[];
-  };
+  learning_context?: LaikaLearningContext;
 };
 
 export type LaikaHealth = {
@@ -88,9 +84,18 @@ export function getLaikaHealth(): Promise<LaikaHealth> {
 
 export type LaikaLearningContext = {
   course?: string;
+  course_title?: string;
   completed_topics?: string[];
+  completed_modules?: string[];
+  pending_modules?: string[];
+  pending_topics?: string[];
+  space_progress_percent?: number;
   arena_missions?: string[];
 };
+
+export function getLaikaLearningContext(): Promise<LaikaLearningContext> {
+  return apiFetch<LaikaLearningContext>("/laika/learning-context");
+}
 
 export type User = {
   id: string;

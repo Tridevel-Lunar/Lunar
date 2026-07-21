@@ -6,7 +6,7 @@ export type PhysicsSlide = {
   funFact: string;
   /** Prompt that points at interactive controls in the scene. */
   tryThis: string;
-  graphic?: "gravity-well" | "magnet" | "thermal" | "radiation" | "vacuum" | "orbit-sim";
+  graphic?: "gravity-well" | "magnet" | "thermal" | "radiation" | "vacuum" | "orbit-sim" | "quiz";
 };
 
 export const PHYSICS_SLIDES: PhysicsSlide[] = [
@@ -85,5 +85,16 @@ export const PHYSICS_SLIDES: PhysicsSlide[] = [
     tryThis:
       "ลองกดเร่งเวลาแล้วดูการ์ด 4 ช่วงด้านบนเปลี่ยนไปตามนาฬิกาจำลอง ถ้าอยากอ่านรายละเอียดช่วงไหนให้ละเอียด กดหยุดชั่วคราวได้",
     graphic: "orbit-sim",
+  },
+  {
+    heading: "ทบทวนก่อนจบโมดูล",
+    laikaSays:
+      "เกือบครบแล้ว! ลองตอบคำถามสั้นๆ ทางซ้ายเพื่อเช็กว่าเรื่องแรงโน้มถ่วง สนามแม่เหล็ก ความร้อน รังสี และสุญญากาศ ยังอยู่ในหัวไหม ตอบถูกพอแล้วค่อยกดจบโมดูลนะ",
+    body: "แบบทดสอบนี้ไม่ได้เน้นท่องจำตัวเลข แต่เน้นความเข้าใจว่าดาวเทียมต้องเจอสภาพแวดล้อมแบบไหน และทำไมแต่ละเรื่องถึงสำคัญตอนออกแบบ CubeSat\n\nถ้ายังสับสนข้อไหน กด «ก่อนหน้า» ย้อนไปดูฉากนั้นอีกครั้งได้",
+    funFact:
+      "ทีมวิศวกรดาวเทียมจริงก็ใช้ checklist แบบนี้ก่อนปิด design review — ไม่ใช่แค่สอบในห้องเรียน",
+    tryThis:
+      "ตอบคำถามทางซ้ายให้ถูกอย่างน้อย 6 จาก 10 ข้อ แล้วกด «เสร็จโมดูลนี้»",
+    graphic: "quiz",
   },
 ];

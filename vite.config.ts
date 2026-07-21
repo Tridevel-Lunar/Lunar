@@ -5,6 +5,10 @@ import react from "@vitejs/plugin-react";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const proxyTarget = env.VITE_PROXY_TARGET || "http://localhost:8000";
+  const extraAllowedHosts = (env.VITE_ALLOWED_HOSTS ?? "")
+    .split(",")
+    .map((host) => host.trim())
+    .filter(Boolean);
 
   return {
     plugins: [react()],
@@ -18,6 +22,8 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true,
       port: 3000,
+      // Cloudflare quick tunnels (*.trycloudflare.com) and optional VITE_ALLOWED_HOSTS overrides.
+      allowedHosts: [".trycloudflare.com", ".localhost", ...extraAllowedHosts],
       watch: {
         usePolling: env.CHOKIDAR_USEPOLLING === "true",
       },

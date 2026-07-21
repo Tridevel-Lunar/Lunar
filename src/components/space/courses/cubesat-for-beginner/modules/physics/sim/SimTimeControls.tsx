@@ -13,9 +13,10 @@ type SimTimeControlsProps = {
   footnote?: ReactNode;
   /** Extra controls rendered on the right (e.g. focus buttons). */
   trailing?: ReactNode;
+  onReset?: () => void;
 };
 
-export default function SimTimeControls({ footnote, trailing }: SimTimeControlsProps) {
+export default function SimTimeControls({ footnote, trailing, onReset }: SimTimeControlsProps) {
   const { timeScale, setTimeScale } = useSimulationClock();
   const idx = timeScaleIndex(timeScale);
   const canSlow = idx > 0;
@@ -64,6 +65,17 @@ export default function SimTimeControls({ footnote, trailing }: SimTimeControlsP
           <span className="ml-1 min-w-[3.2rem] rounded-md border border-white/10 bg-black/40 px-2 py-1.5 text-center font-mono text-[0.7rem] text-cyan/80 backdrop-blur-sm">
             {formatTimeScale(timeScale)}
           </span>
+          {onReset && (
+            <button
+              type="button"
+              onClick={onReset}
+              title="รีเซ็ตฉาก"
+              aria-label="รีเซ็ตฉาก"
+              className="cursor-pointer rounded-md border border-white/15 bg-black/50 px-2.5 py-1.5 font-mono text-[0.75rem] text-text/70 backdrop-blur-sm transition hover:border-white/25 hover:text-text"
+            >
+              ↻
+            </button>
+          )}
         </div>
         {footnote && (
           <div className="rounded-md border border-white/10 bg-black/50 px-2.5 py-1.5 font-section-thai text-[0.68rem] leading-snug text-text/55 backdrop-blur-sm">

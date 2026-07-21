@@ -56,10 +56,36 @@ function estimateRagTokens(topK: number): number {
 }
 
 function formatLearningContext(ctx?: LaikaLearningContext): string {
-  if (!ctx) return "(no progress data)";
-  const topics = ctx.completed_topics?.join(", ") ?? "";
-  const missions = ctx.arena_missions?.join(", ") ?? "";
-  return `Course: ${ctx.course ?? ""}\nCompleted topics: ${topics}\nArena missions: ${missions}`;
+  if (!ctx) return "(no progress data — learner may be new)";
+
+  const course = ctx.course ?? "";
+  const courseTitle = ctx.course_title ?? "";
+  const courseLine = courseTitle && course ? `${courseTitle} (${course})` : course || "(unspecified)";
+
+  const lines = [`Active course: ${courseLine}`];
+
+  if (typeof ctx.space_progress_percent === "number") {
+    const done = ctx.completed_topics?.length ?? ctx.completed_modules?.length ?? 0;
+    lines.push(`Space progress: ${ctx.space_progress_percent}% (${done} modules completed)`);
+  }
+
+  if (ctx.completed_topics?.length) {
+    lines.push(`Completed modules: ${ctx.completed_topics.join(", ")}`);
+  } else {
+    lines.push("Completed modules: none yet");
+  }
+
+  if (ctx.pending_topics?.length) {
+    lines.push(`Not yet completed: ${ctx.pending_topics.join(", ")}`);
+  }
+
+  if (ctx.arena_missions?.length) {
+    lines.push(`Arena: ${ctx.arena_missions.join(", ")}`);
+  } else {
+    lines.push("Arena: no mission drafts saved");
+  }
+
+  return lines.join("\n");
 }
 
 function formatHistory(messages: ChatNode[]): string {

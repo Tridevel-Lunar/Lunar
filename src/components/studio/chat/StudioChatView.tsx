@@ -24,6 +24,7 @@ import {
 } from "@/components/studio/data/studio-data";
 import LaikaTypingStatus from "@/components/studio/chat/LaikaTypingStatus";
 import { LaikaAvatar, TypeBadge } from "@/components/studio/shared/studio-shared";
+import { useLaikaLearningContext } from "@/components/studio/hooks/useLaikaLearningContext";
 import { isSameChatCalendarDay } from "@/lib/chat-timestamp";
 import {
   ApiError,
@@ -104,6 +105,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   const [webSearch, setWebSearch] = useState(false);
   const [laikaMode, setLaikaMode] = useState<"standard" | "extra">("standard");
   const [laikaHealth, setLaikaHealth] = useState<LaikaHealth | null>(null);
+  const learningContext = useLaikaLearningContext();
 
   // Memoised context usage estimate — stable reference unless deps change
   const contextUsage = useMemo<ContextUsageEstimate>(() => {
@@ -116,11 +118,12 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
       currentContent: streamingText,
       draft: editDraft,
       historyMessages: msg as ChatNode[],
+      learningContext: learningContext ?? undefined,
       topK: 5,
       webSearch,
       mode: laikaMode,
     });
-  }, [laikaHealth, session?.messages, session?.laikaIntent, streamingText, editDraft, webSearch, laikaMode]);
+  }, [laikaHealth, session?.messages, session?.laikaIntent, streamingText, editDraft, learningContext, webSearch, laikaMode]);
 
   const loadConversation = useCallback(async () => {
     if (!collectionId) return;
@@ -393,6 +396,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
           parent_node_id: parentNodeId,
           web_search: webSearch ?? false,
           laika_mode: laikaMode,
+          learning_context: learningContext ?? undefined,
         },
         {
           onMeta: (meta) => {

@@ -3,31 +3,47 @@ import { HiOutlineBell, HiOutlineCalendar, HiOutlineMagnifyingGlass } from "reac
 import { IoPlanetOutline } from "react-icons/io5";
 import { Suspense, useRef, useState } from "react";
 
-import ModuleSidebar from "@/components/app/ModuleSidebar";
 import { KnowledgeProvider } from "@/components/knowledge/KnowledgeProvider";
 import KnowledgeDialog from "@/components/knowledge/KnowledgeDialog";
 import KnowledgeText from "@/components/knowledge/KnowledgeText";
 import { LAIKA_AVATAR_URL } from "@/lib/constants";
 import type { SpaceModulePageProps } from "@/components/space/core/types";
 import { spaceCoursePath } from "@/components/space/core/routes";
+import { useSpaceProgress } from "@/components/space/hooks/useSpaceProgress";
 
 import LessonScene from "./LessonScene";
+import PhysicsQuizPanel from "./components/PhysicsQuizPanel";
 import { SimulationClockProvider } from "./sim/SimulationClock";
 import OrbitSimView from "./sim/OrbitSimView";
 import { PHYSICS_SLIDES } from "./slides";
 
+const MODULE_ID = "physics";
+
 /** Physics for Space — custom module page (slides + WebGPU lessons). */
-export default function PhysicsModule({ user, course, module }: SpaceModulePageProps) {
+export default function PhysicsModule({ course, module }: SpaceModulePageProps) {
   const navigate = useNavigate();
+  const { isModuleCompleted, markComplete } = useSpaceProgress();
+  const moduleCompleted = isModuleCompleted(course.id, MODULE_ID);
   const slides = PHYSICS_SLIDES;
 
   const [slideIdx, setSlideIdx] = useState(0);
+  const [sceneResetKey, setSceneResetKey] = useState(0);
+  const [finishing, setFinishing] = useState(false);
   const totalSlides = slides.length;
   const slideElRef = useRef<HTMLDivElement>(null);
 
   const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-  const slide = slides[slideIdx];
+  const slide = slides[slideIdx]!;
+
+  async function handleMarkComplete() {
+    setFinishing(true);
+    try {
+      await markComplete(course.id, MODULE_ID);
+    } finally {
+      setFinishing(false);
+    }
+  }
 
   function goNext() {
     if (slideIdx < totalSlides - 1) setSlideIdx((p) => p + 1);
@@ -36,14 +52,15 @@ export default function PhysicsModule({ user, course, module }: SpaceModulePageP
     if (slideIdx > 0) setSlideIdx((p) => p - 1);
   }
 
+  function handleResetScene() {
+    setSceneResetKey((k) => k + 1);
+  }
+
   return (
     <KnowledgeProvider>
       <KnowledgeDialog />
-      <SimulationClockProvider resetKey={slideIdx}>
-        <div className="flex h-screen overflow-hidden bg-bg text-text">
-          <ModuleSidebar user={user} activeModule="space" />
-
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <SimulationClockProvider resetKey={`${slideIdx}-${sceneResetKey}`}>
+        <div className="flex h-screen flex-col overflow-hidden bg-bg text-text">
             <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-3">
               <div className="flex items-center gap-2.5">
                 <button
@@ -91,7 +108,14 @@ export default function PhysicsModule({ user, course, module }: SpaceModulePageP
             <main className="flex min-h-0 flex-1 overflow-hidden">
               <div className="relative min-h-0 min-w-0 flex-[2_1_0%] overflow-hidden">
                 <div ref={slideElRef} className="absolute inset-0">
-                  {slide.graphic && slide.graphic !== "orbit-sim" ? (
+                  {slide.graphic === "quiz" ? (
+                    <PhysicsQuizPanel
+                      courseId={course.id}
+                      moduleCompleted={moduleCompleted}
+                      finishing={finishing}
+                      onMarkComplete={handleMarkComplete}
+                    />
+                  ) : slide.graphic && slide.graphic !== "orbit-sim" ? (
                     <>
                       <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-lg border border-white/10 bg-black/45 px-3.5 py-2 backdrop-blur-sm">
                         <p className="font-thai text-[0.9rem] font-bold text-text">{slide.heading}</p>
@@ -106,6 +130,8 @@ export default function PhysicsModule({ user, course, module }: SpaceModulePageP
                               | "radiation"
                               | "vacuum"
                           }
+                          resetKey={sceneResetKey}
+                          onResetScene={handleResetScene}
                         />
                       </Suspense>
                     </>
@@ -114,38 +140,40 @@ export default function PhysicsModule({ user, course, module }: SpaceModulePageP
                       <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-lg border border-white/10 bg-black/45 px-3.5 py-2 backdrop-blur-sm">
                         <p className="font-thai text-[0.9rem] font-bold text-text">{slide.heading}</p>
                       </div>
-                      <OrbitSimView />
+                      <OrbitSimView onReset={handleResetScene} />
                     </>
                   ) : (
-                    <div className="relative flex h-full w-full flex-col justify-center overflow-hidden bg-[radial-gradient(ellipse_at_30%_40%,rgba(0,229,255,0.12),transparent_55%),radial-gradient(ellipse_at_80%_70%,rgba(167,139,250,0.1),transparent_50%),#030812] px-10 py-12">
-                      <p className="font-mono mb-3 text-[0.65rem] tracking-[0.2em] text-cyan/70 uppercase">
-                        Physics for Space
-                      </p>
-                      <h2 className="font-thai mb-4 max-w-xl text-[clamp(1.6rem,3vw,2.2rem)] font-bold leading-snug text-text">
-                        {slide.heading}
-                      </h2>
-                      <p className="font-section-thai mb-8 max-w-lg text-[1rem] leading-relaxed text-text/65">
-                        สภาพแวดล้อมนอกชั้นบรรยากาศมีอะไรบ้าง และทำไมมันสำคัญตอนออกแบบดาวเทียม
-                      </p>
-                      <div className="grid max-w-2xl gap-3 sm:grid-cols-2">
-                        {[
-                          { title: "แรงโน้มถ่วง", desc: "ทำไมดาวเทียมถึงลอยได้" },
-                          { title: "สนามแม่เหล็ก", desc: "ปกป้องและบอกทิศทาง" },
-                          { title: "ความร้อนและรังสี", desc: "สิ่งที่ทำให้อุปกรณ์เสื่อม" },
-                          { title: "สุญญากาศ", desc: "อากาศบางๆ ที่ยังดึงอยู่" },
-                        ].map((item) => (
-                          <div
-                            key={item.title}
-                            className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur-sm"
-                          >
-                            <p className="font-thai text-[0.95rem] font-semibold text-text">{item.title}</p>
-                            <p className="font-section-thai mt-1 text-[0.82rem] text-text/50">{item.desc}</p>
-                          </div>
-                        ))}
+                    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[radial-gradient(ellipse_at_50%_40%,rgba(0,229,255,0.12),transparent_55%),radial-gradient(ellipse_at_70%_75%,rgba(167,139,250,0.1),transparent_50%),#030812] px-6 py-10 sm:px-10">
+                      <div className="flex w-full max-w-2xl flex-col items-center text-center">
+                        <p className="font-mono mb-3 text-[0.65rem] tracking-[0.2em] text-cyan/70 uppercase">
+                          Physics for Space
+                        </p>
+                        <h2 className="font-thai mb-4 max-w-xl text-[clamp(1.6rem,3vw,2.2rem)] font-bold leading-snug text-text">
+                          {slide.heading}
+                        </h2>
+                        <p className="font-section-thai mb-8 max-w-lg text-[1rem] leading-relaxed text-text/65">
+                          สภาพแวดล้อมนอกชั้นบรรยากาศมีอะไรบ้าง และทำไมมันสำคัญตอนออกแบบดาวเทียม
+                        </p>
+                        <div className="grid w-full max-w-xl gap-3 sm:grid-cols-2">
+                          {[
+                            { title: "แรงโน้มถ่วง", desc: "ทำไมดาวเทียมถึงลอยได้" },
+                            { title: "สนามแม่เหล็ก", desc: "ปกป้องและบอกทิศทาง" },
+                            { title: "ความร้อนและรังสี", desc: "สิ่งที่ทำให้อุปกรณ์เสื่อม" },
+                            { title: "สุญญากาศ", desc: "อากาศบางๆ ที่ยังดึงอยู่" },
+                          ].map((item) => (
+                            <div
+                              key={item.title}
+                              className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left backdrop-blur-sm"
+                            >
+                              <p className="font-thai text-[0.95rem] font-semibold text-text">{item.title}</p>
+                              <p className="font-section-thai mt-1 text-[0.82rem] text-text/50">{item.desc}</p>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="font-section-thai mt-8 text-[0.85rem] text-text/40">
+                          กด «ถัดไป» ทางขวาเพื่อเริ่มฉากแรก
+                        </p>
                       </div>
-                      <p className="font-section-thai mt-8 text-[0.85rem] text-text/40">
-                        กด «ถัดไป» ทางขวาเพื่อเริ่มฉากแรก
-                      </p>
                     </div>
                   )}
                 </div>
@@ -184,7 +212,11 @@ export default function PhysicsModule({ user, course, module }: SpaceModulePageP
                   </div>
                   <div className="mt-4 rounded-xl border border-violet-400/20 bg-violet-400/[0.06] p-4">
                     <p className="font-mono mb-2 text-[0.58rem] tracking-wider text-violet-300/80 uppercase">
-                      {slide.graphic ? "ลองเล่นในฉากนี้" : "เริ่มต้นยังไง"}
+                      {slide.graphic === "quiz"
+                        ? "แบบทดสอบ"
+                        : slide.graphic
+                          ? "ลองเล่นในฉากนี้"
+                          : "เริ่มต้นยังไง"}
                     </p>
                     <p className="font-section-thai text-[0.82rem] leading-relaxed text-text/70">
                       {slide.tryThis}
@@ -225,7 +257,6 @@ export default function PhysicsModule({ user, course, module }: SpaceModulePageP
                 </div>
               </div>
             </main>
-          </div>
         </div>
       </SimulationClockProvider>
     </KnowledgeProvider>

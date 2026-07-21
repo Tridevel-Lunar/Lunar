@@ -41,23 +41,25 @@ export const ASSEMBLED_POSES: Record<BoardPartId, PartPose> = {
 export const FLATSAT_POSES: Record<BoardPartId, PartPose> = {
   eps: {
     position: [-1.55, 0.04, 0],
-    rotation: [-Math.PI / 2, 0, 0],
+    rotation: [0, 0, 0],
     scale: [1.05, 0.035, 1.35],
   },
   obc: {
     position: [0, 0.045, 0],
-    rotation: [-Math.PI / 2, 0, 0],
+    rotation: [0, 0, 0],
     scale: [1.15, 0.04, 1.35],
   },
   comm: {
     position: [1.55, 0.04, 0],
-    rotation: [-Math.PI / 2, 0, 0],
+    rotation: [0, 0, 0],
     scale: [1.05, 0.035, 1.35],
   },
   payload: {
     position: [0, 0.04, -1.45],
-    rotation: [-Math.PI / 2, 0, 0],
-    scale: [2.5, 0.035, 0.95],
+    rotation: [0, 0, 0],
+    // Match the FR4 pad proportions drawn into the board texture.
+    // (payload pad is ~440x180 in the 1024x768 canvas)
+    scale: [2.1, 0.035, 0.87],
   },
 };
 
