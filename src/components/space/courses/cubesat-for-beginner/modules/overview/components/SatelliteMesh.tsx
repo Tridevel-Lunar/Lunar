@@ -77,6 +77,12 @@ interface SatelliteMeshProps {
   /** Hide locator beacon while camera is focused on this craft. */
   followed?: boolean;
   accentColor?: string;
+  /** Override orbit display size (museum / inspect). */
+  displaySize?: number;
+  /** When false, hide orbit locator beacon (museum). Default: show unless followed. */
+  showBeacon?: boolean;
+  /** Apply nadir tilt for orbit lookAt. Museum displays upright. Default true. */
+  applyNadirTilt?: boolean;
 }
 
 export default function SatelliteMesh({
@@ -85,27 +91,28 @@ export default function SatelliteMesh({
   hovered,
   followed,
   accentColor = "#9db0c7",
+  displaySize,
+  showBeacon: showBeaconProp,
+  applyNadirTilt = true,
 }: SatelliteMeshProps) {
   const key: SatelliteModelKey = MISSION_MODEL[missionType];
   const path = SATELLITE_MODELS[key].path;
   const { scene } = useGLTF(path);
-  const targetSize = displaySizeForMission(missionType);
-  const nadirTiltX = nadirTiltXForMission(missionType);
+  const targetSize = displaySize ?? displaySizeForMission(missionType);
+  const nadirTiltX = applyNadirTilt ? nadirTiltXForMission(missionType) : 0;
 
   const model = useMemo(
     () => normalizeModel(scene, targetSize, accentColor),
     [scene, targetSize, accentColor]
   );
 
-  // Mild highlight only — keep relative real-world proportions readable
-  const scale = selected && !followed ? 1.12 : hovered && !followed ? 1.06 : 1;
   // Large enough to find & click from Earth overview (model itself stays true-relative)
   const beaconR = Math.max(0.09, Math.min(0.16, targetSize * 1.8));
   const hitR = beaconR * 1.65;
-  const showBeacon = !followed;
+  const showBeacon = showBeaconProp ?? !followed;
 
   return (
-    <group scale={scale} renderOrder={10}>
+    <group renderOrder={10}>
       {/* Parent lookAt points −Z at Earth; tilt so model nadir axis matches */}
       <group rotation={[nadirTiltX, 0, 0]}>
         <primitive object={model} />

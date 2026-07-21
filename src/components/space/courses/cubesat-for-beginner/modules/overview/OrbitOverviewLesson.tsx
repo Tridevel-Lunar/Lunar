@@ -9,6 +9,7 @@ import { useSpaceProgress } from "@/components/space/hooks/useSpaceProgress";
 import JourneyPanel from "./components/JourneyPanel";
 import OverviewTimeControls from "./components/OverviewTimeControls";
 import {
+  BAND_META,
   INITIAL_ORBITS,
   INITIAL_SATELLITES,
   OrbitBand,
@@ -16,13 +17,21 @@ import {
   SatelliteDefinition,
   SimulationSelection,
 } from "./lib/types";
-import { modelMetaForMission } from "./lib/satelliteModels";
+import { modelMetaForMission, formatDimensionsWxLxH, realDimensionsMForMission } from "./lib/satelliteModels";
 import { hudBtn, hudBtnActive, hudPanel } from "./lib/hudStyles";
 import { DEFAULT_TIME_SCALE } from "../physics/sim/timeScale";
 
+import OverviewSceneLoader from "./components/OverviewSceneLoader";
+
 const OrbitScene = lazy(() => import("./components/OrbitScene"));
+const MuseumScene = lazy(() => import("./components/MuseumScene"));
 
 const MODULE_ID = "overview";
+
+type SceneView = "orbit" | "museum";
+
+const hudBtnMuseum =
+  "cursor-pointer rounded-md border border-white/30 bg-white/10 px-2.5 py-1.5 font-mono text-[0.7rem] tracking-wide text-white/90 backdrop-blur-sm transition hover:border-white/45";
 
 export default function OrbitOverviewLesson({
   courseId = "cubesat-for-beginner",
@@ -46,6 +55,7 @@ export default function OrbitOverviewLesson({
   );
   const [homeToken, setHomeToken] = useState(0);
   const [sceneBandVisit, setSceneBandVisit] = useState<OrbitBand | null>(null);
+  const [sceneView, setSceneView] = useState<SceneView>("orbit");
 
   const [layers, setLayers] = useState({
     orbitalPaths: true,
@@ -59,6 +69,17 @@ export default function OrbitOverviewLesson({
   const selectedSatelliteId =
     selection?.kind === "satellite" ? selection.id : null;
   const selectedOrbitId = selection?.kind === "orbit" ? selection.id : null;
+  const isMuseum = sceneView === "museum";
+
+  /** Single focus target shared by orbit chase cam and museum gallery cam. */
+  const focusSatelliteId = useMemo(() => {
+    if (selection?.kind === "satellite") return selection.id;
+    if (followSatelliteId) return followSatelliteId;
+    if (selection?.kind === "orbit") {
+      return satellites.find((s) => s.orbitId === selection.id)?.id ?? null;
+    }
+    return null;
+  }, [selection, followSatelliteId, satellites]);
 
   const selectedSat = useMemo(
     () =>
@@ -77,7 +98,6 @@ export default function OrbitOverviewLesson({
       if (orbit && orbit.band !== "HEO") {
         setSceneBandVisit(orbit.band);
       }
-      // Auto-focus a satellite on this orbit (Physics-style follow)
       const satOnOrbit = satellites.find((s) => s.orbitId === orbitId);
       setFollowSatelliteId(satOnOrbit?.id ?? null);
     },
@@ -122,6 +142,19 @@ export default function OrbitOverviewLesson({
     setFollowSatelliteId(selectedSatelliteId);
   }, [followSatelliteId, selectedSatelliteId]);
 
+  const handleSwapView = useCallback(() => {
+    if (sceneView === "orbit") {
+      setFollowSatelliteId(null);
+      setSceneView("museum");
+      return;
+    }
+
+    setSceneView("orbit");
+    if (focusSatelliteId) {
+      setFollowSatelliteId(focusSatelliteId);
+    }
+  }, [sceneView, focusSatelliteId]);
+
   const handleReset = () => {
     setTimeScale(DEFAULT_TIME_SCALE);
     setFollowSatelliteId(null);
@@ -130,7 +163,7 @@ export default function OrbitOverviewLesson({
   };
 
   const sceneOrbits = useMemo(() => orbits, [orbits]);
-  const isChasing = !!followSatelliteId;
+  const isChasing = !!followSatelliteId && !isMuseum;
   const followedSat = useMemo(
     () =>
       followSatelliteId
@@ -142,33 +175,66 @@ export default function OrbitOverviewLesson({
     ? modelMetaForMission(followedSat.missionType)
     : null;
 
+  const focusSat = useMemo(
+    () =>
+      focusSatelliteId
+        ? (satellites.find((s) => s.id === focusSatelliteId) ?? null)
+        : null,
+    [focusSatelliteId, satellites],
+  );
+  const focusOrbit = useMemo(
+    () =>
+      focusSat
+        ? (orbits.find((o) => o.id === focusSat.orbitId) ?? null)
+        : null,
+    [focusSat, orbits],
+  );
+  const focusBandMeta = focusOrbit ? BAND_META[focusOrbit.band] : null;
+  const focusModelMeta = focusSat
+    ? modelMetaForMission(focusSat.missionType)
+    : null;
+
   return (
     <KnowledgeProvider>
-      <main className="flex h-screen w-screen overflow-hidden bg-[#05070d]">
+      <main
+        className={`flex h-screen w-screen overflow-hidden ${
+          isMuseum ? "bg-[#050508]" : "bg-[#05070d]"
+        }`}
+      >
         <section
           className={`relative h-full min-w-0 transition-[flex-basis,flex-grow] duration-300 ease-out ${
             panelOpen ? "flex-[2] basis-0" : "flex-1 basis-full"
           }`}
         >
           <Suspense
-            fallback={<div className="h-full w-full bg-[#05070d]" aria-hidden />}
+            fallback={
+              <OverviewSceneLoader variant={isMuseum ? "museum" : "orbit"} />
+            }
           >
-            <OrbitScene
-              key={resetKey}
-              orbits={sceneOrbits}
-              satellites={satellites}
-              activeOrbitId={activeOrbitId}
-              showOrbitPaths={layers.orbitalPaths}
-              showSatellites={layers.satellites}
-              speed={timeScale}
-              paused={timeScale === 0}
-              selectedSatelliteId={selectedSatelliteId}
-              selectedOrbitId={selectedOrbitId}
-              followSatelliteId={followSatelliteId}
-              homeToken={homeToken}
-              onSelectSatellite={handleSatelliteSelect}
-              onSelectOrbit={handleOrbitSelect}
-            />
+            {isMuseum ? (
+              <MuseumScene
+                satellites={satellites}
+                focusSatelliteId={focusSatelliteId}
+                onSelectSatellite={handleSatelliteSelect}
+              />
+            ) : (
+              <OrbitScene
+                key={resetKey}
+                orbits={sceneOrbits}
+                satellites={satellites}
+                activeOrbitId={activeOrbitId}
+                showOrbitPaths={layers.orbitalPaths}
+                showSatellites={layers.satellites}
+                speed={timeScale}
+                paused={timeScale === 0}
+                selectedSatelliteId={selectedSatelliteId}
+                selectedOrbitId={selectedOrbitId}
+                followSatelliteId={followSatelliteId}
+                homeToken={homeToken}
+                onSelectSatellite={handleSatelliteSelect}
+                onSelectOrbit={handleOrbitSelect}
+              />
+            )}
           </Suspense>
 
           <div className="pointer-events-none absolute top-3 left-3 z-20 flex flex-wrap items-center gap-1">
@@ -180,35 +246,121 @@ export default function OrbitOverviewLesson({
             >
               ‹ COURSE
             </Link>
+            {!isMuseum && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleGoHome}
+                  className={`pointer-events-auto ${hudBtn}`}
+                  aria-label="มุมกล้องหลัก"
+                  title="กลับมุมกล้องหลัก"
+                >
+                  ⌂ Cam
+                </button>
+                <button
+                  type="button"
+                  disabled={!followSatelliteId && !selectedSatelliteId}
+                  onClick={handleToggleChase}
+                  className={`pointer-events-auto ${isChasing ? hudBtnActive : hudBtn}`}
+                  title={
+                    isChasing
+                      ? "หยุดตามกล้อง (ยังซูม/หมุนรอบโลกได้)"
+                      : selectedSatelliteId || followSatelliteId
+                        ? "โฟกัสตามดาวเทียม"
+                        : "เลือกดาวเทียมหรือวงโคจรก่อน"
+                  }
+                >
+                  {isChasing
+                    ? "◎ กำลังตาม…"
+                    : selectedSat
+                      ? `✈ ตาม · ${selectedSat.name}`
+                      : "✈ ตามดาวเทียม"}
+                </button>
+              </>
+            )}
             <button
               type="button"
-              onClick={handleGoHome}
-              className={`pointer-events-auto ${hudBtn}`}
-              aria-label="มุมกล้องหลัก"
-              title="กลับมุมกล้องหลัก"
-            >
-              ⌂ Cam
-            </button>
-            <button
-              type="button"
-              disabled={!followSatelliteId && !selectedSatelliteId}
-              onClick={handleToggleChase}
-              className={`pointer-events-auto ${isChasing ? hudBtnActive : hudBtn}`}
+              onClick={handleSwapView}
+              className={`pointer-events-auto ${isMuseum ? hudBtnMuseum : hudBtn}`}
               title={
-                isChasing
-                  ? "หยุดตามกล้อง (ยังซูม/หมุนรอบโลกได้)"
-                  : selectedSatelliteId || followSatelliteId
-                    ? "โฟกัสตามดาวเทียม"
-                    : "เลือกดาวเทียมหรือวงโคจรก่อน"
+                isMuseum
+                  ? "กลับฉากโลกและวงโคจร"
+                  : "เปิดพิพิธภัณฑ์ดาวเทียม 3D"
               }
+              aria-label={isMuseum ? "สลับไปฉากโลก" : "สลับไปพิพิธภัณฑ์"}
             >
-              {isChasing
-                ? "◎ กำลังตาม…"
-                : selectedSat
-                  ? `✈ ตาม · ${selectedSat.name}`
-                  : "✈ ตามดาวเทียม"}
+              {isMuseum ? "⇄ Swap · Orbit" : "⇄ Swap · Museum"}
             </button>
           </div>
+
+          {isMuseum && (
+            <div className="pointer-events-none absolute inset-x-3 bottom-3 z-20 flex items-end justify-between gap-3">
+              <div className={`max-w-[18rem] ${hudPanel}`}>
+                สัดส่วนจริง (true scale) — เปรียบเทียบขนาดดาวเทียมได้ตรงกันบนฐาน
+              </div>
+              <div className={`max-w-[280px] ${hudPanel}`}>
+                {focusSat && focusBandMeta ? (
+                  <>
+                    <div
+                      className="font-mono text-[0.58rem] tracking-wider uppercase"
+                      style={{ color: focusBandMeta.defaultColor }}
+                    >
+                      {focusBandMeta.label} · {focusBandMeta.subtitleTh}
+                    </div>
+                    <div className="mt-0.5 truncate font-mono text-[0.75rem] text-white/85">
+                      {focusSat.name}
+                    </div>
+                    <p className="mt-1 text-[0.65rem] leading-snug text-white/50">
+                      {focusSat.description}
+                    </p>
+                    <p className="mt-1 font-mono text-[0.6rem] text-white/45">
+                      {formatDimensionsWxLxH(
+                        realDimensionsMForMission(focusSat.missionType),
+                      )}
+                    </p>
+                    {focusModelMeta && (
+                      <p className="mt-1.5 text-[0.6rem] leading-snug text-white/35">
+                        Model:{" "}
+                        <a
+                          href={focusModelMeta.source}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="pointer-events-auto text-white/50 underline decoration-white/20 hover:text-white/70"
+                        >
+                          {focusModelMeta.credit}
+                        </a>
+                        {"license" in focusModelMeta ? (
+                          <>
+                            {" · "}
+                            <a
+                              href={focusModelMeta.license}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="pointer-events-auto text-white/45 underline decoration-white/20 hover:text-white/65"
+                            >
+                              CC BY 4.0
+                            </a>
+                          </>
+                        ) : null}
+                      </p>
+                    )}
+                    <p className="mt-1 text-[0.65rem] leading-snug text-white/40">
+                      ลากหมุน · เลื่อน · ซูม
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="font-mono text-[0.58rem] tracking-wider text-white/80 uppercase">
+                      Museum
+                    </div>
+                    <p className="mt-0.5 text-[0.65rem] leading-snug text-white/55">
+                      คลิกดาวเทียมเพื่อโฟกัส · ลากหมุน/เลื่อน/ซูม
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {isChasing && followedSat && (
             <div className={`absolute right-3 bottom-3 z-20 max-w-[260px] ${hudPanel}`}>
@@ -224,26 +376,22 @@ export default function OrbitOverviewLesson({
               {followedModelMeta && (
                 <p className="mt-1.5 text-[0.6rem] leading-snug text-white/35">
                   Model:{" "}
-                  {"source" in followedModelMeta && followedModelMeta.source ? (
-                    <a
-                      href={followedModelMeta.source}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white/50 underline decoration-white/20 hover:text-white/70"
-                    >
-                      {followedModelMeta.credit}
-                    </a>
-                  ) : (
-                    followedModelMeta.credit
-                  )}
-                  {"license" in followedModelMeta && followedModelMeta.license ? (
+                  <a
+                    href={followedModelMeta.source}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pointer-events-auto text-white/50 underline decoration-white/20 hover:text-white/70"
+                  >
+                    {followedModelMeta.credit}
+                  </a>
+                  {"license" in followedModelMeta ? (
                     <>
                       {" · "}
                       <a
                         href={followedModelMeta.license}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-white/45 underline decoration-white/20 hover:text-white/65"
+                        className="pointer-events-auto text-white/45 underline decoration-white/20 hover:text-white/65"
                       >
                         CC BY 4.0
                       </a>
@@ -261,13 +409,15 @@ export default function OrbitOverviewLesson({
             </div>
           )}
 
-          <OverviewTimeControls
-            timeScale={timeScale}
-            onTimeScaleChange={setTimeScale}
-            onReset={handleReset}
-            layers={layers}
-            onToggleLayer={toggleLayer}
-          />
+          {!isMuseum && (
+            <OverviewTimeControls
+              timeScale={timeScale}
+              onTimeScaleChange={setTimeScale}
+              onReset={handleReset}
+              layers={layers}
+              onToggleLayer={toggleLayer}
+            />
+          )}
 
           {!panelOpen && (
             <button
