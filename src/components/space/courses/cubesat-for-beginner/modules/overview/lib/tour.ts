@@ -169,7 +169,7 @@ export const MODULE1_TYPE_CARDS: {
   {
     mission: "science_demo",
     short: "วิจัย · CubeSat",
-    everyday: "KNACKSAT · มหาวิทยาลัย",
+    everyday: "KNACKSAT-2 · มหาวิทยาลัย",
     orbit: "LEO",
   },
 ];

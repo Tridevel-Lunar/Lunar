@@ -139,6 +139,12 @@ export const BAND_META: Record<
   },
 };
 
+/** Short label for UI: LEO · วงโคจรระดับต่ำ */
+export function bandLabelTh(band: OrbitBand): string {
+  const m = BAND_META[band];
+  return `${m.label} · ${m.subtitleTh}`;
+}
+
 const MU_EARTH = 398600;
 const EARTH_R_KM = 6371;
 
@@ -390,7 +396,7 @@ export const INITIAL_SATELLITES: SatelliteDefinition[] = [
   },
   {
     id: "knacksat",
-    name: "KNACKSAT (CubeSat 1U)",
+    name: "KNACKSAT-2 (CubeSat 3U)",
     orbitId: "orbit-leo-cubesat",
     missionType: "science_demo",
     description: MISSIONS.science_demo.whyFit,
@@ -398,7 +404,7 @@ export const INITIAL_SATELLITES: SatelliteDefinition[] = [
     velocityKmS: 7.58,
     inclinationDeg: 97.5,
     periodMin: 96,
-    launched: "Dec 2018 · มจพ.",
+    launched: "2026 · 3U · ISS/JAXA",
     phase: 1.4,
   },
   {

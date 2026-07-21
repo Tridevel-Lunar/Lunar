@@ -72,7 +72,7 @@ export default function CubeSatSizeBuilder({
             onClick={onSelectKnacksat}
             className="text-[11px] font-medium text-emerald-300/90 hover:text-emerald-200"
           >
-            KNACKSAT ↗
+            KNACKSAT-2 ↗
           </button>
         )}
       </div>

@@ -89,7 +89,7 @@ export const MISSIONS: Record<MissionType, MissionMeta> = {
     labelTh: "วิจัย / ทดลอง (CubeSat)",
     labelEn: "Science & tech demo",
     suitableBands: ["LEO"],
-    examples: "KNACKSAT, CubeSat มหาวิทยาลัย",
+    examples: "KNACKSAT-2, CubeSat มหาวิทยาลัย",
     whyFit:
       "LEO ปล่อยง่ายและถูกที่สุด — rideshare หรือปล่อยจาก ISS ได้ · เหมาะเรียนรู้และทดลอง",
     designNote: "ระบบเรียบง่าย ไม่ต้องสำรองหลายชั้นแบบดาวเทียมพาณิชย์มูลค่าสูง",

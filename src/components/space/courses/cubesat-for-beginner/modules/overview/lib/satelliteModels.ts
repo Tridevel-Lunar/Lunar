@@ -75,10 +75,7 @@ export const MISSION_MODEL: Record<MissionType, SatelliteModelKey> = {
   polar_coverage: "tess",
 };
 
-/**
- * Approximate real longest-axis length (meters) for relative sizing.
- * Values are order-of-magnitude for teaching, not CAD-accurate.
- */
+/** Approximate real longest-axis length (meters) for relative sizing. */
 export const MODEL_REAL_LENGTH_M: Record<SatelliteModelKey, number> = {
   terra: 6.8,
   tess: 3.7,
@@ -86,14 +83,33 @@ export const MODEL_REAL_LENGTH_M: Record<SatelliteModelKey, number> = {
   icesat: 2.0,
   starlink: 4.1,
   theos: 2.4,
-  // Edited mesh is tall (~8.2 on Y vs ~2 body width). Target longest axis so
-  // the ~1U body cube lands near 10 cm after normalize-to-longest.
   cubesat: 0.41,
 };
 
+/** Approximate W × L × H (m) for museum labels — teaching order-of-magnitude. */
+export type RealDimensionsM = { w: number; l: number; h: number };
+
+export const MODEL_REAL_DIMENSIONS_M: Record<SatelliteModelKey, RealDimensionsM> =
+  {
+    terra: { w: 6.8, l: 3.5, h: 3.5 },
+    tess: { w: 3.7, l: 1.9, h: 1.7 },
+    tdrs: { w: 17.4, l: 4.2, h: 4.2 },
+    icesat: { w: 2.0, l: 1.0, h: 1.0 },
+    starlink: { w: 4.1, l: 1.6, h: 0.3 },
+    theos: { w: 2.4, l: 2.0, h: 2.0 },
+    cubesat: { w: 0.1, l: 0.1, h: 0.1 },
+  };
+
 /** Mission overrides when the asset size differs from the mesh stand-in. */
 const MISSION_REAL_LENGTH_M: Partial<Record<MissionType, number>> = {
-  science_demo: 0.41, // KNACKSAT 1U body ≈ 10 cm within current cubesat.glb
+  science_demo: 0.3,
+};
+
+const MISSION_REAL_DIMENSIONS_M: Partial<Record<MissionType, RealDimensionsM>> = {
+  science_demo: { w: 0.1, l: 0.1, h: 0.3 },
+  meteorology: { w: 6.5, l: 3.2, h: 3.2 },
+  navigation: { w: 5.2, l: 1.9, h: 1.7 },
+  polar_coverage: { w: 6.0, l: 4.0, h: 4.0 },
 };
 
 /**
@@ -120,6 +136,25 @@ export function realLengthMForMission(mission: MissionType): number {
     MISSION_REAL_LENGTH_M[mission] ??
     MODEL_REAL_LENGTH_M[MISSION_MODEL[mission]]
   );
+}
+
+export function realDimensionsMForMission(mission: MissionType): RealDimensionsM {
+  return (
+    MISSION_REAL_DIMENSIONS_M[mission] ??
+    MODEL_REAL_DIMENSIONS_M[MISSION_MODEL[mission]]
+  );
+}
+
+function formatDimensionM(meters: number): string {
+  if (meters < 1) return `${Math.round(meters * 100)} cm`;
+  if (meters < 10) return `${meters.toFixed(1)} m`;
+  return `${meters.toFixed(0)} m`;
+}
+
+/** Display as W × L × H with adaptive units per axis. */
+export function formatDimensionsWxLxH(dims: RealDimensionsM): string {
+  const { w, l, h } = dims;
+  return `${formatDimensionM(w)} × ${formatDimensionM(l)} × ${formatDimensionM(h)}`;
 }
 
 /** Longest-axis target size for mesh normalize (scene units). */
