@@ -68,11 +68,44 @@ Vite เปิดเผยเฉพาะชื่อ `GOOGLE_CLIENT_ID` (ผ่
 
 | Product module | Landing tab (`PlatformSection`) | Route | เนื้อหาหลัก |
 |----------------|--------------------------------|-------|-------------|
-| **Space** | LEARN (เรียนรู้) | `/space` | 3D Model, Embedded, Physics, Programming |
+| **Space** | LEARN (เรียนรู้) | `/space`, `/space/course/:courseId`, `/space/course/:courseId/module/:moduleId` | Courses → custom Modules (Overview, Anatomy, Physics, Programming) |
 | **Arena** | BUILD (สร้าง) | `/arena`, `/arena/mission/:missionId` | Visual Coding (Blockly), Mission Feedback (mock) |
 | **Studio** | LAUNCH (ปล่อย) | `/studio` | พอร์ตโฟลิโอ, LAIKA, ต่อยอดไอเดีย |
 
 ฟีเจอร์ LAIKA / LLM / RAG จะเรียก backend API — ไม่ implement ใน frontend โดยตรง
+
+### Space (Courses & Modules)
+
+Space is a **course catalogue**: each course lists **modules**, and each module is a **lazy-loaded custom React page** registered in code (no CMS).
+
+| Route | หน้าที่ |
+|-------|---------|
+| `/space` | Home + My Courses (`SpaceHome`) — courses from registry |
+| `/space/course/:courseId` | Course overview + module list (`SpaceCourse`) |
+| `/space/course/:courseId/module/:moduleId` | Resolves module via registry and renders its `Component` (`SpaceModuleRoute`) |
+
+Current course: **`cubesat-for-beginner`** with modules `overview`, `anatomy`, `physics`, `programming`. Only **physics** has a full lesson UI today; others use a placeholder page.
+
+| ใน scope | นอก scope |
+|----------|-----------|
+| Explicit course/module registry (`core/registry.ts`) | Backend progress / unlock API |
+| Custom module pages (`SpaceModulePageProps`) | Plugin / auto-discovery (`import.meta.glob`) |
+| Physics: slides + WebGPU scenes + sim clock | Persist progress beyond UI metadata |
+
+**Lib / components**
+
+| Path | บทบาท |
+|------|--------|
+| `src/components/space/core/types.ts` | `SpaceCourseDefinition`, `SpaceModuleDefinition`, page props |
+| `src/components/space/core/registry.ts` | `listCourses` / `getCourse` / `getModule` |
+| `src/components/space/core/routes.ts` | Path builders (`spaceCoursePath`, `spaceModulePath`) |
+| `src/components/space/courses/` | Per-course folders + [README](../src/components/space/courses/README.md) for contributors |
+| `src/components/space/courses/cubesat-for-beginner/` | Course def + modules |
+| `…/modules/physics/` | Physics page, `LessonScene`, `scene/`, `sim/`, `physics/` |
+| `src/components/space/SpaceHome.tsx` · `SpaceCourse.tsx` · `SpaceModuleRoute.tsx` | Generic shells |
+| `src/lib/knowledge/` · `src/components/knowledge/` | Shared glossary popups (`[[id\|label]]`) |
+
+**Add a module:** create a folder under the course, export a definition with `lazy(() => import(…))`, then add one line to the course’s `modules` array — see `courses/README.md`.
 
 ### Studio (LAIKA)
 
@@ -164,7 +197,8 @@ frontend/
 │   ├── components/
 │   │   ├── auth/          # GoogleSignInButton, GoogleOneTap, LoginForm, ...
 │   │   ├── arena/         # ArenaDemo, mission/, blockly/, feedback/
-│   │   ├── space/, studio/
+│   │   ├── space/         # SpaceHome, SpaceCourse, SpaceModuleRoute, core/, courses/
+│   │   ├── studio/
 │   │   └── ...            # Landing sections, Navbar, SpaceCanvas
 │   ├── lib/
 │   │   ├── api.ts         # User type, studio + arena API helpers

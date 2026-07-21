@@ -54,9 +54,22 @@ Access token หมดอายุ → `apiFetch` / `getCurrentUser` เรี�
 |-----------|--------|
 | **Blender** | สร้าง 3D assets นอก repo — Chassis, OBC, Solar Panel, Camera Payload |
 | **Three.js / React Three Fiber (R3F)** | ใช้อยู่ — โหลด `.gltf` / `.glb` จาก Blender แสดง 360° บนเบราว์เซอร์ |
+| **WebGPUCanvas + TSL materials** | ใช้อยู่ใน Space Physics — realistic Earth/Sun (`modules/physics/scene/`) |
 | **KiCad** | ออกแบบอุปกรณ์อิเล็กทรอนิกส์ (นอก repo) — อ้างอิงใน Embedded System module |
 
 Export จาก Blender → `public/models/` หรือ CDN (เมื่อมี)
+
+## Space — Course / Module architecture
+
+| ส่วน | ที่รัน |
+|------|--------|
+| Course catalogue + module list | Frontend registry (`components/space/core/`) |
+| Module lesson UI | Lazy-loaded custom React page ต่อโมดูล |
+| Physics 3D / sim clock | Physics module (`courses/…/modules/physics/`) |
+| Knowledge glossary popups | Shared (`lib/knowledge` + `components/knowledge`) |
+
+- Modules register explicitly on a course (`course.ts` import + array entry)
+- Contributor guide: `src/components/space/courses/README.md`
 
 ## Arena — Visual Programming
 
@@ -76,7 +89,7 @@ Export จาก Blender → `public/models/` หรือ CDN (เมื่อ�
 |------|--------|
 | UI landing / แชท / branch map | Frontend |
 | Collections + conversation tree | **Backend** (PostgreSQL) |
-| LLM + RAG | **Backend** (Gemini / Groq / Ollama) |
+| LLM + RAG | **Backend** (Gemini / DeepSeek / Ollama) |
 
 Frontend เรียก API เท่านั้น — ไม่ฝัง API keys. แชทส่งประวัติพร้อม `created_at` และ `client_now`; ชื่อผู้เรียน inject ฝั่ง backend จาก session
 

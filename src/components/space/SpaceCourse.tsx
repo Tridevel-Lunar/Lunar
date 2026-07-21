@@ -6,16 +6,18 @@ import {
 import { IoPlanetOutline } from "react-icons/io5";
 import { GiCube, GiOrbital } from "react-icons/gi";
 import { TbBlocks } from "react-icons/tb";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
 import type { User } from "@/lib/api";
-import { CURRENT_COURSE, SPACE_TOPICS, type SpaceTopic } from "./space-data";
-
+import { getCourse } from "@/components/space/core/registry";
+import { spaceHomePath, spaceModulePath } from "@/components/space/core/routes";
+import type { SpaceModuleDefinition } from "@/components/space/core/types";
+import { useSpaceProgress } from "@/components/space/hooks/useSpaceProgress";
 
 const SPACE_HERO_EARTH = "/space-hero-earth.png";
 
-function TopicIcon({ type, accent }: { type: SpaceTopic["icon"]; accent: string }) {
+function TopicIcon({ type, accent }: { type: string; accent: string }) {
   const className = "text-[1.9rem]";
   const style = { color: accent, filter: `drop-shadow(0 0 12px ${accent}66)` };
 
@@ -28,6 +30,8 @@ function TopicIcon({ type, accent }: { type: SpaceTopic["icon"]; accent: string 
       return <GiOrbital className={className} style={style} />;
     case "programming":
       return <TbBlocks className={className} style={style} />;
+    default:
+      return <IoPlanetOutline className={className} style={style} />;
   }
 }
 
@@ -47,7 +51,21 @@ function GlassCard({
   );
 }
 
-function SpaceHero() {
+function SpaceHero({
+  tag,
+  title,
+  subtitle,
+  description,
+  progress,
+  onContinue,
+}: {
+  tag: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  progress: number;
+  onContinue: () => void;
+}) {
   return (
     <section className="relative min-h-[240px] overflow-hidden rounded-xl border border-white/10">
       <img
@@ -66,14 +84,12 @@ function SpaceHero() {
 
       <div className="relative z-[1] grid gap-4 p-4 lg:grid-cols-[1fr_auto] lg:p-5">
         <div className="max-w-sm pt-1">
-          <p className="font-section-thai mb-1 text-[0.85rem] text-cyan/80">{CURRENT_COURSE.tag}</p>
+          <p className="font-section-thai mb-1 text-[0.85rem] text-cyan/80">{tag}</p>
           <h2 className="font-display mb-0.5 text-[clamp(1.6rem,3vw,2.2rem)] font-bold tracking-wide text-text">
-            {CURRENT_COURSE.title}
+            {title}
           </h2>
-          <p className="font-section-thai mb-2 text-[1rem] text-text/70">{CURRENT_COURSE.subtitle}</p>
-          <p className="font-section-thai text-[0.95rem] leading-relaxed text-muted">
-            {CURRENT_COURSE.description}
-          </p>
+          <p className="font-section-thai mb-2 text-[1rem] text-text/70">{subtitle}</p>
+          <p className="font-section-thai text-[0.95rem] leading-relaxed text-muted">{description}</p>
         </div>
 
         <GlassCard className="col-span-full flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
@@ -82,27 +98,26 @@ function SpaceHero() {
               <GiCube className="text-2xl text-cyan drop-shadow-[0_0_10px_rgba(0,229,255,0.5)]" />
             </div>
             <div>
-              <p className="font-display text-[1rem] font-semibold tracking-wide text-text">
-                {CURRENT_COURSE.title}
-              </p>
+              <p className="font-display text-[1rem] font-semibold tracking-wide text-text">{title}</p>
             </div>
           </div>
 
           <div className="min-w-[180px] flex-1 sm:max-w-[220px]">
             <div className="mb-1.5 flex justify-between font-mono text-[0.6rem] tracking-wider text-muted">
               <span>Progress</span>
-              <span className="text-cyan">{CURRENT_COURSE.progress}%</span>
+              <span className="text-cyan">{progress}%</span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-cyan to-teal shadow-[0_0_12px_rgba(0,229,255,0.45)]"
-                style={{ width: `${CURRENT_COURSE.progress}%` }}
+                style={{ width: `${progress}%` }}
               />
             </div>
           </div>
 
           <button
             type="button"
+            onClick={onContinue}
             className="btn-clip font-mono shrink-0 cursor-pointer border border-cyan/50 bg-cyan/10 px-6 py-3 text-[0.72rem] tracking-[0.12em] text-cyan transition hover:bg-cyan hover:text-bg"
           >
             CONTINUE LEARNING →
@@ -113,42 +128,45 @@ function SpaceHero() {
   );
 }
 
-function TopicRow({ topic }: { topic: SpaceTopic }) {
+function TopicRow({
+  module,
+  courseId,
+  completed,
+}: {
+  module: SpaceModuleDefinition;
+  courseId: string;
+  completed: boolean;
+}) {
+  const navigate = useNavigate();
+
   return (
     <button
       type="button"
+      onClick={() => navigate(spaceModulePath(courseId, module.id))}
       className="group flex w-full cursor-pointer items-center gap-3.5 rounded-xl border border-white/[0.08] bg-white/[0.03] p-3 text-left transition hover:border-white/15 hover:bg-white/[0.05]"
     >
       <div
         className="w-1 shrink-0 self-stretch rounded-full"
-        style={{ background: topic.accent, boxShadow: `0 0 12px ${topic.accent}55` }}
+        style={{ background: module.accent, boxShadow: `0 0 12px ${module.accent}55` }}
       />
       <div
         className="flex h-14 w-[4.5rem] shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/25"
-        style={{ boxShadow: `inset 0 0 24px ${topic.accent}15` }}
+        style={{ boxShadow: `inset 0 0 24px ${module.accent}15` }}
       >
-        <TopicIcon type={topic.icon} accent={topic.accent} />
+        <TopicIcon type={module.icon} accent={module.accent} />
       </div>
       <div className="min-w-0 flex-1">
         <p className="font-display text-[0.95rem] font-semibold tracking-[0.1em] text-text">
-          {topic.title}
+          {module.title}
         </p>
         <p className="font-section-thai mt-0.5 text-[0.88rem] leading-snug text-muted">
-          {topic.description}
+          {module.description}
         </p>
-        <div className="mt-2 flex items-center gap-2">
-          <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full transition-all"
-              style={{
-                width: `${topic.progress}%`,
-                background: topic.accent,
-                boxShadow: `0 0 8px ${topic.accent}66`,
-              }}
-            />
-          </div>
-          <span className="font-mono text-[0.55rem] tracking-wider text-text/40">{topic.progress}%</span>
-        </div>
+        {completed && (
+          <p className="font-mono mt-2 text-[0.55rem] tracking-wider text-emerald-400/85">
+            ✓ เสร็จแล้ว
+          </p>
+        )}
       </div>
       <span className="pr-2 text-xl text-text/25 transition group-hover:text-cyan/70">›</span>
     </button>
@@ -157,12 +175,44 @@ function TopicRow({ topic }: { topic: SpaceTopic }) {
 
 export default function SpaceCourse({ user }: { user: User }) {
   const navigate = useNavigate();
+  const { courseId = "" } = useParams<{ courseId: string }>();
+  const course = getCourse(courseId);
+  const { isModuleCompleted, courseProgressPercent } = useSpaceProgress();
 
   const today = new Date().toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
+
+  if (!course) {
+    return (
+      <div className="flex h-screen overflow-hidden bg-bg text-text">
+        <ModuleSidebar user={user} activeModule="space" />
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3">
+          <p className="font-mono text-[0.72rem] text-muted">Course not found</p>
+          <button
+            type="button"
+            onClick={() => navigate(spaceHomePath())}
+            className="cursor-pointer font-mono text-[0.7rem] tracking-wider text-cyan transition hover:underline"
+          >
+            ← Back to Space
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const moduleIds = course.modules.map((m) => m.id);
+  const progress = courseProgressPercent(course.id, moduleIds);
+  const nextModule =
+    course.modules.find((m) => !isModuleCompleted(course.id, m.id)) ?? course.modules[0];
+
+  function handleContinue() {
+    if (nextModule) {
+      navigate(spaceModulePath(course.id, nextModule.id));
+    }
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg text-text">
@@ -173,7 +223,7 @@ export default function SpaceCourse({ user }: { user: User }) {
           <div className="flex items-center gap-2.5">
             <button
               type="button"
-              onClick={() => navigate("/space", { state: { tab: "courses" } })}
+              onClick={() => navigate(spaceHomePath(), { state: { tab: "courses" } })}
               className="cursor-pointer text-lg text-text/40 transition hover:text-cyan"
             >
               ←
@@ -200,10 +250,22 @@ export default function SpaceCourse({ user }: { user: User }) {
 
         <main className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           <div className="mx-auto max-w-[920px] space-y-4">
-            <SpaceHero />
+            <SpaceHero
+              tag={course.tag}
+              title={course.title}
+              subtitle={course.subtitle}
+              description={course.description}
+              progress={progress}
+              onContinue={handleContinue}
+            />
             <div className="space-y-2">
-              {SPACE_TOPICS.map((topic) => (
-                <TopicRow key={topic.id} topic={topic} />
+              {course.modules.map((module) => (
+                <TopicRow
+                  key={module.id}
+                  module={module}
+                  courseId={course.id}
+                  completed={isModuleCompleted(course.id, module.id)}
+                />
               ))}
             </div>
           </div>
