@@ -6,6 +6,7 @@ import WebGPUCanvas from "../../physics/scene/WebGPUCanvas";
 import RealisticEarth from "../../physics/scene/RealisticEarth";
 import RealisticSun from "../../physics/scene/RealisticSun";
 import StarSphere from "../../physics/scene/StarSphere";
+import { CanvasLoadOverlay } from "./OverviewSceneLoader";
 import OrbitPath from "./OrbitPath";
 import Satellite from "./Satellite";
 import CameraRig from "./CameraRig";
@@ -59,6 +60,8 @@ export default function OrbitScene({
     >
       <color attach="background" args={["#010208"]} />
       <StarSphere />
+
+      <CanvasLoadOverlay variant="orbit" />
 
       <RealisticSun earthRadius={SCENE_EARTH_RADIUS} lightIntensity={2.2} />
       <ambientLight intensity={0.06} color="#4466aa" />
