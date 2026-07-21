@@ -1,13 +1,12 @@
 import * as Blockly from "blockly";
 
-const EVENT = 200;
-const POWER = 160;
+const SETUP = 200;
 const SENSOR = 40;
-const ORBIT = 20;
+const ACTUATOR = 160;
+const CONTROL = 230;
 const SAFETY = 0;
-const LOGIC = 230;
 
-/** Register Mission 01 custom blocks (idempotent). */
+/** Register Mission 01 deterministic mission blocks (idempotent). */
 export function registerM01Blocks(): void {
   if ((registerM01Blocks as { done?: boolean }).done) return;
   (registerM01Blocks as { done?: boolean }).done = true;
@@ -15,123 +14,158 @@ export function registerM01Blocks(): void {
   Blockly.common.defineBlocksWithJsonArray([
     {
       type: "m01_on_start",
-      message0: "เมื่อเริ่มภารกิจ",
+      message0: "Setup",
       message1: "%1",
       args1: [{ type: "input_statement", name: "BODY" }],
-      colour: EVENT,
-      tooltip: "จุดเริ่มต้นของโปรแกรมภารกิจ",
+      colour: SETUP,
+      tooltip: "กำหนดค่า threshold ก่อนเริ่มจำลอง",
       hat: "cap",
     },
     {
-      type: "m01_await_phase",
-      message0: "รอจนพร้อมปล่อย",
-      previousStatement: null,
-      nextStatement: null,
-      colour: EVENT,
-      tooltip: "รอจนเข้าเฟส ready_for_release",
+      type: "m01_main_loop",
+      message0: "Main Loop",
+      message1: "%1",
+      args1: [{ type: "input_statement", name: "BODY" }],
+      colour: CONTROL,
+      tooltip: "รันซ้ำทุก tick จนจบ window",
     },
     {
-      type: "m01_power_bus_on",
-      message0: "เปิดบัสพลังงาน",
+      type: "m01_set_battery_threshold_low",
+      message0: "set battery threshold low = %1 %",
+      args0: [{ type: "field_number", name: "VALUE", value: 20, min: 0, max: 100, precision: 1 }],
       previousStatement: null,
       nextStatement: null,
-      colour: POWER,
-      tooltip: "เปิดบัสไฟให้แอคชูเอเตอร์",
+      colour: SETUP,
+      tooltip: "กำหนดระดับแบตต่ำ",
     },
     {
-      type: "m01_read_power",
-      message0: "อ่านพลังงานที่เหลือ",
+      type: "m01_set_battery_threshold_high",
+      message0: "set battery threshold high = %1 %",
+      args0: [{ type: "field_number", name: "VALUE", value: 80, min: 0, max: 100, precision: 1 }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: SETUP,
+      tooltip: "กำหนดระดับแบตสูง",
+    },
+    {
+      type: "m01_set_temp_threshold",
+      message0: "set temp threshold min = %1 max = %2",
+      args0: [
+        { type: "field_number", name: "MIN", value: 0, min: -120, max: 120, precision: 1 },
+        { type: "field_number", name: "MAX", value: 60, min: -120, max: 120, precision: 1 },
+      ],
+      previousStatement: null,
+      nextStatement: null,
+      colour: SETUP,
+      tooltip: "กำหนดช่วงอุณหภูมิที่ยอมรับได้",
+    },
+    {
+      type: "m01_set_heater_power",
+      message0: "set heater power = %1 %",
+      args0: [{ type: "field_number", name: "VALUE", value: 30, min: 0, max: 100, precision: 1 }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: SETUP,
+      tooltip: "กำหนดกำลัง heater",
+    },
+    {
+      type: "m01_enable_payload_mode",
+      message0: "enable payload: %1",
+      args0: [
+        {
+          type: "field_dropdown",
+          name: "MODE",
+          options: [
+            ["camera", "camera"],
+            ["science_sensor", "science_sensor"],
+            ["off", "off"],
+          ],
+        },
+      ],
+      previousStatement: null,
+      nextStatement: null,
+      colour: SETUP,
+      tooltip: "เลือก payload เริ่มต้น",
+    },
+    {
+      type: "m01_battery_level",
+      message0: "battery level",
       output: "Number",
-      colour: POWER,
-      tooltip: "คืนค่าพลังงาน (Wh)",
+      colour: SENSOR,
+      tooltip: "อ่านค่าแบตเตอรี่",
     },
     {
-      type: "m01_payload_set",
-      message0: "ตั้ง Payload เป็น %1",
+      type: "m01_temperature",
+      message0: "temperature",
+      output: "Number",
+      colour: SENSOR,
+      tooltip: "อ่านค่าอุณหภูมิ",
+    },
+    {
+      type: "m01_is_daylight",
+      message0: "is daylight?",
+      output: "Boolean",
+      colour: SENSOR,
+      tooltip: "บอกสถานะแสงอาทิตย์",
+    },
+    {
+      type: "m01_tick_number",
+      message0: "tick number",
+      output: "Number",
+      colour: SENSOR,
+      tooltip: "รอบ tick ปัจจุบัน",
+    },
+    {
+      type: "m01_turn_heater",
+      message0: "turn heater %1",
       args0: [
         {
           type: "field_dropdown",
           name: "ON",
           options: [
-            ["เปิด", "true"],
-            ["ปิด", "false"],
+            ["ON", "true"],
+            ["OFF", "false"],
           ],
         },
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: POWER,
-      tooltip: "เปิดหรือปิด Payload",
+      colour: ACTUATOR,
+      tooltip: "สั่งเปิด/ปิด heater",
     },
     {
-      type: "m01_sensor_enable",
-      message0: "เปิดเซนเซอร์ %1",
+      type: "m01_turn_payload",
+      message0: "turn payload %1",
       args0: [
         {
           type: "field_dropdown",
-          name: "SENSOR",
+          name: "ON",
           options: [
-            ["อุณหภูมิ", "temp"],
-            ["IMU", "imu"],
+            ["ON", "true"],
+            ["OFF", "false"],
           ],
         },
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: SENSOR,
-      tooltip: "เปิดเซนเซอร์ที่เลือก",
+      colour: ACTUATOR,
+      tooltip: "สั่งเปิด/ปิด payload",
     },
     {
-      type: "m01_sensor_read",
-      message0: "อ่านค่าเซนเซอร์ %1",
-      args0: [
-        {
-          type: "field_dropdown",
-          name: "SENSOR",
-          options: [
-            ["อุณหภูมิ", "temp"],
-            ["IMU", "imu"],
-          ],
-        },
-      ],
-      output: "Number",
-      colour: SENSOR,
-      tooltip: "อ่านค่าจากเซนเซอร์",
-    },
-    {
-      type: "m01_begin_ascent",
-      message0: "เริ่มลำดับขึ้นสู่วงโคจร",
+      type: "m01_enter_safe_mode",
+      message0: "enter safe mode",
       previousStatement: null,
       nextStatement: null,
-      colour: ORBIT,
-      tooltip: "เริ่ม ascent (ต้องมี power bus + IMU)",
+      colour: SAFETY,
+      tooltip: "เข้า safe mode ทันที",
     },
     {
-      type: "m01_orbit_stability",
-      message0: "ตรวจเสถียรวงโคจร",
-      output: "Number",
-      colour: ORBIT,
-      tooltip: "คืนค่าความเสถียร 0–1",
-    },
-    {
-      type: "m01_until_stable",
-      message0: "ลูป: ตรวจจนเสถียร ≥ %1 สูงสุด %2 ครั้ง",
-      args0: [
-        { type: "field_number", name: "THRESHOLD", value: 0.7, min: 0, max: 1, precision: 0.1 },
-        { type: "field_number", name: "MAX_TRIES", value: 5, min: 1, max: 20, precision: 1 },
-      ],
+      type: "m01_exit_safe_mode",
+      message0: "exit safe mode",
       previousStatement: null,
       nextStatement: null,
-      colour: ORBIT,
-      tooltip: "วนตรวจความเสถียรจนถึง threshold",
-    },
-    {
-      type: "m01_confirm_leo",
-      message0: "ยืนยันเข้า LEO",
-      previousStatement: null,
-      nextStatement: null,
-      colour: ORBIT,
-      tooltip: "ยืนยันว่าเข้าสู่วงโคจรต่ำแล้ว",
+      colour: SAFETY,
+      tooltip: "ออกจาก safe mode (มีผล tick ถัดไป)",
     },
     {
       type: "m01_if",
@@ -143,36 +177,72 @@ export function registerM01Blocks(): void {
       args2: [{ type: "input_statement", name: "ELSE" }],
       previousStatement: null,
       nextStatement: null,
-      colour: LOGIC,
+      colour: CONTROL,
       tooltip: "เงื่อนไข if / else",
+    },
+    {
+      type: "m01_when",
+      message0: "when %1 do",
+      args0: [
+        {
+          type: "field_dropdown",
+          name: "EVENT",
+          options: [
+            ["battery_low", "battery_low"],
+            ["battery_high", "battery_high"],
+            ["too_cold", "too_cold"],
+            ["too_hot", "too_hot"],
+            ["glitch_tick", "glitch_tick"],
+          ],
+        },
+      ],
+      message1: "%1",
+      args1: [{ type: "input_statement", name: "BODY" }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: CONTROL,
+      tooltip: "event-driven block",
     },
     {
       type: "m01_compare",
       message0: "%1 %2 %3",
       args0: [
-        { type: "input_value", name: "LEFT", check: "Number" },
+        { type: "input_value", name: "LEFT" },
         {
           type: "field_dropdown",
           name: "CMP",
           options: [
-            ["≥", "gte"],
             ["<", "lt"],
+            ["<=", "lte"],
+            [">", "gt"],
+            [">=", "gte"],
+            ["=", "eq"],
           ],
         },
         { type: "field_number", name: "RIGHT", value: 4 },
       ],
       output: "Boolean",
-      colour: LOGIC,
+      colour: CONTROL,
       tooltip: "เปรียบเทียบตัวเลข",
       inputsInline: true,
     },
     {
-      type: "m01_safe_mode_payload_off",
-      message0: "โหมดฉุกเฉิน: ปิด payload",
+      type: "m01_wait_1_tick",
+      message0: "wait 1 tick",
       previousStatement: null,
       nextStatement: null,
-      colour: SAFETY,
-      tooltip: "ปิด payload และกู้คืนเล็กน้อย",
+      colour: CONTROL,
+      tooltip: "จบ tick ทันที",
+    },
+    {
+      type: "m01_repeat_until_end",
+      message0: "repeat until end of window",
+      message1: "%1",
+      args1: [{ type: "input_statement", name: "BODY" }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: CONTROL,
+      tooltip: "วนหนึ่งรอบต่อ tick จนจบ window",
     },
   ]);
 }

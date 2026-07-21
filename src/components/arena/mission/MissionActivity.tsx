@@ -15,6 +15,10 @@ import BlocklyEditor, {
   type BlocklyEditorHandle,
 } from "@/components/arena/blockly/BlocklyEditor";
 import MissionFeedbackMock from "@/components/arena/feedback/MissionFeedbackMock";
+import { gradeLabel, gradeStatusClassName } from "@/components/arena/grade-label";
+import MissionRunErrorDialog, {
+  runErrorPresentation,
+} from "@/components/arena/mission/MissionRunErrorDialog";
 import {
   Select,
   SelectContent,
@@ -24,8 +28,10 @@ import {
 } from "@/components/ui/select";
 import {
   ApiError,
+  type ArenaRunResponse,
   getArenaAttempt,
   getArenaMission,
+  runArenaMission,
   saveArenaAttempt,
 } from "@/lib/api";
 
@@ -114,6 +120,10 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [runState, setRunState] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [runMessage, setRunMessage] = useState<string | null>(null);
+  const [runError, setRunError] = useState<{ title: string; message: string } | null>(null);
+  const [runResult, setRunResult] = useState<ArenaRunResponse | null>(null);
 
   const editorRef = useRef<BlocklyEditorHandle>(null);
 
@@ -170,6 +180,27 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
     if (!ok) return;
     editorRef.current?.clear();
     editorRef.current?.seedStart();
+    setRunState("idle");
+    setRunMessage(null);
+    setRunError(null);
+    setRunResult(null);
+  }
+
+  async function handleRun() {
+    const ast = editorRef.current?.toAst() ?? { type: "program", body: [] };
+    setRunState("running");
+    setRunMessage(null);
+    setRunError(null);
+    setRunResult(null);
+    try {
+      const result = await runArenaMission(mission.id, ast as Record<string, unknown>);
+      setRunResult(result);
+      setRunState("done");
+      setRunMessage("ประมวลผลสำเร็จ");
+    } catch (err) {
+      setRunState("idle");
+      setRunError(runErrorPresentation(err));
+    }
   }
 
   return (
@@ -262,12 +293,12 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
 
                 <button
                   type="button"
-                  disabled
-                  title="ยังไม่พร้อมในรอบนี้"
-                  className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border border-teal-500/25 bg-teal-500/15 px-4 py-2 font-section-thai text-[0.85rem] text-teal-200/40"
+                  onClick={() => void handleRun()}
+                  disabled={runState === "running"}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-teal-500/45 bg-teal-500/15 px-4 py-2 font-section-thai text-[0.85rem] text-teal-100 transition hover:border-teal-400/70 hover:bg-teal-400/20 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <IoRocketOutline className="text-base" />
-                  ส่งภารกิจ
+                  {runState === "running" ? "กำลังส่งภารกิจ..." : "ส่งภารกิจ"}
                 </button>
 
                 {saveMessage && (
@@ -279,15 +310,34 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
                     {saveMessage}
                   </span>
                 )}
+                {runMessage && runState === "done" && (
+                  <span className="font-section-thai text-[0.75rem] text-cyan-200">
+                    {runMessage}
+                  </span>
+                )}
+                {runResult && runState === "done" && (
+                  <span
+                    className={`font-section-thai text-[0.75rem] ${gradeStatusClassName(runResult.result.grade)}`}
+                  >
+                    Status: {gradeLabel(runResult.result.grade)}
+                  </span>
+                )}
               </div>
             </div>
 
             <aside className="min-h-0 min-w-0 overflow-hidden bg-[#040912]/60">
-              <MissionFeedbackMock />
+              <MissionFeedbackMock runResult={runResult} />
             </aside>
           </div>
         </>
       )}
+
+      <MissionRunErrorDialog
+        open={runError !== null}
+        title={runError?.title ?? ""}
+        message={runError?.message ?? ""}
+        onClose={() => setRunError(null)}
+      />
     </div>
   );
 }

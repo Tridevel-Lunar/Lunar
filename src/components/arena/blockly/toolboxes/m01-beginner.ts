@@ -6,57 +6,58 @@ export const M01_BEGINNER_TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
   contents: [
     {
       kind: "category",
-      name: "เริ่มต้น",
+      name: "Setup",
       categorystyle: "lunar_start_category",
       contents: [
         { kind: "block", type: "m01_on_start" },
-        { kind: "block", type: "m01_await_phase" },
+        { kind: "block", type: "m01_set_battery_threshold_low" },
+        { kind: "block", type: "m01_set_battery_threshold_high" },
+        { kind: "block", type: "m01_set_temp_threshold" },
+        { kind: "block", type: "m01_set_heater_power" },
+        { kind: "block", type: "m01_enable_payload_mode" },
       ],
     },
     {
       kind: "category",
-      name: "พลังงาน",
-      categorystyle: "lunar_power_category",
-      contents: [
-        { kind: "block", type: "m01_power_bus_on" },
-        { kind: "block", type: "m01_read_power" },
-        { kind: "block", type: "m01_payload_set" },
-      ],
-    },
-    {
-      kind: "category",
-      name: "เซนเซอร์",
-      categorystyle: "lunar_sensor_category",
-      contents: [
-        { kind: "block", type: "m01_sensor_enable" },
-        { kind: "block", type: "m01_sensor_read" },
-      ],
-    },
-    {
-      kind: "category",
-      name: "วงโคจร",
-      categorystyle: "lunar_orbit_category",
-      contents: [
-        { kind: "block", type: "m01_begin_ascent" },
-        { kind: "block", type: "m01_orbit_stability" },
-        { kind: "block", type: "m01_until_stable" },
-        { kind: "block", type: "m01_confirm_leo" },
-      ],
-    },
-    {
-      kind: "category",
-      name: "เงื่อนไข",
+      name: "Main Loop",
       categorystyle: "lunar_logic_category",
       contents: [
+        { kind: "block", type: "m01_main_loop" },
         { kind: "block", type: "m01_if" },
+        { kind: "block", type: "m01_when" },
         { kind: "block", type: "m01_compare" },
+        { kind: "block", type: "m01_wait_1_tick" },
+        { kind: "block", type: "m01_repeat_until_end" },
       ],
     },
     {
       kind: "category",
-      name: "ความปลอดภัย",
+      name: "Sensors",
+      categorystyle: "lunar_sensor_category",
+      contents: [
+        { kind: "block", type: "m01_battery_level" },
+        { kind: "block", type: "m01_temperature" },
+        { kind: "block", type: "m01_is_daylight" },
+        { kind: "block", type: "m01_tick_number" },
+      ],
+    },
+    {
+      kind: "category",
+      name: "Actuator",
+      categorystyle: "lunar_power_category",
+      contents: [
+        { kind: "block", type: "m01_turn_heater" },
+        { kind: "block", type: "m01_turn_payload" },
+      ],
+    },
+    {
+      kind: "category",
+      name: "Safe Mode",
       categorystyle: "lunar_safety_category",
-      contents: [{ kind: "block", type: "m01_safe_mode_payload_off" }],
+      contents: [
+        { kind: "block", type: "m01_enter_safe_mode" },
+        { kind: "block", type: "m01_exit_safe_mode" },
+      ],
     },
   ],
 };
