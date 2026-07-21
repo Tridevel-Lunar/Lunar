@@ -602,6 +602,7 @@ export async function deleteKnowledgeSource(sourceId: string): Promise<void> {
 
 export type ArenaMissionPack = {
   id: string;
+  version: number;
   toolboxId: string;
   title: string;
   code: string;
@@ -618,7 +619,37 @@ export type ArenaMissionPack = {
 
 export type ArenaAttempt = {
   mission_id: string;
+  mission_version: number | null;
   ast: Record<string, unknown> | null;
+};
+
+export type ArenaRunResult = {
+  grade: "perfect" | "risky" | "fail" | string;
+  comms: "full" | "partial" | "missed" | string;
+  payload_data: "full" | "partial" | "none" | string;
+  longevity_impact: "none" | "minor" | "major" | string;
+  satellite_survived: boolean;
+  sent_to_earth: boolean;
+};
+
+export type ArenaTickLog = {
+  tick: number;
+  is_daylight: boolean;
+  glitch_applied: boolean;
+  battery: number;
+  temperature: number;
+  safe_mode: boolean;
+  heater_on: boolean;
+  payload_on: boolean;
+};
+
+export type ArenaRunResponse = {
+  mission_id: string;
+  mission_version: number;
+  ticks: ArenaTickLog[];
+  final_battery: number;
+  final_temperature: number;
+  result: ArenaRunResult;
 };
 
 export function getArenaMission(missionId: string): Promise<ArenaMissionPack> {
@@ -635,6 +666,16 @@ export function saveArenaAttempt(
 ): Promise<ArenaAttempt> {
   return apiFetch<ArenaAttempt>(`/arena/missions/${missionId}/attempt`, {
     method: "PUT",
+    body: JSON.stringify({ ast }),
+  });
+}
+
+export function runArenaMission(
+  missionId: string,
+  ast: Record<string, unknown>,
+): Promise<ArenaRunResponse> {
+  return apiFetch<ArenaRunResponse>(`/arena/missions/${missionId}/runs`, {
+    method: "POST",
     body: JSON.stringify({ ast }),
   });
 }

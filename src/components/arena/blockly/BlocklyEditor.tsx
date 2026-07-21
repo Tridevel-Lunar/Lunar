@@ -72,6 +72,10 @@ const BlocklyEditor = forwardRef<BlocklyEditorHandle, Props>(function BlocklyEdi
       start.initSvg();
       start.render();
       start.moveBy(60, 40);
+      const mainLoop = ws.newBlock("m01_main_loop");
+      mainLoop.initSvg();
+      mainLoop.render();
+      mainLoop.moveBy(60, 180);
     },
     loadAst: (ast) => {
       const ws = workspaceRef.current;
@@ -116,11 +120,15 @@ const BlocklyEditor = forwardRef<BlocklyEditorHandle, Props>(function BlocklyEdi
     if (initialAstRef.current) {
       astToWorkspace(workspace, initialAstRef.current);
     } else {
-      // Seed a start hat so beginners have an entry point
+      // Seed setup + main loop blocks so beginners start in correct structure
       const start = workspace.newBlock("m01_on_start");
       start.initSvg();
       start.render();
       start.moveBy(60, 40);
+      const mainLoop = workspace.newBlock("m01_main_loop");
+      mainLoop.initSvg();
+      mainLoop.render();
+      mainLoop.moveBy(60, 180);
     }
 
     const resize = () => {

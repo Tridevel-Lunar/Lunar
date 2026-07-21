@@ -1,20 +1,26 @@
 /** AST + Arena attempt contracts (mirror backend schemas). */
 
 export type AstOp =
-  | "on_start"
-  | "await_phase"
-  | "power_bus_on"
-  | "read_power"
-  | "payload_set"
-  | "sensor_enable"
-  | "sensor_read"
-  | "begin_ascent"
-  | "orbit_stability"
-  | "until_stable"
-  | "confirm_leo"
+  | "setup"
+  | "main_loop"
+  | "set_battery_threshold_low"
+  | "set_battery_threshold_high"
+  | "set_temp_threshold"
+  | "set_heater_power"
+  | "enable_payload_mode"
+  | "battery_level"
+  | "temperature"
+  | "is_daylight"
+  | "tick_number"
+  | "turn_heater"
+  | "turn_payload"
+  | "enter_safe_mode"
+  | "exit_safe_mode"
   | "if"
+  | "when"
   | "compare"
-  | "safe_mode_payload_off";
+  | "wait_1_tick"
+  | "repeat_until_end";
 
 export type AstNode = {
   id: string;
