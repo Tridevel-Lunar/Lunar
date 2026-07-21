@@ -2,12 +2,19 @@ import { useState } from "react";
 
 import KnowledgeText from "@/components/knowledge/KnowledgeText";
 
+import type { MissionType } from "../lib/missions";
 import { MATCH_QUESTIONS } from "../lib/journey";
 import type { OrbitBand } from "../lib/types";
 
+const MATCH_FOCUS_MISSION: Record<string, MissionType> = {
+  eo: "earth_observation",
+  tv: "communications",
+  gps: "navigation",
+};
+
 type MatchStepProps = {
   onCorrectCountChange: (count: number) => void;
-  onFocusBand: (band: OrbitBand) => void;
+  onFocusBand: (band: OrbitBand, missionType?: MissionType) => void;
 };
 
 export default function MatchStep({
@@ -21,7 +28,7 @@ export default function MatchStep({
     const nextAnswers = { ...answers, [questionId]: band };
     setAnswers(nextAnswers);
     setRevealed((prev) => ({ ...prev, [questionId]: true }));
-    onFocusBand(band);
+    onFocusBand(band, MATCH_FOCUS_MISSION[questionId]);
 
     const correctCount = MATCH_QUESTIONS.filter(
       (q) => nextAnswers[q.id] === q.answer,
@@ -30,7 +37,10 @@ export default function MatchStep({
 
     // Keep focus on correct answer's band after a wrong pick settles
     if (band !== correct) {
-      window.setTimeout(() => onFocusBand(correct), 900);
+      window.setTimeout(
+        () => onFocusBand(correct, MATCH_FOCUS_MISSION[questionId]),
+        900,
+      );
     }
   }
 

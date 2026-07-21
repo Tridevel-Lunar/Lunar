@@ -5,6 +5,7 @@ import {
   SAT_PARTS,
 } from "../../lib/tour";
 import { MissionType } from "../../lib/missions";
+import { OrbitBand } from "../../lib/types";
 
 export function IntroStep({
   onHookOpened,
@@ -94,7 +95,7 @@ export function TypesStep({
   onFocusBand,
 }: {
   onCardsOpenedCount?: (count: number) => void;
-  onFocusBand?: (band: "GEO" | "MEO" | "LEO") => void;
+  onFocusBand?: (band: OrbitBand, missionType?: MissionType) => void;
 }) {
   const [opened, setOpened] = useState<Set<MissionType>>(new Set());
   const [picked, setPicked] = useState<MissionType | null>(null);
@@ -111,7 +112,7 @@ export function TypesStep({
     });
     const c = MODULE1_TYPE_CARDS.find((x) => x.mission === mission);
     if (c && onFocusBand) {
-      onFocusBand(c.orbit as "GEO" | "MEO" | "LEO");
+      onFocusBand(c.orbit, c.mission);
     }
   }
 

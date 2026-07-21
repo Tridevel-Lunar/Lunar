@@ -5,6 +5,8 @@ import KnowledgeText from "@/components/knowledge/KnowledgeText";
 import { LAIKA_AVATAR_URL } from "@/lib/constants";
 import { spaceCoursePath } from "@/components/space/core/routes";
 
+import { TOUR_MISSION_FOCUS } from "../lib/tour";
+import type { MissionType } from "../lib/missions";
 import {
   JOURNEY_STEPS,
   JOURNEY_TOTAL,
@@ -151,7 +153,7 @@ export default function JourneyPanel({
     });
   }, [gateOpen, step.id, stepIdx]);
 
-  function focusBand(band: OrbitBand) {
+  function focusBand(band: OrbitBand, missionType?: MissionType) {
     if (band !== "HEO") {
       setCheckpoint((prev) => {
         if (prev.visitedBands.has(band)) return prev;
@@ -160,6 +162,34 @@ export default function JourneyPanel({
         return { ...prev, visitedBands: next };
       });
     }
+
+    const orbitForSatellite = (sat: SatelliteDefinition) =>
+      orbits.find((o) => o.id === sat.orbitId);
+
+    const satellitesOnBand = satellites.filter(
+      (sat) => orbitForSatellite(sat)?.band === band,
+    );
+
+    let targetSat: SatelliteDefinition | undefined;
+
+    if (missionType) {
+      targetSat = satellitesOnBand.find((sat) => sat.missionType === missionType);
+    }
+
+    if (!targetSat) {
+      for (const mission of TOUR_MISSION_FOCUS[band]) {
+        targetSat = satellitesOnBand.find((sat) => sat.missionType === mission);
+        if (targetSat) break;
+      }
+    }
+
+    targetSat ??= satellitesOnBand[0];
+
+    if (targetSat) {
+      onSelectSatellite?.(targetSat.id);
+      return;
+    }
+
     const orbit = orbits.find((o) => o.band === band);
     if (orbit) onSelectOrbit(orbit.id);
     else onClearSelection();
@@ -420,7 +450,10 @@ export default function JourneyPanel({
                           {visited ? "เยี่ยมชมแล้ว" : "กดเพื่อเยี่ยมชม"}
                         </span>
                       </div>
-                      <p className="mt-1 text-[11px] text-white/45">
+                      <p className="mt-0.5 text-[11px] text-white/55">
+                        {BAND_META[band].subtitle}
+                      </p>
+                      <p className="text-[11px] text-white/45">
                         {BAND_META[band].subtitleTh}
                       </p>
                     </button>
