@@ -9,6 +9,5 @@ export const anatomyModule: SpaceModuleDefinition = {
   description: "ศึกษาส่วนประกอบต่าง ๆ ของ CubeSat และการทำงานร่วมกันของแต่ละระบบ",
   accent: "#7dd3fc",
   icon: "anatomy",
-  progress: 0,
-  Component: lazy(() => import("../PlaceholderModule")),
+  Component: lazy(() => import("./AnatomyModule")),
 };
