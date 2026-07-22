@@ -20,6 +20,8 @@ import { gradeLabel, gradeStatusClassName } from "@/components/arena/grade-label
 import MissionRunErrorDialog, {
   runErrorPresentation,
 } from "@/components/arena/mission/MissionRunErrorDialog";
+import MissionTimeline from "@/components/arena/timeline/MissionTimeline";
+import { getMissionTimelineConfig } from "@/components/arena/timeline/mission-timeline-config";
 import {
   ApiError,
   type ArenaRunResponse,
@@ -41,6 +43,9 @@ const VIEW_OPTIONS: {
 ];
 
 function MissionDetailPanel({ mission }: { mission: ArenaMission }) {
+  const [previewTick, setPreviewTick] = useState(1);
+  const timelineConfig = getMissionTimelineConfig(mission.id);
+
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       <div>
@@ -73,7 +78,23 @@ function MissionDetailPanel({ mission }: { mission: ArenaMission }) {
         </p>
       </section>
 
-      <section className="space-y-2 border-t border-white/10 pt-5">
+      {timelineConfig ? (
+        <section className="space-y-2 border-t border-white/10 pt-5">
+          <h3 className="font-display text-[0.72rem] font-semibold tracking-[0.16em] text-cyan/90">
+            ไทม์ไลน์ 10 รอบปฏิบัติการ
+          </h3>
+          <p className="font-section-thai text-[0.85rem] leading-relaxed text-text/70">
+            โปรแกรมที่คุณเขียนจะถูกใช้ซ้ำทุกจุดบนเส้นเวลานี้ — คลิกแต่ละรอบเพื่อดูว่าเกิดอะไรขึ้น
+          </p>
+          <MissionTimeline
+            config={timelineConfig}
+            selectedTick={previewTick}
+            onSelectTick={setPreviewTick}
+          />
+        </section>
+      ) : null}
+
+      <section className="space-y-3 border-t border-white/10 pt-5">
         <h3 className="font-display text-[0.72rem] font-semibold tracking-[0.16em] text-cyan/90">
           MISSION OBJECTIVE
         </h3>
@@ -83,6 +104,64 @@ function MissionDetailPanel({ mission }: { mission: ArenaMission }) {
             {mission.objectiveHighlight}
           </span>
         </p>
+        {mission.objectiveCheckWhen ? (
+          <p className="font-section-thai text-[0.85rem] leading-relaxed text-text/70">
+            {mission.objectiveCheckWhen}
+          </p>
+        ) : null}
+        {mission.objectiveMetrics.length > 0 ? (
+          <div className="space-y-1.5">
+            <p className="font-display text-[0.62rem] font-semibold tracking-[0.14em] text-text/55">
+              สิ่งที่ระบบตรวจ
+            </p>
+            <ul className="font-section-thai space-y-1.5 text-[0.85rem] text-text/75">
+              {mission.objectiveMetrics.map((item) => (
+                <li key={item} className="flex gap-2">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan/70" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        {mission.objectiveOutcomes.length > 0 ? (
+          <div className="space-y-2.5">
+            <p className="font-display text-[0.62rem] font-semibold tracking-[0.14em] text-text/55">
+              เกณฑ์ผลลัพธ์
+            </p>
+            <div className="space-y-2">
+              {mission.objectiveOutcomes.map((outcome) => (
+                <div
+                  key={outcome.grade}
+                  className="rounded-md border border-white/[0.06] bg-white/[0.02] px-3 py-2.5"
+                >
+                  <p className="font-display text-[0.68rem] font-semibold tracking-[0.12em] text-cyan/85">
+                    {outcome.grade}
+                  </p>
+                  <p className="font-section-thai mt-1 text-[0.84rem] leading-relaxed text-text/75">
+                    {outcome.summary}
+                  </p>
+                  <ul className="font-section-thai mt-1.5 space-y-1 text-[0.82rem] text-text/65">
+                    {outcome.conditions.map((condition) => (
+                      <li key={condition} className="flex gap-2">
+                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-white/30" />
+                        <span>{condition}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {mission.objectiveBonus ? (
+          <p className="font-section-thai rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[0.84rem] leading-relaxed text-amber-200/85">
+            <span className="font-display text-[0.62rem] font-semibold tracking-[0.14em] text-amber-300/90">
+              โบนัส:{" "}
+            </span>
+            {mission.objectiveBonus}
+          </p>
+        ) : null}
       </section>
 
       <section className="space-y-2 border-t border-white/10 pt-5">
@@ -369,8 +448,8 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
               </div>
             </div>
 
-            <aside className="min-h-0 min-w-0 overflow-hidden bg-[#040912]/60">
-              <MissionFeedbackMock runResult={runResult} />
+            <aside className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-[#040912]/60">
+              <MissionFeedbackMock missionId={mission.id} runResult={runResult} />
             </aside>
           </div>
         </div>
