@@ -626,6 +626,7 @@ export type ArenaAttempt = {
   mission_id: string;
   mission_version: number | null;
   ast: Record<string, unknown> | null;
+  workspace: Record<string, unknown> | null;
 };
 
 export type ArenaRunResult = {
@@ -668,10 +669,14 @@ export function getArenaAttempt(missionId: string): Promise<ArenaAttempt> {
 export function saveArenaAttempt(
   missionId: string,
   ast: Record<string, unknown>,
+  workspace?: Record<string, unknown> | null,
 ): Promise<ArenaAttempt> {
   return apiFetch<ArenaAttempt>(`/arena/missions/${missionId}/attempt`, {
     method: "PUT",
-    body: JSON.stringify({ ast }),
+    body: JSON.stringify({
+      ast,
+      ...(workspace !== undefined ? { workspace } : {}),
+    }),
   });
 }
 

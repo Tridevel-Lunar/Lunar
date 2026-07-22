@@ -69,7 +69,7 @@ Vite เปิดเผยเฉพาะชื่อ `GOOGLE_CLIENT_ID` (ผ่
 | Product module | Landing tab (`PlatformSection`) | Route | เนื้อหาหลัก |
 |----------------|--------------------------------|-------|-------------|
 | **Space** | LEARN (เรียนรู้) | `/space`, `/space/course/:courseId`, `/space/course/:courseId/module/:moduleId` | Courses → custom Modules (Overview, Anatomy, Physics, Programming) |
-| **Arena** | BUILD (สร้าง) | `/arena`, `/arena/mission/:missionId` | Visual Coding (Blockly), Mission Feedback (mock) |
+| **Arena** | BUILD (สร้าง) | `/arena`, `/arena/mission/:missionId` | Visual Coding (Blockly), mission run + feedback |
 | **Studio** | LAUNCH (ปล่อย) | `/studio` | พอร์ตโฟลิโอ, LAIKA, ต่อยอดไอเดีย |
 
 ฟีเจอร์ LAIKA / LLM / RAG จะเรียก backend API — ไม่ implement ใน frontend โดยตรง
@@ -138,49 +138,51 @@ Studio แยกเป็น landing + chat ต่อ collection:
 
 ### Arena (Visual Coding)
 
-Mission hub + Blockly workspace for **MISSION 01 — LEO Orbital Launch**. Stage: **UI + mock save** (no interpreter / `POST .../runs` / DB yet). Design reference: workspace `visual-programming-system-design v2.md`.
+Mission hub + Blockly workspace for **MISSION 01 — FIRST ORBIT SURVIVAL** (`leo-orbital-launch`). Live: pack metadata, attempt save/load (`ast` + Blockly `workspace`), and `POST .../runs` grading. Design reference: workspace `docs/satellite_mission_block_design (2).md`.
 
 | Route | หน้าที่ |
 |-------|---------|
 | `/arena` | Mission carousel (`ArenaDemo`) — brief + CTA |
-| `/arena/mission/:missionId` | Mission shell: header (back, code/title, **90:00 timer**) + `MissionActivity` |
+| `/arena/mission/:missionId` | Full-width mission shell (**no** `ModuleSidebar`): header (back, code/title, timer) + `MissionActivity` |
 
-Playable id: `leo-orbital-launch` only. `coming-soon` shows a not-ready message.
+Playable id: `leo-orbital-launch` only. Other missions show a not-ready message.
 
 | ใน scope | นอก scope (ถัดไป) |
 |----------|-------------------|
-| M01 Blockly toolbox + Thai blocks → JSON AST | Tree-walking interpreter + `POST /arena/missions/:id/runs` |
-| `GET` mission pack · `GET`/`PUT` attempt (in-memory BE) | Persist attempts in PostgreSQL |
-| Save / Clear / Submit stub | Real grading + `RunResult` |
-| Result column mock (simulate / dashboard / outcome) | R3F frame replay, live metrics |
-| VIEW select: รายละเอียดภารกิจ \| เขียนโค้ดบล็อก | Extra mission tabs / submit flow |
+| M01 Blockly → program AST + workspace JSON draft | Multi-mission packs / practice starting conditions |
+| `GET` pack · `GET`/`PUT` attempt (PostgreSQL) · `POST` runs | R3F tick replay / live 3D metrics |
+| Tab bar: รายละเอียดภารกิจ \| เขียนโค้ดบล็อก | Extra mission tabs |
+| Save / Clear / Run + validation error modal | Longevity health accumulation |
+| Result panel from run response (`MissionFeedbackMock`) | Richer outcome UX |
 
 **UI layout (coding view)**
 
-- Top bar (`ArenaMission`): back · mission code/title · countdown timer  
-- VIEW dropdown (`MissionActivity`): switches detail vs Blockly — `SelectContent` uses `z-[100]` so it stacks above Blockly toolbox (`z-index: 70`)  
+- Top bar (`ArenaMission`): back · mission code/title · countdown timer — sidebar hidden for immersion  
+- Tab bar (`MissionActivity`): detail vs coding — tabs use `z-[80]` above Blockly toolbox (`z-index: 70`)  
+- Leaving coding snapshots **AST + Blockly workspace** so remount restores **block positions**; Save persists both to the API  
 - Split: Blockly ~`1.5fr` · Result ~`1fr` (`lg:grid-cols-[minmax(0,1.5fr)_minmax(260px,1fr)]`)  
-- Blockly terms: **toolbox** = category list · **flyout** = block palette · **workspace** = canvas  
+- Blockly terms: **toolbox** = category list · **flyout** = block palette · **workspace** = canvas (also the serialized layout blob)
 
 **Lib / components**
 
 | Path | บทบาท |
 |------|--------|
-| `src/pages/Arena.tsx` · `ArenaMission.tsx` | Routes |
+| `src/pages/Arena.tsx` · `ArenaMission.tsx` | Routes (mission page: no module sidebar) |
 | `src/components/arena/arena-data.ts` | Static mission copy |
 | `src/components/arena/ArenaDemo.tsx` | Hub carousel |
-| `src/components/arena/mission/MissionActivity.tsx` | Detail / coding views, save/clear |
-| `src/components/arena/blockly/BlocklyEditor.tsx` | Blockly inject + theme |
+| `src/components/arena/mission/MissionActivity.tsx` | Tabs, draft snapshot, save/clear/run |
+| `src/components/arena/mission/MissionRunErrorDialog.tsx` | Modal for AST validation / run API errors |
+| `src/components/arena/grade-label.ts` | Thai grade labels + status colors |
+| `src/components/arena/blockly/BlocklyEditor.tsx` | Inject + theme; restore prefers `workspace` → AST → seed |
 | `src/components/arena/blockly/blocks/m01.ts` | M01 block defs |
 | `src/components/arena/blockly/toolboxes/m01-beginner.ts` | Category toolbox |
-| `src/components/arena/blockly/toAst.ts` · `fromAst.ts` | Workspace ↔ AST |
+| `src/components/arena/blockly/toAst.ts` · `fromAst.ts` | Workspace ↔ program AST |
 | `src/components/arena/blockly/blockly-toolbox.css` | Toolbox/flyout styling (class `.blocklyToolbox`) |
-| `src/components/arena/feedback/MissionFeedbackMock.tsx` | Mock result panels |
+| `src/components/arena/feedback/MissionFeedbackMock.tsx` | Run result panels (battery/temp/grade) |
 | `src/ast/types.ts` | AST / pack types (mirror BE) |
-| `src/lib/api.ts` | `getArenaMission` · `getArenaAttempt` · `saveArenaAttempt` |
+| `src/lib/api.ts` | `getArenaMission` · `getArenaAttempt` · `saveArenaAttempt(ast, workspace?)` · `runArenaMission` |
 
-**Backend (mock):** `GET/PUT /arena/missions/{id}/attempt` — in-memory per user; see [backend/docs/api.md](../../backend/docs/api.md#arena).
-
+**Backend:** draft `ast` + optional `workspace` in `arena_attempts`; runs use AST only — see [backend/docs/api.md](../../backend/docs/api.md#arena).
 ## Directory Map
 
 ```

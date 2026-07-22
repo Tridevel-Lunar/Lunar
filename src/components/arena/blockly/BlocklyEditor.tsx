@@ -9,16 +9,22 @@ import { workspaceToAst } from "./toAst";
 import { M01_BEGINNER_TOOLBOX } from "./toolboxes/m01-beginner";
 import "./blockly-toolbox.css";
 
+export type BlocklyWorkspaceState = Record<string, unknown>;
+
 export type BlocklyEditorHandle = {
   toAst: () => ProgramAst;
+  toWorkspaceState: () => BlocklyWorkspaceState | null;
   clear: () => void;
   seedStart: () => void;
   loadAst: (ast: ProgramAst | Record<string, unknown> | null) => void;
+  loadWorkspace: (state: BlocklyWorkspaceState | null) => void;
   getWorkspace: () => Blockly.WorkspaceSvg | null;
 };
 
 type Props = {
   initialAst?: ProgramAst | Record<string, unknown> | null;
+  /** Prefer over AST when restoring layout (positions, scroll). */
+  initialWorkspace?: BlocklyWorkspaceState | null;
   className?: string;
 };
 
@@ -48,13 +54,41 @@ const DarkTheme = Blockly.Theme.defineTheme("lunarArenaDark", {
   },
 });
 
+function seedEmptyWorkspace(ws: Blockly.WorkspaceSvg): void {
+  const start = ws.newBlock("m01_on_start");
+  start.initSvg();
+  start.render();
+  start.moveBy(60, 40);
+  const mainLoop = ws.newBlock("m01_main_loop");
+  mainLoop.initSvg();
+  mainLoop.render();
+  mainLoop.moveBy(60, 180);
+}
+
+function restoreWorkspace(
+  workspace: Blockly.WorkspaceSvg,
+  initialWorkspace: BlocklyWorkspaceState | null | undefined,
+  initialAst: ProgramAst | Record<string, unknown> | null | undefined,
+): void {
+  if (initialWorkspace && typeof initialWorkspace === "object") {
+    Blockly.serialization.workspaces.load(initialWorkspace, workspace);
+    return;
+  }
+  if (initialAst) {
+    astToWorkspace(workspace, initialAst);
+    return;
+  }
+  seedEmptyWorkspace(workspace);
+}
+
 const BlocklyEditor = forwardRef<BlocklyEditorHandle, Props>(function BlocklyEditor(
-  { initialAst = null, className },
+  { initialAst = null, initialWorkspace = null, className },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
   const initialAstRef = useRef(initialAst);
+  const initialWorkspaceRef = useRef(initialWorkspace);
 
   useImperativeHandle(ref, () => ({
     toAst: () => {
@@ -62,25 +96,28 @@ const BlocklyEditor = forwardRef<BlocklyEditorHandle, Props>(function BlocklyEdi
       if (!ws) return { type: "program", body: [] };
       return workspaceToAst(ws);
     },
+    toWorkspaceState: () => {
+      const ws = workspaceRef.current;
+      if (!ws) return null;
+      return Blockly.serialization.workspaces.save(ws) as BlocklyWorkspaceState;
+    },
     clear: () => {
       workspaceRef.current?.clear();
     },
     seedStart: () => {
       const ws = workspaceRef.current;
       if (!ws) return;
-      const start = ws.newBlock("m01_on_start");
-      start.initSvg();
-      start.render();
-      start.moveBy(60, 40);
-      const mainLoop = ws.newBlock("m01_main_loop");
-      mainLoop.initSvg();
-      mainLoop.render();
-      mainLoop.moveBy(60, 180);
+      seedEmptyWorkspace(ws);
     },
     loadAst: (ast) => {
       const ws = workspaceRef.current;
       if (!ws) return;
       astToWorkspace(ws, ast);
+    },
+    loadWorkspace: (state) => {
+      const ws = workspaceRef.current;
+      if (!ws || !state) return;
+      Blockly.serialization.workspaces.load(state, ws);
     },
     getWorkspace: () => workspaceRef.current,
   }));
@@ -95,7 +132,6 @@ const BlocklyEditor = forwardRef<BlocklyEditorHandle, Props>(function BlocklyEdi
       theme: DarkTheme,
       media: "/blockly/media/",
       trashcan: true,
-      // Auto-hide when content fits — avoids a sticky grey track
       scrollbars: true,
       move: { scrollbars: true, drag: true, wheel: true },
       zoom: {
@@ -116,25 +152,11 @@ const BlocklyEditor = forwardRef<BlocklyEditorHandle, Props>(function BlocklyEdi
     });
 
     workspaceRef.current = workspace;
-
-    if (initialAstRef.current) {
-      astToWorkspace(workspace, initialAstRef.current);
-    } else {
-      // Seed setup + main loop blocks so beginners start in correct structure
-      const start = workspace.newBlock("m01_on_start");
-      start.initSvg();
-      start.render();
-      start.moveBy(60, 40);
-      const mainLoop = workspace.newBlock("m01_main_loop");
-      mainLoop.initSvg();
-      mainLoop.render();
-      mainLoop.moveBy(60, 180);
-    }
+    restoreWorkspace(workspace, initialWorkspaceRef.current, initialAstRef.current);
 
     const resize = () => {
       Blockly.svgResize(workspace);
       workspace.resize();
-      // Keep workspace metrics aligned with CSS toolbox width
       const toolbox = workspace.getToolbox?.();
       if (toolbox && "getWidth" in toolbox) {
         workspace.resizeContents?.();
@@ -145,7 +167,6 @@ const BlocklyEditor = forwardRef<BlocklyEditorHandle, Props>(function BlocklyEdi
       }
     };
     resize();
-    // Second + third pass: CSS width paint before Blockly measures toolbox
     requestAnimationFrame(() => {
       resize();
       requestAnimationFrame(resize);
@@ -165,7 +186,7 @@ const BlocklyEditor = forwardRef<BlocklyEditorHandle, Props>(function BlocklyEdi
       workspace.dispose();
       workspaceRef.current = null;
     };
-    // Mount once — AST reloads go through imperative handle
+    // Mount once — drafts reload via remount + initial props
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

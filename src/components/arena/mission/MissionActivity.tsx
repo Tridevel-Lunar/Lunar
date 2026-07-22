@@ -13,6 +13,7 @@ import type { ProgramAst } from "@/ast/types";
 import type { ArenaMission } from "@/components/arena/arena-data";
 import BlocklyEditor, {
   type BlocklyEditorHandle,
+  type BlocklyWorkspaceState,
 } from "@/components/arena/blockly/BlocklyEditor";
 import MissionFeedbackMock from "@/components/arena/feedback/MissionFeedbackMock";
 import { gradeLabel, gradeStatusClassName } from "@/components/arena/grade-label";
@@ -109,6 +110,7 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
   const [initialAst, setInitialAst] = useState<ProgramAst | Record<string, unknown> | null>(
     null,
   );
+  const [draftWorkspace, setDraftWorkspace] = useState<BlocklyWorkspaceState | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -133,6 +135,7 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
         ]);
         if (cancelled) return;
         setInitialAst(attempt.ast);
+        setDraftWorkspace(attempt.workspace);
         setLoaded(true);
       } catch (err) {
         if (cancelled) return;
@@ -151,12 +154,25 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
     };
   }, [mission.id]);
 
+  function snapshotEditorDraft() {
+    const ast = editorRef.current?.toAst() ?? null;
+    const workspace = editorRef.current?.toWorkspaceState() ?? null;
+    if (ast) setInitialAst(ast);
+    setDraftWorkspace(workspace);
+    return { ast, workspace };
+  }
+
   async function handleSave() {
-    const ast = editorRef.current?.toAst() ?? { type: "program", body: [] };
+    const { ast, workspace } = snapshotEditorDraft();
+    const programAst = ast ?? { type: "program", body: [] };
     setSaveState("saving");
     setSaveMessage(null);
     try {
-      await saveArenaAttempt(mission.id, ast as Record<string, unknown>);
+      await saveArenaAttempt(
+        mission.id,
+        programAst as Record<string, unknown>,
+        workspace,
+      );
       setSaveState("saved");
       setSaveMessage("บันทึกโค้ดบล็อกแล้ว");
       window.setTimeout(() => setSaveState("idle"), 2000);
@@ -173,10 +189,19 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
     if (!ok) return;
     editorRef.current?.clear();
     editorRef.current?.seedStart();
+    snapshotEditorDraft();
     setRunState("idle");
     setRunMessage(null);
     setRunError(null);
     setRunResult(null);
+  }
+
+  function handleTabChange(next: ActivityTab) {
+    if (next === tab) return;
+    if (tab === "coding" && next !== "coding") {
+      snapshotEditorDraft();
+    }
+    setTab(next);
   }
 
   async function handleRun() {
@@ -213,7 +238,7 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
               id={`mission-tab-${id}`}
               aria-selected={selected}
               aria-controls={`mission-panel-${id}`}
-              onClick={() => setTab(id)}
+              onClick={() => handleTabChange(id)}
               className={`font-section-thai relative inline-flex items-center gap-1.5 px-3 py-2.5 text-[0.82rem] transition ${
                 selected
                   ? "text-cyan"
@@ -260,9 +285,10 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
               {loaded ? (
                 <div className="relative min-h-0 flex-1 overflow-hidden">
                   <BlocklyEditor
-                    key={`${mission.id}-${initialAst ? "restored" : "fresh"}`}
+                    key={`${mission.id}-${draftWorkspace ? "ws" : initialAst ? "ast" : "fresh"}`}
                     ref={editorRef}
                     initialAst={initialAst}
+                    initialWorkspace={draftWorkspace}
                     className="absolute inset-0 h-full w-full"
                   />
                 </div>
