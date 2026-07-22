@@ -17,7 +17,7 @@ function formatTimer(totalSec: number): string {
 export default function ArenaMission() {
   const { missionId } = useParams<{ missionId: string }>();
   const mission = ARENA_MISSIONS.find((m) => m.id === missionId);
-  const playable = mission?.id === "leo-orbital-launch";
+  const playable = mission?.id === "leo-orbit-one-lap";
   const [timerSec, setTimerSec] = useState(TIMER_START_SEC);
 
   useEffect(() => {

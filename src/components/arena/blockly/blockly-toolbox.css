@@ -169,3 +169,32 @@
 [data-blockly-editor] .blocklyScrollbarHorizontal {
   display: none !important;
 }
+
+/* Block labels — light pastels need dark text (Blockly default is white) */
+[data-blockly-editor] .blocklyText,
+[data-blockly-editor] .blocklyDropdownText,
+[data-blockly-editor] .blocklyNonEditableText > text,
+[data-blockly-editor] .blocklyEditableText > text {
+  fill: #0b1220 !important;
+  font-weight: 600 !important;
+}
+
+[data-blockly-editor] .blocklyEditableText rect {
+  fill: rgba(255, 255, 255, 0.55) !important;
+  stroke: rgba(15, 23, 42, 0.25) !important;
+}
+
+[data-blockly-editor] .blocklyHtmlInput {
+  color: #0b1220 !important;
+  font-weight: 600 !important;
+}
+
+[data-blockly-editor] .blocklyDropDownDiv .goog-menuitem-content,
+[data-blockly-editor] .blocklyMenuItemContent,
+[data-blockly-editor] .blocklyDropdownMenu .blocklyMenuItem {
+  color: #0b1220 !important;
+}
+
+[data-blockly-editor] .blocklyFlyoutLabelText {
+  fill: rgba(232, 237, 245, 0.75) !important;
+}

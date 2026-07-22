@@ -3,10 +3,9 @@ import * as Blockly from "blockly";
 import "blockly/blocks";
 
 import type { ProgramAst } from "@/ast/types";
-import { registerM01Blocks } from "./blocks/m01";
+import { compileProgram } from "./compileProgram";
 import { astToWorkspace } from "./fromAst";
-import { workspaceToAst } from "./toAst";
-import { M01_BEGINNER_TOOLBOX } from "./toolboxes/m01-beginner";
+import { buildToolbox, registerArenaBlocks, type RegistryOptions } from "./registry";
 import "./blockly-toolbox.css";
 
 export type BlocklyWorkspaceState = Record<string, unknown>;
@@ -26,11 +25,17 @@ type Props = {
   /** Prefer over AST when restoring layout (positions, scroll). */
   initialWorkspace?: BlocklyWorkspaceState | null;
   className?: string;
+  registryOptions?: RegistryOptions;
 };
 
 const DarkTheme = Blockly.Theme.defineTheme("lunarArenaDark", {
   name: "lunarArenaDark",
   base: Blockly.Themes.Classic,
+  fontStyle: {
+    family: '"Sarabun", "Noto Sans Thai", sans-serif',
+    weight: "600",
+    size: 12,
+  },
   componentStyles: {
     workspaceBackgroundColour: "#070d18",
     toolboxBackgroundColour: "#02060f",
@@ -45,6 +50,10 @@ const DarkTheme = Blockly.Theme.defineTheme("lunarArenaDark", {
     cursorColour: "#00e5ff",
   },
   categoryStyles: {
+    lunar_obc_category: { colour: "#38bdf8" },
+    lunar_eps_category: { colour: "#f59e0b" },
+    lunar_payload_category: { colour: "#a855f7" },
+    lunar_comm_category: { colour: "#10b981" },
     lunar_start_category: { colour: "#1a2740" },
     lunar_power_category: { colour: "#1a2740" },
     lunar_sensor_category: { colour: "#1a2740" },
@@ -55,14 +64,17 @@ const DarkTheme = Blockly.Theme.defineTheme("lunarArenaDark", {
 });
 
 function seedEmptyWorkspace(ws: Blockly.WorkspaceSvg): void {
-  const start = ws.newBlock("m01_on_start");
+  const start = ws.newBlock("obc_on_start");
   start.initSvg();
   start.render();
   start.moveBy(60, 40);
-  const mainLoop = ws.newBlock("m01_main_loop");
-  mainLoop.initSvg();
-  mainLoop.render();
-  mainLoop.moveBy(60, 180);
+  const repeat = ws.newBlock("obc_repeat_orbit");
+  repeat.initSvg();
+  repeat.render();
+  const body = start.getInput("BODY")?.connection;
+  if (body && repeat.previousConnection) {
+    body.connect(repeat.previousConnection);
+  }
 }
 
 function restoreWorkspace(
@@ -70,31 +82,43 @@ function restoreWorkspace(
   initialWorkspace: BlocklyWorkspaceState | null | undefined,
   initialAst: ProgramAst | Record<string, unknown> | null | undefined,
 ): void {
+  // Prefer AST when present — seeded demos often clear workspace; a stale
+  // workspace JSON would otherwise hide the Perfect solution.
+  if (initialAst && typeof initialAst === "object") {
+    const body = (initialAst as ProgramAst).body;
+    if (Array.isArray(body) && body.length > 0) {
+      astToWorkspace(workspace, initialAst);
+      return;
+    }
+  }
   if (initialWorkspace && typeof initialWorkspace === "object") {
     Blockly.serialization.workspaces.load(initialWorkspace, workspace);
-    return;
-  }
-  if (initialAst) {
-    astToWorkspace(workspace, initialAst);
     return;
   }
   seedEmptyWorkspace(workspace);
 }
 
+const DEFAULT_REGISTRY: RegistryOptions = {
+  enabledLibs: ["obc", "eps", "payload"],
+  payloadModuleId: "generic",
+  commLibVisible: false,
+};
+
 const BlocklyEditor = forwardRef<BlocklyEditorHandle, Props>(function BlocklyEditor(
-  { initialAst = null, initialWorkspace = null, className },
+  { initialAst = null, initialWorkspace = null, className, registryOptions },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
   const initialAstRef = useRef(initialAst);
   const initialWorkspaceRef = useRef(initialWorkspace);
+  const registryRef = useRef({ ...DEFAULT_REGISTRY, ...registryOptions });
 
   useImperativeHandle(ref, () => ({
     toAst: () => {
       const ws = workspaceRef.current;
       if (!ws) return { type: "program", body: [] };
-      return workspaceToAst(ws);
+      return compileProgram(ws);
     },
     toWorkspaceState: () => {
       const ws = workspaceRef.current;
@@ -125,10 +149,11 @@ const BlocklyEditor = forwardRef<BlocklyEditorHandle, Props>(function BlocklyEdi
   useEffect(() => {
     if (!containerRef.current || workspaceRef.current) return;
 
-    registerM01Blocks();
+    const opts = registryRef.current;
+    registerArenaBlocks(opts);
 
     const workspace = Blockly.inject(containerRef.current, {
-      toolbox: M01_BEGINNER_TOOLBOX,
+      toolbox: buildToolbox(opts),
       theme: DarkTheme,
       media: "/blockly/media/",
       trashcan: true,

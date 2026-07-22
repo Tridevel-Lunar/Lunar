@@ -3,15 +3,15 @@
 export type AstOp =
   | "setup"
   | "main_loop"
-  | "set_battery_threshold_low"
-  | "set_battery_threshold_high"
-  | "set_temp_threshold"
-  | "set_heater_power"
-  | "enable_payload_mode"
+  | "repeat_until_end"
   | "battery_level"
   | "temperature"
+  | "is_in_sunlight"
+  | "is_in_eclipse"
   | "is_daylight"
+  | "sim_sec"
   | "tick_number"
+  | "orbit_phase"
   | "turn_heater"
   | "turn_payload"
   | "enter_safe_mode"
@@ -20,7 +20,12 @@ export type AstOp =
   | "when"
   | "compare"
   | "wait_1_tick"
-  | "repeat_until_end";
+  | "log"
+  | "payload_is_on"
+  | "payload_capture"
+  | "is_comm_pass"
+  | "seconds_until_pass"
+  | "queue_downlink";
 
 export type AstNode = {
   id: string;
@@ -44,8 +49,15 @@ export type MissionLimits = {
   wallMs: number;
 };
 
+export type MissionSetupPresets = {
+  eps?: Record<string, unknown>;
+  payload?: Record<string, unknown>;
+  comm?: Record<string, unknown>;
+};
+
 export type MissionPack = {
   id: string;
+  version?: number;
   toolboxId: string;
   title: string;
   code: string;
@@ -53,6 +65,12 @@ export type MissionPack = {
   playable: boolean;
   allowedOps: string[];
   limits: MissionLimits;
+  enabledLibs?: string[];
+  payloadModuleId?: string | null;
+  commLibVisible?: boolean;
+  setupPresets?: MissionSetupPresets | null;
+  orbitPeriodSec?: number | null;
+  eclipseFraction?: number | null;
 };
 
 export type MissionAttempt = {

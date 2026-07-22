@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  HiOutlineCog6Tooth,
   HiOutlineDocumentText,
   HiOutlinePuzzlePiece,
 } from "react-icons/hi2";
@@ -20,10 +21,15 @@ import { gradeLabel, gradeStatusClassName } from "@/components/arena/grade-label
 import MissionRunErrorDialog, {
   runErrorPresentation,
 } from "@/components/arena/mission/MissionRunErrorDialog";
+import MissionSetupTabs, {
+  DEFAULT_MISSION_SETUP,
+  type MissionSetupState,
+} from "@/components/arena/mission/MissionSetupTabs";
 import MissionTimeline from "@/components/arena/timeline/MissionTimeline";
-import { getMissionTimelineConfig } from "@/components/arena/timeline/mission-timeline-config";
+import { getMissionOrbitTimelineConfig } from "@/components/arena/timeline/mission-timeline-config";
 import {
   ApiError,
+  type ArenaMissionPack,
   type ArenaRunResponse,
   getArenaAttempt,
   getArenaMission,
@@ -31,7 +37,7 @@ import {
   saveArenaAttempt,
 } from "@/lib/api";
 
-type ActivityTab = "detail" | "coding";
+type ActivityTab = "detail" | "setup" | "coding";
 
 const VIEW_OPTIONS: {
   id: ActivityTab;
@@ -39,12 +45,13 @@ const VIEW_OPTIONS: {
   icon: typeof HiOutlineDocumentText;
 }[] = [
   { id: "detail", label: "รายละเอียดภารกิจ", icon: HiOutlineDocumentText },
+  { id: "setup", label: "ตั้งค่าระบบ", icon: HiOutlineCog6Tooth },
   { id: "coding", label: "เขียนโค้ดบล็อก", icon: HiOutlinePuzzlePiece },
 ];
 
 function MissionDetailPanel({ mission }: { mission: ArenaMission }) {
-  const [previewTick, setPreviewTick] = useState(1);
-  const timelineConfig = getMissionTimelineConfig(mission.id);
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const timelineConfig = getMissionOrbitTimelineConfig(mission.id);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
@@ -81,15 +88,17 @@ function MissionDetailPanel({ mission }: { mission: ArenaMission }) {
       {timelineConfig ? (
         <section className="space-y-2 border-t border-white/10 pt-5">
           <h3 className="font-display text-[0.72rem] font-semibold tracking-[0.16em] text-cyan/90">
-            ไทม์ไลน์ 10 รอบปฏิบัติการ
+            ไทม์ไลน์ 1 วงโคจร
           </h3>
           <p className="font-section-thai text-[0.85rem] leading-relaxed text-text/70">
-            โปรแกรมที่คุณเขียนจะถูกใช้ซ้ำทุกจุดบนเส้นเวลานี้ — คลิกแต่ละรอบเพื่อดูว่าเกิดอะไรขึ้น
+            เริ่มที่ subsolar (แดดเต็มที่) → เข้า eclipse กลางวง → กลับสู่แดด — โปรแกรม OBC
+            รันซ้ำทุกวินาทีจำลองตลอดวงโคจร
           </p>
           <MissionTimeline
             config={timelineConfig}
-            selectedTick={previewTick}
-            onSelectTick={setPreviewTick}
+            selectedIndex={previewIndex}
+            onSelectIndex={setPreviewIndex}
+            preview
           />
         </section>
       ) : null}
@@ -184,6 +193,52 @@ function MissionDetailPanel({ mission }: { mission: ArenaMission }) {
   );
 }
 
+function setupFromPack(pack: ArenaMissionPack | null): MissionSetupState {
+  const base = structuredClone(DEFAULT_MISSION_SETUP);
+  const eps = pack?.setupPresets?.eps;
+  const payload = pack?.setupPresets?.payload;
+  const comm = pack?.setupPresets?.comm;
+  if (eps) {
+    if (typeof eps.battery_threshold_low === "number") {
+      base.eps.battery_threshold_low = eps.battery_threshold_low;
+    }
+    if (typeof eps.battery_threshold_high === "number") {
+      base.eps.battery_threshold_high = eps.battery_threshold_high;
+    }
+    if (typeof eps.temp_min === "number") base.eps.temp_min = eps.temp_min;
+    if (typeof eps.temp_max === "number") base.eps.temp_max = eps.temp_max;
+    if (typeof eps.heater_power === "number") base.eps.heater_power = eps.heater_power;
+  }
+  if (payload) {
+    if (typeof payload.payload_module === "string") {
+      base.payload.payload_module = payload.payload_module;
+    }
+    if (typeof payload.default_on === "boolean") {
+      base.payload.default_on = payload.default_on;
+    }
+  }
+  if (comm) {
+    if (typeof comm.pass_sim_sec === "number") base.comm.pass_sim_sec = comm.pass_sim_sec;
+    if (typeof comm.downlink_policy === "string") {
+      base.comm.downlink_policy = comm.downlink_policy;
+    }
+  }
+  return base;
+}
+
+function lockedFields(pack: ArenaMissionPack | null) {
+  const eps = pack?.setupPresets?.eps;
+  const payload = pack?.setupPresets?.payload;
+  const comm = pack?.setupPresets?.comm;
+  return {
+    eps: Array.isArray(eps?.locked) ? (eps.locked as string[]) : [],
+    payload: Array.isArray(payload?.locked) ? (payload.locked as string[]) : ["payload_module", "default_on"],
+    comm: Array.isArray(comm?.locked)
+      ? (comm.locked as string[])
+      : ["pass_sim_sec", "downlink_policy"],
+  };
+}
+
 export default function MissionActivity({ mission }: { mission: ArenaMission }) {
   const [tab, setTab] = useState<ActivityTab>("coding");
   const [initialAst, setInitialAst] = useState<ProgramAst | Record<string, unknown> | null>(
@@ -198,6 +253,8 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
   const [runMessage, setRunMessage] = useState<string | null>(null);
   const [runError, setRunError] = useState<{ title: string; message: string } | null>(null);
   const [runResult, setRunResult] = useState<ArenaRunResponse | null>(null);
+  const [pack, setPack] = useState<ArenaMissionPack | null>(null);
+  const [setup, setSetup] = useState<MissionSetupState>(DEFAULT_MISSION_SETUP);
 
   const editorRef = useRef<BlocklyEditorHandle>(null);
 
@@ -208,11 +265,13 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
       setLoadError(null);
       setLoaded(false);
       try {
-        const [, attempt] = await Promise.all([
+        const [missionPack, attempt] = await Promise.all([
           getArenaMission(mission.id),
           getArenaAttempt(mission.id),
         ]);
         if (cancelled) return;
+        setPack(missionPack);
+        setSetup(setupFromPack(missionPack));
         setInitialAst(attempt.ast);
         setDraftWorkspace(attempt.workspace);
         setLoaded(true);
@@ -290,7 +349,12 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
     setRunError(null);
     setRunResult(null);
     try {
-      const result = await runArenaMission(mission.id, ast as Record<string, unknown>);
+      const result = await runArenaMission(mission.id, {
+        ast: ast as Record<string, unknown>,
+        epsSetup: setup.eps,
+        payloadSetup: setup.payload,
+        commSetup: setup.comm,
+      });
       setRunResult(result);
       setRunState("done");
       setRunMessage("ประมวลผลสำเร็จ");
@@ -299,6 +363,16 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
       setRunError(runErrorPresentation(err));
     }
   }
+
+  const registryOptions = {
+    enabledLibs: (pack?.enabledLibs as ("obc" | "eps" | "payload" | "comm")[] | undefined) ?? [
+      "obc",
+      "eps",
+      "payload",
+    ],
+    payloadModuleId: pack?.payloadModuleId ?? "generic",
+    commLibVisible: pack?.commLibVisible ?? false,
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -346,6 +420,29 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
         >
           <MissionDetailPanel mission={mission} />
         </div>
+      ) : tab === "setup" ? (
+        <div
+          id="mission-panel-setup"
+          role="tabpanel"
+          aria-labelledby="mission-tab-setup"
+          className="min-h-0 flex-1 overflow-y-auto"
+        >
+          <div className="mx-auto max-w-3xl space-y-4 p-6">
+            <div>
+              <h2 className="font-display text-[0.72rem] font-semibold tracking-[0.16em] text-cyan/90">
+                ตั้งค่าระบบ
+              </h2>
+              <p className="font-section-thai mt-1.5 text-[0.88rem] leading-relaxed text-text/70">
+                ค่าเหล่านี้จะถูกส่งไปพร้อมโปรแกรมเมื่อกดส่งภารกิจ
+              </p>
+            </div>
+            <MissionSetupTabs
+              value={setup}
+              onChange={setSetup}
+              locked={lockedFields(pack)}
+            />
+          </div>
+        </div>
       ) : (
         <div
           id="mission-panel-coding"
@@ -364,10 +461,11 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
               {loaded ? (
                 <div className="relative min-h-0 flex-1 overflow-hidden">
                   <BlocklyEditor
-                    key={`${mission.id}-${draftWorkspace ? "ws" : initialAst ? "ast" : "fresh"}`}
+                    key={`${mission.id}-${initialAst ? "ast" : "fresh"}-${draftWorkspace ? "ws" : "nows"}`}
                     ref={editorRef}
                     initialAst={initialAst}
                     initialWorkspace={draftWorkspace}
+                    registryOptions={registryOptions}
                     className="absolute inset-0 h-full w-full"
                   />
                   {(runState === "running" ||
@@ -380,7 +478,7 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
                     >
                       {runState === "running" && (
                         <p className="font-section-thai text-[0.9rem] text-cyan-200">
-                          กำลังส่งภารกิจ...
+                          กำลังจำลอง 1 วงโคจร...
                         </p>
                       )}
                       {runMessage && runState === "done" && (

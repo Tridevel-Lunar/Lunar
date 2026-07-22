@@ -78,9 +78,9 @@ Export จาก Blender → `public/models/` หรือ CDN (เมื่อ�
 | **Google Blockly** (`blockly` ^13) | ห้องแล็บลากวางบล็อก — Visual Programming Interface |
 
 - **Draft save:** Blockly → program **AST** (semantic) + Blockly **workspace JSON** (layout) → `PUT /arena/missions/:id/attempt` (PostgreSQL)
-- **Restore:** prefer `workspace` (keeps block positions); fall back to AST auto-layout; else seed setup + main_loop
-- **Run:** `workspaceToAst` → `POST /arena/missions/:id/runs` (BE grades; FE shows result + validation modal on 422)
-- Custom blocks: `components/arena/blockly/blocks/m01.ts` · toolbox: `toolboxes/m01-beginner.ts`
+- **Restore:** prefer `workspace` (keeps block positions); fall back to AST auto-layout; else seed `obc_on_start` + `obc_repeat_orbit`
+- **Run:** `compileProgram` → `POST /arena/missions/:id/runs` with `{ ast, epsSetup, payloadSetup, commSetup }` (BE grades; FE shows orbit trace + validation modal on 422)
+- Custom blocks: `components/arena/blockly/libs/{obc,eps,payload,comm}/` · registry: `registry.ts` · compile: `compileProgram.ts`
 - Toolbox CSS: `blockly-toolbox.css` — class **`.blocklyToolbox`** (Blockly 13; not `.blocklyToolboxDiv`)
 - ไม่ execute physics หนักฝั่ง browser — simulation อยู่ที่ backend
 ## Studio — LAIKA

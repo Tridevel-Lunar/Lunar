@@ -138,30 +138,32 @@ Studio แยกเป็น landing + chat ต่อ collection:
 
 ### Arena (Visual Coding)
 
-Mission hub + Blockly workspace for **MISSION 01 — FIRST ORBIT SURVIVAL** (`leo-orbital-launch`). Live: pack metadata, attempt save/load (`ast` + Blockly `workspace`), and `POST .../runs` grading. Design reference: workspace `docs/satellite_mission_block_design (2).md`.
+Mission hub + Blockly workspace for **MISSION 01 — ONE LAP AROUND EARTH** (`leo-orbit-one-lap`). Live: pack metadata + setup presets, attempt save/load (`ast` + Blockly `workspace`), and `POST .../runs` one-orbit grading with sampled `trace[]`. Spec: workspace `docs/programming_arena_revamp_spec.md`.
 
 | Route | หน้าที่ |
 |-------|---------|
 | `/arena` | Mission carousel (`ArenaDemo`) — brief + CTA |
 | `/arena/mission/:missionId` | Full-width mission shell (**no** `ModuleSidebar`): header (back, code/title, timer) + `MissionActivity` |
 
-Playable id: `leo-orbital-launch` only. Other missions show a not-ready message.
+Playable id: `leo-orbit-one-lap` only. Other missions show a not-ready message.
 
 | ใน scope | นอก scope (ถัดไป) |
 |----------|-------------------|
-| M01 Blockly → program AST + workspace JSON draft | Multi-mission packs / practice starting conditions |
-| `GET` pack · `GET`/`PUT` attempt (PostgreSQL) · `POST` runs | R3F tick replay / live 3D metrics |
+| M01 Blockly libs (obc/eps/payload) → program AST + workspace JSON | Multi-mission packs / camera payload variants |
+| Setup tabs EPS / Payload / COMM → run payload | COMM flyout + downlink ops (M02+) |
+| `GET` pack · `GET`/`PUT` attempt · `POST` runs (orbit sim) | Realtime wall-clock replay / full 3D umbra |
 | Tab bar: รายละเอียดภารกิจ \| เขียนโค้ดบล็อก | Extra mission tabs |
 | Save / Clear / Run + validation error modal | Longevity health accumulation |
-| Result panel from run response (`MissionFeedbackMock`) | Richer outcome UX |
+| Orbit trace feedback (sun/eclipse band) | Richer outcome UX |
 
 **UI layout (coding view)**
 
 - Top bar (`ArenaMission`): back · mission code/title · countdown timer — sidebar hidden for immersion  
 - Tab bar (`MissionActivity`): detail vs coding — tabs use `z-[80]` above Blockly toolbox (`z-index: 70`)  
+- Setup tabs above editor: EPS / Payload / COMM (config, not Blockly)  
 - Leaving coding snapshots **AST + Blockly workspace** so remount restores **block positions**; Save persists both to the API  
-- Split: Blockly ~`1.5fr` · Result ~`1fr` (`lg:grid-cols-[minmax(0,1.5fr)_minmax(260px,1fr)]`)  
-- Blockly terms: **toolbox** = category list · **flyout** = block palette · **workspace** = canvas (also the serialized layout blob)
+- Split: Blockly ~`1.5fr` · Result ~`1fr`  
+- Blockly seed: single `obc_on_start` containing `obc_repeat_orbit`
 
 **Lib / components**
 
@@ -170,19 +172,21 @@ Playable id: `leo-orbital-launch` only. Other missions show a not-ready message.
 | `src/pages/Arena.tsx` · `ArenaMission.tsx` | Routes (mission page: no module sidebar) |
 | `src/components/arena/arena-data.ts` | Static mission copy |
 | `src/components/arena/ArenaDemo.tsx` | Hub carousel |
-| `src/components/arena/mission/MissionActivity.tsx` | Tabs, draft snapshot, save/clear/run |
+| `src/components/arena/mission/MissionActivity.tsx` | Tabs, setup state, draft snapshot, save/clear/run |
+| `src/components/arena/mission/MissionSetupTabs.tsx` | EPS / Payload / COMM forms |
 | `src/components/arena/mission/MissionRunErrorDialog.tsx` | Modal for AST validation / run API errors |
 | `src/components/arena/grade-label.ts` | Thai grade labels + status colors |
 | `src/components/arena/blockly/BlocklyEditor.tsx` | Inject + theme; restore prefers `workspace` → AST → seed |
-| `src/components/arena/blockly/blocks/m01.ts` | M01 block defs |
-| `src/components/arena/blockly/toolboxes/m01-beginner.ts` | Category toolbox |
+| `src/components/arena/blockly/libs/` | `obc` / `eps` / `payload` / `comm` block defs + toolboxes |
+| `src/components/arena/blockly/registry.ts` | `enabledLibs` → toolbox |
+| `src/components/arena/blockly/compileProgram.ts` | `obc_on_start` → `{ setup, main_loop }` |
 | `src/components/arena/blockly/toAst.ts` · `fromAst.ts` | Workspace ↔ program AST |
-| `src/components/arena/blockly/blockly-toolbox.css` | Toolbox/flyout styling (class `.blocklyToolbox`) |
-| `src/components/arena/feedback/MissionFeedbackMock.tsx` | Run result panels (battery/temp/grade) |
+| `src/components/arena/feedback/MissionFeedbackMock.tsx` | Orbit trace playback + dashboard + outcome |
+| `src/components/arena/timeline/` | Sun/eclipse band timeline |
 | `src/ast/types.ts` | AST / pack types (mirror BE) |
-| `src/lib/api.ts` | `getArenaMission` · `getArenaAttempt` · `saveArenaAttempt(ast, workspace?)` · `runArenaMission` |
+| `src/lib/api.ts` | `getArenaMission` · attempt · `runArenaMission({ ast, epsSetup, … })` |
 
-**Backend:** draft `ast` + optional `workspace` in `arena_attempts`; runs use AST only — see [backend/docs/api.md](../../backend/docs/api.md#arena).
+**Backend:** draft `ast` + optional `workspace` in `arena_attempts`; runs use AST + setup tabs — see [backend/docs/api.md](../../backend/docs/api.md#arena).
 ## Directory Map
 
 ```
