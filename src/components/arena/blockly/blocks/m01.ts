@@ -169,11 +169,11 @@ export function registerM01Blocks(): void {
     },
     {
       type: "m01_if",
-      message0: "หาก %1 แล้ว",
+      message0: "If %1 then",
       args0: [{ type: "input_value", name: "COND", check: "Boolean" }],
       message1: "%1",
       args1: [{ type: "input_statement", name: "THEN" }],
-      message2: "มิฉะนั้น %1",
+      message2: "else %1",
       args2: [{ type: "input_statement", name: "ELSE" }],
       previousStatement: null,
       nextStatement: null,

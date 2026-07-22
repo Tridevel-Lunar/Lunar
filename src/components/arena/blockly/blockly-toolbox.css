@@ -20,10 +20,9 @@
   background-color: rgba(2, 6, 15, 0.96) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
   padding: 0.65rem 0.75rem !important;
-  /* Slightly wider than content-sized default for Thai labels */
-  width: 10rem !important;
+  width: 9rem !important;
   min-width: 7rem !important;
-  max-width: 11rem !important;
+  max-width: 9rem !important;
   box-sizing: border-box !important;
   backdrop-filter: blur(10px);
   overflow: hidden !important;
@@ -153,10 +152,6 @@
   box-sizing: border-box;
 }
 
-/*
- * Flyout scrollbar sits on the right edge of the palette (= "middle" of the editor).
- * Hide it — wheel still scrolls the flyout when block lists are long.
- */
 [data-blockly-editor] .blocklyFlyoutScrollbar,
 [data-blockly-editor] .blocklyFlyout .blocklyScrollbarVertical,
 [data-blockly-editor] .blocklyFlyout .blocklyScrollbarBackground,

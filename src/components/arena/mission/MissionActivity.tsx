@@ -20,13 +20,6 @@ import MissionRunErrorDialog, {
   runErrorPresentation,
 } from "@/components/arena/mission/MissionRunErrorDialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   ApiError,
   type ArenaRunResponse,
   getArenaAttempt,
@@ -205,49 +198,57 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      {/* View switcher — z above Blockly toolbox (z-index: 70) */}
-      <div className="relative z-[80] flex shrink-0 items-center gap-2 border-b border-white/[0.06] bg-[#050a14]/90 px-3 py-2">
-        <label
-          htmlFor="mission-view-select"
-          className="font-mono shrink-0 text-[0.85rem] tracking-[0.14em] text-muted"
-        >
-          VIEW :
-        </label>
-        <Select
-          value={tab}
-          onValueChange={(value) => setTab(value as ActivityTab)}
-        >
-          <SelectTrigger
-            id="mission-view-select"
-            aria-label="เลือกมุมมองภารกิจ"
-            className="h-9 w-full max-w-[16rem] rounded-lg border-white/10 bg-white/[0.03] px-2.5 font-section-thai text-[0.82rem] text-text hover:border-cyan/30 focus:ring-cyan/40 focus:ring-offset-0 data-[state=open]:border-cyan/40"
-          >
-            <SelectValue placeholder="เลือกมุมมอง" />
-          </SelectTrigger>
-
-          <SelectContent className="z-[100] border-white/10 bg-[#0a1220] text-text">
-            {VIEW_OPTIONS.map(({ id, label, icon: Icon }) => (
-              <SelectItem
-                key={id}
-                value={id}
-                className="font-section-thai cursor-pointer focus:bg-cyan/15 focus:text-cyan"
-              >
-                <span className="flex items-center gap-2">
-                  <Icon className="text-base opacity-70" aria-hidden />
-                  <span>{label}</span>
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div
+        className="relative z-[80] flex shrink-0 items-stretch gap-1 border-b border-white/[0.06] bg-[#050a14]/90 px-3"
+        role="tablist"
+        aria-label="มุมมองภารกิจ"
+      >
+        {VIEW_OPTIONS.map(({ id, label, icon: Icon }) => {
+          const selected = tab === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              id={`mission-tab-${id}`}
+              aria-selected={selected}
+              aria-controls={`mission-panel-${id}`}
+              onClick={() => setTab(id)}
+              className={`font-section-thai relative inline-flex items-center gap-1.5 px-3 py-2.5 text-[0.82rem] transition ${
+                selected
+                  ? "text-cyan"
+                  : "text-text/55 hover:text-text/85"
+              }`}
+            >
+              <Icon className="text-base opacity-80" aria-hidden />
+              <span>{label}</span>
+              {selected && (
+                <span
+                  className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-cyan"
+                  aria-hidden
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {tab === "detail" ? (
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div
+          id="mission-panel-detail"
+          role="tabpanel"
+          aria-labelledby="mission-tab-detail"
+          className="min-h-0 flex-1 overflow-y-auto"
+        >
           <MissionDetailPanel mission={mission} />
         </div>
       ) : (
-        <>
+        <div
+          id="mission-panel-coding"
+          role="tabpanel"
+          aria-labelledby="mission-tab-coding"
+          className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+        >
           {loadError && (
             <p className="shrink-0 border-b border-orange-500/30 bg-orange-500/10 px-4 py-2 font-section-thai text-[0.8rem] text-orange-200">
               {loadError} — ใช้งานเอดิเตอร์แบบออฟไลน์ได้ แต่บันทึกจะไม่สำเร็จจนกว่า API พร้อม
@@ -329,7 +330,7 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
               <MissionFeedbackMock runResult={runResult} />
             </aside>
           </div>
-        </>
+        </div>
       )}
 
       <MissionRunErrorDialog
