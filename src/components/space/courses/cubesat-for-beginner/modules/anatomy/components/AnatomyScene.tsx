@@ -13,19 +13,21 @@ import CubeSatOverviewModel from "./CubeSatOverviewModel";
 import StructureFrame from "./StructureFrame";
 import SubsystemStack from "./SubsystemStack";
 import DataFlowLinks from "./DataFlowLinks";
+import PartCallouts from "./PartCallouts";
 import { easeInOutCubic, lerp } from "../lib/layout";
-import { stepToViewMode, type AnatomyStep } from "../lib/lesson";
+import {
+  showDataFlowLinks,
+  stepToViewMode,
+  type AnatomyStep,
+} from "../lib/lesson";
 import type { AnatomyPartId } from "../lib/parts";
 
-/** Fit whole FlatSat board in view (world units half-extent). */
 const FLAT_HALF_W = 2.7;
 const FLAT_HALF_H = 2.1;
 
 function FlatCameraFit({ active }: { active: boolean }) {
   const { size, camera } = useThree();
   const orthoZoom = useMemo(() => {
-    const aspect = size.width / Math.max(1, size.height);
-    // Choose zoom so the board fills most of the viewport
     const needW = size.width / (FLAT_HALF_W * 2);
     const needH = size.height / (FLAT_HALF_H * 2);
     return Math.min(needW, needH) * 0.92;
@@ -46,7 +48,6 @@ function FlatCameraFit({ active }: { active: boolean }) {
   useFrame(() => {
     if (!active) return;
     if (!(camera instanceof THREE.OrthographicCamera)) return;
-    // Hard-lock: no drift to side angle
     camera.position.set(0, 12, 0);
     camera.up.set(0, 0, -1);
     camera.lookAt(0, 0, 0);
@@ -58,19 +59,23 @@ function FlatCameraFit({ active }: { active: boolean }) {
 function SceneRig({
   step,
   activePart,
-  activeFlowId,
+  activeFlowIds,
   flowPaused = true,
+  flatsatPreferred = false,
+  visitedParts,
   onSelectPart,
   onSelectFlow,
 }: {
   step: AnatomyStep;
   activePart: AnatomyPartId;
-  activeFlowId: string | null;
+  activeFlowIds: string[] | null;
   flowPaused?: boolean;
+  flatsatPreferred?: boolean;
+  visitedParts: Set<AnatomyPartId>;
   onSelectPart: (id: AnatomyPartId) => void;
   onSelectFlow?: (id: string) => void;
 }) {
-  const mode = stepToViewMode(step);
+  const mode = stepToViewMode(step, flatsatPreferred);
   const flat = mode === "flatsat";
   const unfold = useRef(flat ? 1 : 0);
   const shellOpacity = useRef(flat ? 0 : 1);
@@ -81,10 +86,12 @@ function SceneRig({
     const goal = flat ? 1 : 0;
     unfold.current = lerp(unfold.current, goal, Math.min(1, dt * 1.8));
     const t = easeInOutCubic(unfold.current);
-    shellOpacity.current = Math.max(0, 1 - t * 1.5);
+    // On meet step keep shell ghosted so callouts / boards stay readable
+    const shellGoal = step === "meet" ? Math.max(0.18, 1 - t * 1.5) * 0.35 : Math.max(0, 1 - t * 1.5);
+    shellOpacity.current = lerp(shellOpacity.current, shellGoal, Math.min(1, dt * 3));
 
     if (spin.current) {
-      if (!flat && activePart === "overview") {
+      if (!flat && (activePart === "overview" || step === "intro")) {
         spin.current.rotation.y += dt * 0.28;
       } else {
         spin.current.rotation.set(
@@ -97,13 +104,14 @@ function SceneRig({
   });
 
   const showStructureGhost = !flat && activePart === "structure";
+  const showLinks = showDataFlowLinks(step);
+  const showCallouts = step === "meet";
 
   return (
     <>
       <color attach="background" args={["#030712"]} />
       {!flat && <fog attach="fog" args={["#030712", 8, 24]} />}
 
-      {/* Cameras: perspective for 3D explore, orthographic top-down for FlatSat */}
       <PerspectiveCamera
         makeDefault={!flat}
         position={[2.6, 1.8, 3.2]}
@@ -129,7 +137,6 @@ function SceneRig({
       />
       {!flat && (
         <>
-          {/* Local lights only — avoid drei Environment HDRI (CORS on localhost) */}
           <directionalLight position={[-3, 2, -4]} intensity={0.55} color="#7dd3fc" />
           <hemisphereLight color="#a8c4ff" groundColor="#030712" intensity={0.35} />
           <pointLight position={[0, -2, 2]} intensity={0.4} color="#00e5ff" />
@@ -156,10 +163,18 @@ function SceneRig({
             onSelectPart={onSelectPart}
             flat2d={flat}
           />
-          {(step === "dataflow" || step === "quiz") && (
+          {showCallouts && (
+            <PartCallouts
+              flat={flat}
+              activePart={activePart}
+              visitedParts={visitedParts}
+              onSelectPart={onSelectPart}
+            />
+          )}
+          {showLinks && (
             <DataFlowLinks
-              activeFlowId={step === "dataflow" ? activeFlowId : null}
-              showAllDimmed={step === "dataflow" || step === "quiz"}
+              activeFlowIds={activeFlowIds}
+              showAllDimmed
               paused={flowPaused}
               onSelectFlow={onSelectFlow}
             />
@@ -177,7 +192,6 @@ function SceneRig({
         />
       )}
 
-      {/* Orbit only in 3D explore — FlatSat stays locked top-down */}
       <OrbitControls
         ref={controlsRef}
         makeDefault={!flat}
@@ -197,17 +211,21 @@ function SceneRig({
 export default function AnatomyScene({
   step,
   activePart,
-  activeFlowId,
+  activeFlowIds,
   onSelectPart,
   onSelectFlow,
   flowPaused = true,
+  flatsatPreferred = false,
+  visitedParts,
 }: {
   step: AnatomyStep;
   activePart: AnatomyPartId;
-  activeFlowId: string | null;
+  activeFlowIds: string[] | null;
   onSelectPart: (id: AnatomyPartId) => void;
   onSelectFlow?: (id: string) => void;
   flowPaused?: boolean;
+  flatsatPreferred?: boolean;
+  visitedParts: Set<AnatomyPartId>;
 }) {
   return (
     <Canvas
@@ -219,8 +237,10 @@ export default function AnatomyScene({
       <SceneRig
         step={step}
         activePart={activePart}
-        activeFlowId={activeFlowId}
+        activeFlowIds={activeFlowIds}
         flowPaused={flowPaused}
+        flatsatPreferred={flatsatPreferred}
+        visitedParts={visitedParts}
         onSelectPart={onSelectPart}
         onSelectFlow={onSelectFlow}
       />

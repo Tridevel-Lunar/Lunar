@@ -1,4 +1,4 @@
-import type { AnatomyPartId } from "./lib/parts";
+import type { AnatomyPartId } from "./parts";
 
 export type Vec3 = [number, number, number];
 
