@@ -291,6 +291,35 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
                     initialWorkspace={draftWorkspace}
                     className="absolute inset-0 h-full w-full"
                   />
+                  {(runState === "running" ||
+                    (runMessage && runState === "done") ||
+                    (runResult && runState === "done")) && (
+                    <div
+                      className="pointer-events-none absolute right-3 top-3 z-[60] max-w-[14rem] rounded-md border border-white/15 bg-[#050a14]/92 px-2.5 py-2 shadow-lg backdrop-blur-sm"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      {runState === "running" && (
+                        <p className="font-section-thai text-[0.9rem] text-cyan-200">
+                          กำลังส่งภารกิจ...
+                        </p>
+                      )}
+                      {runMessage && runState === "done" && (
+                        <p className="font-section-thai text-[0.9rem] text-cyan-200">
+                          {runMessage}
+                        </p>
+                      )}
+                      {runResult && runState === "done" && (
+                        <p
+                          className={`font-section-thai text-[0.9rem] ${
+                            runMessage ? "mt-0.5" : ""
+                          } ${gradeStatusClassName(runResult.result.grade)}`}
+                        >
+                          Status: {gradeLabel(runResult.result.grade)}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-1 items-center justify-center font-section-thai text-text/40">
@@ -335,18 +364,6 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
                     }`}
                   >
                     {saveMessage}
-                  </span>
-                )}
-                {runMessage && runState === "done" && (
-                  <span className="font-section-thai text-[0.75rem] text-cyan-200">
-                    {runMessage}
-                  </span>
-                )}
-                {runResult && runState === "done" && (
-                  <span
-                    className={`font-section-thai text-[0.75rem] ${gradeStatusClassName(runResult.result.grade)}`}
-                  >
-                    Status: {gradeLabel(runResult.result.grade)}
                   </span>
                 )}
               </div>
