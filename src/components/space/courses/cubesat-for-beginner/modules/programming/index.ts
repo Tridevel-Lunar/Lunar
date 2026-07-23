@@ -6,8 +6,9 @@ export const programmingModule: SpaceModuleDefinition = {
   id: "programming",
   title: "PROGRAMMING FOR CUBESAT",
   titleTh: "การเขียนโปรแกรม",
-  description: "เรียนการเขียนโปรแกรมแบบบล็อก เพื่อสั่งให้ดาวเทียมทำงาน",
+  description:
+    "เรียนรู้แนวคิดแดด/eclipse และฝึกสั่งงานดาวเทียมด้วยบล็อกใน Arena",
   accent: "#ffab00",
   icon: "programming",
-  Component: lazy(() => import("../PlaceholderModule")),
+  Component: lazy(() => import("./ProgrammingModule")),
 };

@@ -103,16 +103,16 @@ Progress ใน UI ปัจจุบันเป็น metadata ชั่วค
 | **Editor UX** | ลากวางบล็อกซ้อนกัน — สไตล์ Google Blockly |
 
 **Input:** การจัดเรียง/แก้ไขบล็อก  
-**Output:** AST / mission script ส่งไป Simulation Engine
+**Output:** program **AST** (รัน/ให้คะแนน) + Blockly **workspace** JSON (ตำแหน่งบล็อก/เลย์เอาต์) — บันทึก draft แยก field; จำลองใช้ AST เท่านั้น
 
 ### Mission Feedback Window (Physics Reality Check)
 
 | รายการ | รายละเอียด |
 |--------|------------|
-| **3D preview** | ดาวเทียม 3D วิ่งรอบโลกควบคู่กับ code ที่รัน |
-| **Simulation Engine** | จำลองตามกฎฟิสิกส์ — sync กับบล็อกที่ผู้เรียนเขียน |
-| **สำเร็จ** | แสดง Orbital Data / ผลลัพธ์ที่ถูกต้อง |
-| **ไม่สำเร็จ** | แสดง error message อธิบายว่าตรรกะหรือเงื่อนไขใดผิด |
+| **3D preview** | พื้นที่ผลจำลอง (M01: placeholder; R3F replay ถัดไป) |
+| **Simulation Engine** | Backend deterministic tick sim — sync กับ AST จากบล็อก |
+| **สำเร็จ** | grade `perfect` / `risky` + battery/temp / comms จาก `POST .../runs` |
+| **ไม่สำเร็จ** | grade `fail` หรือ modal แสดง validation error (AST โครงสร้างผิด) |
 
 ```
 Blockly → Backend Simulation Engine → 3D + metrics / errors

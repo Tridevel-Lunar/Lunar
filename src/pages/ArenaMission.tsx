@@ -3,12 +3,10 @@ import { Link, useParams } from "react-router-dom";
 import { HiOutlineClock } from "react-icons/hi2";
 import { IoArrowBack, IoGameControllerOutline } from "react-icons/io5";
 
-import ModuleSidebar from "@/components/app/ModuleSidebar";
 import { ARENA_MISSIONS } from "@/components/arena/arena-data";
 import MissionActivity from "@/components/arena/mission/MissionActivity";
-import { useAuthUser } from "@/routes/useAuthUser";
 
-const TIMER_START_SEC = 90 * 60;
+const TIMER_START_SEC = 30 * 60;
 
 function formatTimer(totalSec: number): string {
   const m = Math.floor(totalSec / 60);
@@ -17,10 +15,9 @@ function formatTimer(totalSec: number): string {
 }
 
 export default function ArenaMission() {
-  const user = useAuthUser();
   const { missionId } = useParams<{ missionId: string }>();
   const mission = ARENA_MISSIONS.find((m) => m.id === missionId);
-  const playable = mission?.id === "leo-orbital-launch";
+  const playable = mission?.id === "leo-orbit-one-lap";
   const [timerSec, setTimerSec] = useState(TIMER_START_SEC);
 
   useEffect(() => {
@@ -37,8 +34,6 @@ export default function ArenaMission() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg text-text">
-      <ModuleSidebar user={user} activeModule="arena" />
-
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-3">
           <div className="flex min-w-0 items-center gap-3">

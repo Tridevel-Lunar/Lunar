@@ -20,10 +20,9 @@
   background-color: rgba(2, 6, 15, 0.96) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
   padding: 0.65rem 0.75rem !important;
-  /* Slightly wider than content-sized default for Thai labels */
-  width: 10rem !important;
+  width: 9rem !important;
   min-width: 7rem !important;
-  max-width: 11rem !important;
+  max-width: 9rem !important;
   box-sizing: border-box !important;
   backdrop-filter: blur(10px);
   overflow: hidden !important;
@@ -153,10 +152,6 @@
   box-sizing: border-box;
 }
 
-/*
- * Flyout scrollbar sits on the right edge of the palette (= "middle" of the editor).
- * Hide it — wheel still scrolls the flyout when block lists are long.
- */
 [data-blockly-editor] .blocklyFlyoutScrollbar,
 [data-blockly-editor] .blocklyFlyout .blocklyScrollbarVertical,
 [data-blockly-editor] .blocklyFlyout .blocklyScrollbarBackground,
@@ -173,4 +168,33 @@
 
 [data-blockly-editor] .blocklyScrollbarHorizontal {
   display: none !important;
+}
+
+/* Block labels — light pastels need dark text (Blockly default is white) */
+[data-blockly-editor] .blocklyText,
+[data-blockly-editor] .blocklyDropdownText,
+[data-blockly-editor] .blocklyNonEditableText > text,
+[data-blockly-editor] .blocklyEditableText > text {
+  fill: #0b1220 !important;
+  font-weight: 600 !important;
+}
+
+[data-blockly-editor] .blocklyEditableText rect {
+  fill: rgba(255, 255, 255, 0.55) !important;
+  stroke: rgba(15, 23, 42, 0.25) !important;
+}
+
+[data-blockly-editor] .blocklyHtmlInput {
+  color: #0b1220 !important;
+  font-weight: 600 !important;
+}
+
+[data-blockly-editor] .blocklyDropDownDiv .goog-menuitem-content,
+[data-blockly-editor] .blocklyMenuItemContent,
+[data-blockly-editor] .blocklyDropdownMenu .blocklyMenuItem {
+  color: #0b1220 !important;
+}
+
+[data-blockly-editor] .blocklyFlyoutLabelText {
+  fill: rgba(232, 237, 245, 0.75) !important;
 }

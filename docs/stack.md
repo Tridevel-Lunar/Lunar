@@ -77,12 +77,12 @@ Export จาก Blender → `public/models/` หรือ CDN (เมื่อ�
 |-----------|--------|
 | **Google Blockly** (`blockly` ^13) | ห้องแล็บลากวางบล็อก — Visual Programming Interface |
 
-- Blockly workspace → JSON AST → `PUT /arena/missions/:id/attempt` (บันทึก draft, in-memory BE)
-- Custom blocks: `components/arena/blockly/blocks/m01.ts` · toolbox: `toolboxes/m01-beginner.ts`
+- **Draft save:** Blockly → program **AST** (semantic) + Blockly **workspace JSON** (layout) → `PUT /arena/missions/:id/attempt` (PostgreSQL)
+- **Restore:** prefer `workspace` (keeps block positions); fall back to AST auto-layout; else seed `obc_on_start` + `obc_repeat_orbit`
+- **Run:** `compileProgram` → `POST /arena/missions/:id/runs` with `{ ast, epsSetup, payloadSetup, commSetup }` (BE grades; FE shows orbit trace + validation modal on 422)
+- Custom blocks: `components/arena/blockly/libs/{obc,eps,payload,comm}/` · registry: `registry.ts` · compile: `compileProgram.ts`
 - Toolbox CSS: `blockly-toolbox.css` — class **`.blocklyToolbox`** (Blockly 13; not `.blocklyToolboxDiv`)
-- รันจำลอง (`POST .../runs`) ยังไม่เปิด — Result panel เป็น mock (`MissionFeedbackMock`)
-- ไม่ execute physics หนักฝั่ง browser
-
+- ไม่ execute physics หนักฝั่ง browser — simulation อยู่ที่ backend
 ## Studio — LAIKA
 
 | ส่วน | ที่รัน |
@@ -102,10 +102,10 @@ Frontend เรียก API เท่านั้น — ไม่ฝัง API
 | Google GIS (browser) | ✓ | |
 | Google token verify + user upsert | | ✓ |
 | 3D viewer (R3F) | ✓ | |
-| Blockly editor | ✓ (M01 toolbox + AST save/load) | pack metadata |
-| Attempt save/load | ✓ `PUT/GET .../attempt` | ✓ in-memory (no DB yet) |
-| Orbital / physics calc | | ✓ (Poliastro, PyEphem) — planned for runs |
-| Run block code / simulation | ส่ง request (planned) | ✓ (planned) |
+| Blockly editor | ✓ (M01 toolbox + AST/workspace save/load) | pack metadata + grading |
+| Attempt save/load | ✓ `PUT/GET .../attempt` (`ast` + `workspace`) | ✓ PostgreSQL `arena_attempts` |
+| Orbital / physics calc | | ✓ (sim ticks in arena runner; Poliastro planned elsewhere) |
+| Run block code / simulation | ✓ `POST .../runs` + result UI | ✓ deterministic M01 runner |
 | LAIKA LLM + RAG | แสดงผล | ✓ |
 | Satellite imagery API | แสดงผล | ✓ |
 | PostgreSQL (users, progress) | | ✓ |

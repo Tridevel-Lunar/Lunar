@@ -620,12 +620,23 @@ export type ArenaMissionPack = {
     maxSteps: number;
     wallMs: number;
   };
+  enabledLibs?: string[];
+  payloadModuleId?: string | null;
+  commLibVisible?: boolean;
+  setupPresets?: {
+    eps?: Record<string, unknown>;
+    payload?: Record<string, unknown>;
+    comm?: Record<string, unknown>;
+  } | null;
+  orbitPeriodSec?: number | null;
+  eclipseFraction?: number | null;
 };
 
 export type ArenaAttempt = {
   mission_id: string;
   mission_version: number | null;
   ast: Record<string, unknown> | null;
+  workspace: Record<string, unknown> | null;
 };
 
 export type ArenaRunResult = {
@@ -637,24 +648,65 @@ export type ArenaRunResult = {
   sent_to_earth: boolean;
 };
 
-export type ArenaTickLog = {
-  tick: number;
-  is_daylight: boolean;
-  glitch_applied: boolean;
+export type ArenaOrbitTraceEntry = {
+  simSec: number;
+  phase: number;
+  isSunlit: boolean;
   battery: number;
   temperature: number;
-  safe_mode: boolean;
-  heater_on: boolean;
-  payload_on: boolean;
+  heaterOn: boolean;
+  payloadOn: boolean;
+  safeMode: boolean;
+};
+
+export type ArenaOrbitSummary = {
+  eclipseEnterSec: number;
+  eclipseExitSec: number;
+  minBattery: number;
+  minBatteryDuringEclipse: number;
+};
+
+export type ArenaRunTiming = {
+  overrunCount: number;
+  usedSecPerWindowSample?: number[] | null;
 };
 
 export type ArenaRunResponse = {
   mission_id: string;
   mission_version: number;
-  ticks: ArenaTickLog[];
+  orbitPeriodSec: number;
+  simSecPerWindow: number;
+  trace: ArenaOrbitTraceEntry[];
+  orbitSummary: ArenaOrbitSummary;
   final_battery: number;
   final_temperature: number;
+  timing?: ArenaRunTiming | null;
   result: ArenaRunResult;
+};
+
+export type ArenaEpsSetup = {
+  battery_threshold_low?: number;
+  battery_threshold_high?: number;
+  temp_min?: number;
+  temp_max?: number;
+  heater_power?: number;
+};
+
+export type ArenaPayloadSetup = {
+  payload_module?: string;
+  default_on?: boolean;
+};
+
+export type ArenaCommSetup = {
+  pass_sim_sec?: number;
+  downlink_policy?: string;
+};
+
+export type ArenaRunRequest = {
+  ast: Record<string, unknown>;
+  epsSetup?: ArenaEpsSetup;
+  payloadSetup?: ArenaPayloadSetup;
+  commSetup?: ArenaCommSetup;
 };
 
 export function getArenaMission(missionId: string): Promise<ArenaMissionPack> {
@@ -668,20 +720,28 @@ export function getArenaAttempt(missionId: string): Promise<ArenaAttempt> {
 export function saveArenaAttempt(
   missionId: string,
   ast: Record<string, unknown>,
+  workspace?: Record<string, unknown> | null,
 ): Promise<ArenaAttempt> {
   return apiFetch<ArenaAttempt>(`/arena/missions/${missionId}/attempt`, {
     method: "PUT",
-    body: JSON.stringify({ ast }),
+    body: JSON.stringify({
+      ast,
+      ...(workspace !== undefined ? { workspace } : {}),
+    }),
   });
 }
 
 export function runArenaMission(
   missionId: string,
-  ast: Record<string, unknown>,
+  payload: ArenaRunRequest | Record<string, unknown>,
 ): Promise<ArenaRunResponse> {
+  const body =
+    "ast" in payload
+      ? payload
+      : { ast: payload };
   return apiFetch<ArenaRunResponse>(`/arena/missions/${missionId}/runs`, {
     method: "POST",
-    body: JSON.stringify({ ast }),
+    body: JSON.stringify(body),
   });
 }
 
