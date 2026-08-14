@@ -168,7 +168,7 @@ function MissionNavButton({
   );
 }
 
-export default function ArenaDemo({ user }: { user: User }) {
+export default function Arena({ user }: { user: User }) {
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<"idle" | "out" | "in">("idle");
   const [slideDir, setSlideDir] = useState<"left" | "right">("right");
