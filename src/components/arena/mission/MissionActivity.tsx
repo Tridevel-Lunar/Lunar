@@ -17,7 +17,7 @@ import BlocklyEditor, {
   type BlocklyEditorHandle,
   type BlocklyWorkspaceState,
 } from "@/components/arena/blockly/BlocklyEditor";
-import MissionFeedbackMock from "@/components/arena/feedback/MissionFeedbackMock";
+import MissionFeedbackMock from "@/components/arena/feedback/MissionFeedback";
 import { gradeLabel, gradeStatusClassName } from "@/components/arena/grade-label";
 import MissionRunErrorDialog, {
   runErrorPresentation,

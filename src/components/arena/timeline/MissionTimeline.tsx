@@ -1,7 +1,10 @@
+import { lazy, Suspense } from "react";
 import { IoMoonOutline, IoSunnyOutline } from "react-icons/io5";
 
 import type { ArenaOrbitTraceEntry } from "@/lib/api";
 import type { MissionOrbitTimelineConfig } from "@/components/arena/timeline/mission-timeline-config";
+
+const ArenaOrbitPreview = lazy(() => import("@/components/arena/orbit/ArenaOrbitPreview"));
 
 export type MissionTimelineProps = {
   config: MissionOrbitTimelineConfig;
@@ -101,7 +104,7 @@ export default function MissionTimeline({
         {/* Sample dots */}
         {!preview || hasRunData ? (
           <div
-            className="flex items-start justify-between gap-0.5 overflow-x-auto"
+            className="flex w-full min-w-0 items-center overflow-hidden"
             role="tablist"
             aria-label="ไทม์ไลน์วงโคจร"
           >
@@ -110,7 +113,10 @@ export default function MissionTimeline({
               const isSelected = index === selectedIndex;
               const isPlayback = playbackIndex === index;
               return (
-                <div key={entry.simSec} className="flex min-w-[1.1rem] flex-1 flex-col items-center gap-1">
+                <div
+                  key={entry.simSec}
+                  className="flex min-w-0 flex-1 items-center justify-center px-px"
+                >
                   <button
                     type="button"
                     role="tab"
@@ -118,7 +124,7 @@ export default function MissionTimeline({
                     aria-label={`simSec ${entry.simSec}`}
                     title={`${formatSimSec(entry.simSec)} · ${entry.isSunlit ? "แดด" : "eclipse"}`}
                     onClick={() => onSelectIndex(index)}
-                    className={`relative flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition ${
+                    className={`aspect-square w-full max-w-3.5 rounded-full border transition ${
                       isSelected || isPlayback
                         ? "border-cyan bg-cyan/25 shadow-[0_0_8px_rgba(0,229,255,0.25)]"
                         : entry.isSunlit
@@ -132,35 +138,56 @@ export default function MissionTimeline({
           </div>
         ) : null}
 
-        <div className="flex min-h-0 flex-1 flex-col justify-center rounded-md border border-white/[0.06] bg-white/[0.02] px-2.5 py-2">
+        <div className="relative min-h-[160px] flex-1">
+          <Suspense
+            fallback={
+              <div className="flex h-full min-h-[160px] items-center justify-center rounded-md border border-white/[0.06] bg-[#02060f] font-section-thai text-[0.72rem] text-text/45">
+                กำลังโหลดภาพวงโคจร…
+              </div>
+            }
+          >
+            <ArenaOrbitPreview
+              sample={
+                selected
+                  ? {
+                      phase: selected.phase,
+                      isSunlit: selected.isSunlit,
+                      heaterOn: selected.heaterOn,
+                      payloadOn: selected.payloadOn,
+                      safeMode: selected.safeMode,
+                    }
+                  : null
+              }
+              className="h-full min-h-[160px]"
+            />
+          </Suspense>
           {selected ? (
-            <>
+            <div className="pointer-events-none absolute bottom-2 left-2 right-2 rounded-md bg-[#02060f]/75 px-2 py-1.5 backdrop-blur-sm">
               <p className="font-display text-[0.58rem] tracking-[0.12em] text-cyan/80">
                 t = {formatSimSec(selected.simSec)}
                 <span className="text-muted"> · phase {selected.phase.toFixed(2)}</span>
               </p>
-              <p className="font-section-thai mt-1 text-[0.78rem] leading-snug text-text/75">
+              <p className="font-section-thai mt-0.5 text-[0.72rem] leading-snug text-text/75">
                 {selected.isSunlit ? "อยู่ในแสงอาทิตย์" : "อยู่ใน eclipse"}
-                {selected.simSec >= config.passSimSec && selected.simSec < config.passSimSec + 30
+                {selected.simSec >= config.passSimSec &&
+                selected.simSec < config.passSimSec + 30
                   ? " · ใกล้ช่วง pass"
                   : ""}
               </p>
               {hasRunData ? (
-                <p className="font-section-thai mt-1.5 text-[0.72rem] text-text/60">
+                <p className="font-section-thai mt-0.5 text-[0.68rem] text-text/60">
                   แบต {selected.battery}% · อุณหภูมิ {selected.temperature}°C
                   {selected.heaterOn ? " · heater ON" : ""}
                   {selected.payloadOn ? " · payload ON" : ""}
                   {selected.safeMode ? " · safe mode" : ""}
                 </p>
               ) : (
-                <p className="font-section-thai mt-1.5 text-[0.72rem] text-text/45">
-                  เริ่มที่ subsolar → เข้า eclipse กลางวง → กลับสู่แดด · กดส่งภารกิจเพื่อดู trace
+                <p className="font-section-thai mt-0.5 text-[0.68rem] text-text/45">
+                  เริ่มที่ subsolar → เข้า eclipse กลางวง → กลับสู่แดด
                 </p>
               )}
-            </>
-          ) : (
-            <p className="font-section-thai text-[0.72rem] text-text/45">ไม่มีข้อมูล</p>
-          )}
+            </div>
+          ) : null}
         </div>
       </div>
     </section>
