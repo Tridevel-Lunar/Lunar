@@ -1,8 +1,3 @@
-import {
-  HiOutlineBell,
-  HiOutlineCalendar,
-  HiOutlineMagnifyingGlass,
-} from "react-icons/hi2";
 import { IoPlanetOutline } from "react-icons/io5";
 import { GiCube, GiOrbital } from "react-icons/gi";
 import { TbBlocks } from "react-icons/tb";
@@ -179,12 +174,6 @@ export default function SpaceCourse({ user }: { user: User }) {
   const course = getCourse(courseId);
   const { isModuleCompleted, courseProgressPercent } = useSpaceProgress();
 
-  const today = new Date().toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
   if (!course) {
     return (
       <div className="flex h-screen overflow-hidden bg-bg text-text">
@@ -219,33 +208,16 @@ export default function SpaceCourse({ user }: { user: User }) {
       <ModuleSidebar user={user} activeModule="space" />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-3">
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => navigate(spaceHomePath(), { state: { tab: "courses" } })}
-              className="cursor-pointer text-lg text-text/40 transition hover:text-cyan"
-            >
-              ←
-            </button>
-            <IoPlanetOutline className="text-xl text-cyan" />
-            <h1 className="font-display text-[1.35rem] font-bold tracking-[0.18em] text-text">SPACE</h1>
-          </div>
-
-          <div className="flex items-center gap-2 text-text/50">
-            {[HiOutlineMagnifyingGlass, HiOutlineCalendar, HiOutlineBell].map((Icon, i) => (
-              <button
-                key={i}
-                type="button"
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/[0.03] transition hover:border-cyan/30 hover:text-cyan"
-              >
-                <Icon className="text-base" />
-              </button>
-            ))}
-            <div className="ml-1 hidden text-right sm:block">
-              <p className="font-mono text-[0.58rem] tracking-wider text-muted">{today}</p>
-            </div>
-          </div>
+        <header className="flex shrink-0 items-center gap-2.5 border-b border-white/[0.06] px-5 py-3">
+          <button
+            type="button"
+            onClick={() => navigate(spaceHomePath(), { state: { tab: "explore" } })}
+            className="cursor-pointer text-lg text-text/40 transition hover:text-cyan"
+          >
+            ←
+          </button>
+          <IoPlanetOutline className="text-xl text-cyan" />
+          <h1 className="font-display text-[1.35rem] font-bold tracking-[0.18em] text-text">SPACE</h1>
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto px-5 py-4">

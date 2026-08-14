@@ -770,3 +770,56 @@ export function completeSpaceModule(
     { method: "PUT" },
   );
 }
+
+/* ── Space Technology catalog ── */
+
+export type SpaceCatalogOutlineItem = {
+  id: string;
+  title: string;
+  summary: string;
+};
+
+export type SpaceCatalogCourseStatus = "published" | "coming_soon" | "later";
+
+export type SpaceCatalogCourse = {
+  kind: "course";
+  id: string;
+  title: string;
+  titleTh: string;
+  summary: string;
+  status: SpaceCatalogCourseStatus;
+  level: string;
+  tags: string[];
+  teaches: string[];
+  audience: string;
+  intentHints: string[];
+  prerequisites: string[];
+  relatedCourseIds: string[];
+  recommendWhen: string[];
+  doNotConfuseWith: string[];
+  arenaHooks: string[];
+  outline: SpaceCatalogOutlineItem[] | null;
+};
+
+export type SpaceCatalogFolder = {
+  kind: "folder";
+  id: string;
+  title: string;
+  titleTh: string;
+  summary: string;
+  children: SpaceCatalogNode[];
+};
+
+export type SpaceCatalogNode = SpaceCatalogFolder | SpaceCatalogCourse;
+
+export type SpaceCatalog = {
+  domainId: string;
+  title: string;
+  titleTh: string;
+  summary: string;
+  nodes: SpaceCatalogNode[];
+};
+
+export function getSpaceCatalog(): Promise<SpaceCatalog> {
+  return apiFetch<SpaceCatalog>("/space/catalog");
+}
