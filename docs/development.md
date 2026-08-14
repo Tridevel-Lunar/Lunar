@@ -69,7 +69,7 @@ Vite เปิดเผยเฉพาะชื่อ `GOOGLE_CLIENT_ID` (ผ่
 | Product module | Landing tab (`PlatformSection`) | Route | เนื้อหาหลัก |
 |----------------|--------------------------------|-------|-------------|
 | **Space** | LEARN (เรียนรู้) | `/space`, `/space/course/:courseId`, `/space/course/:courseId/module/:moduleId` | Courses → custom Modules (Overview, Anatomy, Physics, Programming) |
-| **Arena** | BUILD (สร้าง) | `/arena`, `/arena/mission/:missionId` | Visual Coding (Blockly), mission run + feedback |
+| **Arena** | BUILD (สร้าง) | `/arena`, `/arena/mission/:missionId` | Missions grouped by Space branch; M01 Blockly run + 3D replay |
 | **Studio** | LAUNCH (ปล่อย) | `/studio` | พอร์ตโฟลิโอ, LAIKA, ต่อยอดไอเดีย |
 
 ฟีเจอร์ LAIKA / LLM / RAG จะเรียก backend API — ไม่ implement ใน frontend โดยตรง
@@ -138,40 +138,52 @@ Studio แยกเป็น landing + chat ต่อ collection:
 
 ### Arena (Visual Coding)
 
-Mission hub + Blockly workspace for **MISSION 01 — ONE LAP AROUND EARTH** (`leo-orbit-one-lap`). Live: pack metadata + setup presets, attempt save/load (`ast` + Blockly `workspace`), and `POST .../runs` one-orbit grading with sampled `trace[]`. Spec: workspace `docs/programming_arena_revamp_spec.md`.
+Hub lists **six missions grouped by Space Technology branch** (`arena-data.ts` + `ARENA_BRANCHES`). Only **MISSION 01 — ONE LAP AROUND EARTH** (`leo-orbit-one-lap`) is playable (backend pack + Blockly + orbit run). The other five are **coming-soon shells** (overview only; no OBC editor, no backend pack). Spec: workspace `docs/arena_mission_handoff.md` · `docs/space_technology_hierarchy.md`.
 
 | Route | หน้าที่ |
 |-------|---------|
-| `/arena` | Mission carousel (`ArenaDemo`) — brief + CTA |
-| `/arena/mission/:missionId` | Full-width mission shell (**no** `ModuleSidebar`): header (back, code/title, timer) + `MissionActivity` |
+| `/arena` | Branch-sectioned hub (`Arena.tsx`) — status badge + CTA |
+| `/arena/mission/:missionId` | Full-width shell (**no** `ModuleSidebar`). Playable → `MissionActivity`. Coming soon → overview (branch, spaceAnchor, teaching goal). Unknown id → not found. |
 
-Playable id: `leo-orbit-one-lap` only. Other missions show a not-ready message.
+Playable when `mission.status === "playable"` (today: `leo-orbit-one-lap` only).
+
+| id | Space branch | Family | Status |
+|----|--------------|--------|--------|
+| `orbit-sense` | AROUND US | other | coming_soon |
+| `ticket-to-fly` | ACCESS | access | coming_soon |
+| `leo-orbit-one-lap` | FLIGHT | orbit-bus | **playable** |
+| `catch-the-pass` | GROUND | ground-ops | coming_soon |
+| `space-for-thailand` | FOR EARTH | earth-data | coming_soon |
+| `mission-canvas` | MISSION | mission-design | coming_soon |
 
 | ใน scope | นอก scope (ถัดไป) |
 |----------|-------------------|
-| M01 Blockly libs (obc/eps/payload) → program AST + workspace JSON | Multi-mission packs / camera payload variants |
-| Setup tabs EPS / Payload / COMM → run payload | COMM flyout + downlink ops (M02+) |
-| `GET` pack · `GET`/`PUT` attempt · `POST` runs (orbit sim) | Realtime wall-clock replay / full 3D umbra |
-| Tab bar: รายละเอียดภารกิจ \| เขียนโค้ดบล็อก | Extra mission tabs |
+| Hub catalog + coming-soon shells (FE only) | Backend packs / runners for non-orbit families |
+| M01 Blockly libs (obc/eps/payload) → program AST + workspace JSON | Camera payload variants |
+| Setup tabs EPS / Payload / COMM → run payload | COMM flyout + downlink ops |
+| `GET` pack · `GET`/`PUT` attempt · `POST` runs (orbit sim) | Realtime wall-clock replay / Space `RealisticEarth` |
+| Tabs: รายละเอียดภารกิจ (default) · ตั้งค่าระบบ · เขียนโค้ดบล็อก | Extra mission families' UIs |
 | Save / Clear / Run + validation error modal | Longevity health accumulation |
-| Orbit trace feedback (sun/eclipse band) | Richer outcome UX |
+| R3F orbit preview driven by `trace[].phase` + 2×2 outcome table | 4K TSL Earth / new physics on FE |
 
-**UI layout (coding view)**
+**UI layout (playable mission)**
 
-- Top bar (`ArenaMission`): back · mission code/title · countdown timer — sidebar hidden for immersion  
-- Tab bar (`MissionActivity`): detail vs coding — tabs use `z-[80]` above Blockly toolbox (`z-index: 70`)  
-- Setup tabs above editor: EPS / Payload / COMM (config, not Blockly)  
-- Leaving coding snapshots **AST + Blockly workspace** so remount restores **block positions**; Save persists both to the API  
-- Split: Blockly ~`1.5fr` · Result ~`1fr`  
+- Opens on **รายละเอียดภารกิจ**; button **ไปเขียนโค้ดบล็อก** jumps to coding (top tab bar stays)
+- Top bar (`ArenaMission`): back · mission code/title · countdown timer — sidebar hidden for immersion
+- Tab bar (`MissionActivity`): `z-[80]` above Blockly toolbox (`z-index: 70`)
+- Setup tabs: EPS / Payload / COMM (config, not Blockly)
+- Leaving coding snapshots **AST + Blockly workspace**; Save persists both to the API
+- Split: Blockly ~`1.5fr` · Result ~`1fr`
 - Blockly seed: single `obc_on_start` containing `obc_repeat_orbit`
+- Result (`MissionFeedback`): sun/eclipse bar + sample dots (fit width, no X-scroll) + R3F preview (`frameloop="demand"`) + dashboard + 2×2 outcome table
 
 **Lib / components**
 
 | Path | บทบาท |
 |------|--------|
 | `src/pages/Arena.tsx` · `ArenaMission.tsx` | Routes (mission page: no module sidebar) |
-| `src/components/arena/arena-data.ts` | Static mission copy |
-| `src/components/arena/ArenaDemo.tsx` | Hub carousel |
+| `src/components/arena/arena-data.ts` | Catalog: branch, spaceAnchor, family, status |
+| `src/components/arena/Arena.tsx` | Hub by Space branch |
 | `src/components/arena/mission/MissionActivity.tsx` | Tabs, setup state, draft snapshot, save/clear/run |
 | `src/components/arena/mission/MissionSetupTabs.tsx` | EPS / Payload / COMM forms |
 | `src/components/arena/mission/MissionRunErrorDialog.tsx` | Modal for AST validation / run API errors |
@@ -181,12 +193,14 @@ Playable id: `leo-orbit-one-lap` only. Other missions show a not-ready message.
 | `src/components/arena/blockly/registry.ts` | `enabledLibs` → toolbox |
 | `src/components/arena/blockly/compileProgram.ts` | `obc_on_start` → `{ setup, main_loop }` |
 | `src/components/arena/blockly/toAst.ts` · `fromAst.ts` | Workspace ↔ program AST |
-| `src/components/arena/feedback/MissionFeedbackMock.tsx` | Orbit trace playback + dashboard + outcome |
-| `src/components/arena/timeline/` | Sun/eclipse band timeline |
+| `src/components/arena/feedback/MissionFeedback.tsx` | Trace playback, dashboard, 2×2 outcome |
+| `src/components/arena/timeline/` | Sun/eclipse band + sample dots |
+| `src/components/arena/orbit/` | Generic R3F preview (`phase` / `isSunlit`; not M01 grading) |
 | `src/ast/types.ts` | AST / pack types (mirror BE) |
 | `src/lib/api.ts` | `getArenaMission` · attempt · `runArenaMission({ ast, epsSetup, … })` |
 
 **Backend:** draft `ast` + optional `workspace` in `arena_attempts`; runs use AST + setup tabs — see [backend/docs/api.md](../../backend/docs/api.md#arena).
+
 ## Directory Map
 
 ```
@@ -202,7 +216,7 @@ frontend/
 │   ├── ast/               # Arena AST type contracts
 │   ├── components/
 │   │   ├── auth/          # GoogleSignInButton, GoogleOneTap, LoginForm, ...
-│   │   ├── arena/         # ArenaDemo, mission/, blockly/, feedback/
+│   │   ├── arena/         # Arena hub, mission/, blockly/, feedback/, orbit/, timeline/
 │   │   ├── space/         # SpaceHome, SpaceCourse, SpaceModuleRoute, core/, courses/
 │   │   ├── studio/
 │   │   └── ...            # Landing sections, Navbar, SpaceCanvas
