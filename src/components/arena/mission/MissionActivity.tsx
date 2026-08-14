@@ -5,6 +5,7 @@ import {
   HiOutlinePuzzlePiece,
 } from "react-icons/hi2";
 import {
+  IoArrowForward,
   IoRefreshOutline,
   IoRocketOutline,
   IoSaveOutline,
@@ -49,7 +50,13 @@ const VIEW_OPTIONS: {
   { id: "coding", label: "เขียนโค้ดบล็อก", icon: HiOutlinePuzzlePiece },
 ];
 
-function MissionDetailPanel({ mission }: { mission: ArenaMission }) {
+function MissionDetailPanel({
+  mission,
+  onGoToCoding,
+}: {
+  mission: ArenaMission;
+  onGoToCoding: () => void;
+}) {
   const [previewIndex, setPreviewIndex] = useState(0);
   const timelineConfig = getMissionOrbitTimelineConfig(mission.id);
 
@@ -189,6 +196,17 @@ function MissionDetailPanel({ mission }: { mission: ArenaMission }) {
           ))}
         </ul>
       </section>
+
+      <div className="border-t border-white/10 pt-5">
+        <button
+          type="button"
+          onClick={onGoToCoding}
+          className="group inline-flex items-center justify-center gap-2 rounded-lg border border-cyan/60 bg-gradient-to-r from-cyan to-[#4df0ff] px-6 py-3 font-section-thai text-[0.95rem] font-medium text-bg shadow-[0_0_28px_rgba(0,229,255,0.45)] transition hover:brightness-110"
+        >
+          To Playground
+          <IoArrowForward className="text-base transition group-hover:translate-x-0.5" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -240,7 +258,7 @@ function lockedFields(pack: ArenaMissionPack | null) {
 }
 
 export default function MissionActivity({ mission }: { mission: ArenaMission }) {
-  const [tab, setTab] = useState<ActivityTab>("coding");
+  const [tab, setTab] = useState<ActivityTab>("detail");
   const [initialAst, setInitialAst] = useState<ProgramAst | Record<string, unknown> | null>(
     null,
   );
@@ -418,7 +436,10 @@ export default function MissionActivity({ mission }: { mission: ArenaMission }) 
           aria-labelledby="mission-tab-detail"
           className="min-h-0 flex-1 overflow-y-auto"
         >
-          <MissionDetailPanel mission={mission} />
+          <MissionDetailPanel
+            mission={mission}
+            onGoToCoding={() => handleTabChange("coding")}
+          />
         </div>
       ) : tab === "setup" ? (
         <div
