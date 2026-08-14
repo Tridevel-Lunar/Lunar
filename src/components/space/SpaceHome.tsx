@@ -1,10 +1,5 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  HiOutlineBell,
-  HiOutlineCalendar,
-  HiOutlineMagnifyingGlass,
-} from "react-icons/hi2";
 import { IoPlanetOutline } from "react-icons/io5";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
@@ -40,15 +35,6 @@ export default function SpaceHome({ user }: { user: User }) {
           </div>
 
           <div className="flex items-center gap-2 text-text/50">
-            {[HiOutlineMagnifyingGlass, HiOutlineCalendar, HiOutlineBell].map((Icon, i) => (
-              <button
-                key={i}
-                type="button"
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-white/10 bg-white/[0.03] transition hover:border-cyan/30 hover:text-cyan"
-              >
-                <Icon className="text-base" />
-              </button>
-            ))}
             <div className="ml-1 hidden text-right sm:block">
               <p className="font-mono text-[0.58rem] tracking-wider text-muted">{today}</p>
             </div>
