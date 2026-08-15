@@ -4,6 +4,7 @@ import { usePageTitle } from "@/lib/use-page-title";
 import SpaceHome from "@/components/space/SpaceHome";
 import SpaceCourse from "@/components/space/SpaceCourse";
 import SpaceModuleRoute from "@/components/space/SpaceModuleRoute";
+import PathSessionLayout from "@/components/space/path/PathSessionLayout";
 
 export default function Space() {
   const user = useAuthUser();
@@ -13,7 +14,12 @@ export default function Space() {
 
   return (
     <Routes>
-      <Route index element={<SpaceHome user={user} />} />
+      <Route element={<SpaceHome user={user} />}>
+        <Route index element={null} />
+        <Route path="explore" element={null} />
+        <Route path="path" element={null} />
+      </Route>
+      <Route path="path/session" element={<PathSessionLayout user={user} />} />
       <Route path="course/:courseId" element={<SpaceCourse user={user} />} />
       <Route
         path="course/:courseId/module/:moduleId"

@@ -76,33 +76,60 @@ Vite เปิดเผยเฉพาะชื่อ `GOOGLE_CLIENT_ID` (ผ่
 
 ### Space (Courses & Modules)
 
-Space is a **course catalogue**: each course lists **modules**, and each module is a **lazy-loaded custom React page** registered in code (no CMS).
+Space has two layers that must stay in sync by **course id**:
+
+| Layer | Source of truth | Role |
+|-------|-----------------|------|
+| **Catalog tree** | Backend `GET /space/catalog` (`backend/data/space/catalog.json`) | What exists, nesting, status, LAIKA metadata |
+| **Course registry** | Frontend `core/registry.ts` | Which React modules a **published** course actually runs |
+
+Browse UI (`SpaceHome` → Explore) reads the catalog. Entering a course uses the registry. Only `status: published` courses are enterable; `coming_soon` / `later` show in the tree but do not deep-link.
 
 | Route | หน้าที่ |
 |-------|---------|
-| `/space` | Home + My Courses (`SpaceHome`) — courses from registry |
-| `/space/course/:courseId` | Course overview + module list (`SpaceCourse`) |
+| `/space` | Home tab (`SpaceHome`) |
+| `/space/path` | Path tab — saved DAG map + details |
+| `/space/path/session` | LAIKA path session: live course graph + chat (`PathSessionLayout`) |
+| `/space/explore` | Explore catalog browser |
+| `/space/course/:courseId` | Course overview + module list (`SpaceCourse`) — registry only |
 | `/space/course/:courseId/module/:moduleId` | Resolves module via registry and renders its `Component` (`SpaceModuleRoute`) |
 
-Current course: **`cubesat-for-beginner`** with modules `overview`, `anatomy`, `physics`, `programming`. Only **physics** has a full lesson UI today; others use a placeholder page.
+Current published course: **`cubesat-for-beginner`** with modules `overview`, `anatomy`, `physics`, `programming` (also listed in catalog `outline`).
+
+**Catalog vs registry vs LAIKA digest**
+
+- Catalog answers: what exists, how nested, coarse “what this course teaches”
+- Registry answers: which lazy React pages power a published course
+- LAIKA digest (`GET /space/catalog/digest` + prompt helper) is a flat, prompt-sized view; Studio assist may recommend **only** course ids from that digest (prefer `published`; may mention `coming_soon` as upcoming; never recommend folders)
+- **My Path** is owned by Space (`GET/PUT/DELETE /space/learning-path`, `POST /space/laika/path/stream`) — Space tab **Path** (`/space/path`) shows the saved DAG map plus course details; LAIKA planning is a desktop split chat|pannable map at `/space/path/session`. Skip = browse catalog at `/space/explore`. Mobile layout is out of scope.
+
+**Sync when publishing a course**
+
+1. Update the leaf in `backend/data/space/catalog.json` (`status: published` + LAIKA fields; optional `outline`)
+2. Add registry modules under `courses/<id>/` and register in `core/registry.ts`
+3. Keep catalog `outline` module ids aligned with registry module ids
 
 | ใน scope | นอก scope |
 |----------|-----------|
-| Explicit course/module registry (`core/registry.ts`) | Backend progress / unlock API |
-| Custom module pages (`SpaceModulePageProps`) | Plugin / auto-discovery (`import.meta.glob`) |
-| Physics: slides + WebGPU scenes + sim clock | Persist progress beyond UI metadata |
+| Backend catalog SoT + Explore browser | Mobile path session layout |
+| Explicit course/module registry (`core/registry.ts`) | Drag-drop learning-map editor |
+| Space LAIKA path chat + saved path (course ids, DAG map) | Topic-level graph / backoffice catalog editor |
+| Physics: slides + WebGPU scenes + sim clock | Backoffice catalog editor |
 
 **Lib / components**
 
 | Path | บทบาท |
 |------|--------|
+| `src/components/space/catalog/` | Types/helpers + `CatalogBrowser` / tree / course cards |
 | `src/components/space/core/types.ts` | `SpaceCourseDefinition`, `SpaceModuleDefinition`, page props |
 | `src/components/space/core/registry.ts` | `listCourses` / `getCourse` / `getModule` |
-| `src/components/space/core/routes.ts` | Path builders (`spaceCoursePath`, `spaceModulePath`) |
+| `src/components/space/path/` | Path tab (map + details), LAIKA session chat/graph |
+| `src/components/space/core/routes.ts` | Path builders (`spaceCoursePath`, `spaceModulePath`, `spacePathSessionPath`) |
 | `src/components/space/courses/` | Per-course folders + [README](../src/components/space/courses/README.md) for contributors |
 | `src/components/space/courses/cubesat-for-beginner/` | Course def + modules |
 | `…/modules/physics/` | Physics page, `LessonScene`, `scene/`, `sim/`, `physics/` |
 | `src/components/space/SpaceHome.tsx` · `SpaceCourse.tsx` · `SpaceModuleRoute.tsx` | Generic shells |
+| `src/lib/api.ts` → `getSpaceCatalog()` | Client for catalog tree |
 | `src/lib/knowledge/` · `src/components/knowledge/` | Shared glossary popups (`[[id\|label]]`) |
 
 **Add a module:** create a folder under the course, export a definition with `lazy(() => import(…))`, then add one line to the course’s `modules` array — see `courses/README.md`.

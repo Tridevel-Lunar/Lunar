@@ -78,7 +78,6 @@ function FlowEdge({
     return [a, mid, b];
   }, [edge.from, edge.to]);
 
-  // Invisible fat hit area so learners can click the link
   const hitPoints = useMemo(() => [points[0], points[2]], [points]);
 
   return (
@@ -101,7 +100,6 @@ function FlowEdge({
         transparent
         opacity={highlight ? 0.98 : 0.32}
       />
-      {/* Click target */}
       <Line
         points={hitPoints}
         color={color}
@@ -147,19 +145,32 @@ function FlowEdge({
 
 export default function DataFlowLinks({
   activeFlowId,
+  activeFlowIds,
   showAllDimmed,
   paused = true,
   onSelectFlow,
 }: {
-  activeFlowId: string | null;
+  activeFlowId?: string | null;
+  /** Highlight multiple edges (scenario playback). */
+  activeFlowIds?: string[] | null;
   showAllDimmed: boolean;
   paused?: boolean;
   onSelectFlow?: (id: string) => void;
 }) {
+  const highlightSet = useMemo(() => {
+    const ids = new Set<string>();
+    if (activeFlowIds?.length) {
+      for (const id of activeFlowIds) ids.add(id);
+    } else if (activeFlowId) {
+      ids.add(activeFlowId);
+    }
+    return ids;
+  }, [activeFlowId, activeFlowIds]);
+
   return (
     <group>
       {DATA_FLOWS.map((edge) => {
-        const on = edge.id === activeFlowId;
+        const on = highlightSet.has(edge.id);
         if (!showAllDimmed && !on) return null;
         return (
           <FlowEdge

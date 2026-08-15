@@ -1,378 +1,484 @@
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+
+import KnowledgeText from "@/components/knowledge/KnowledgeText";
+import { spaceCoursePath } from "@/components/space/core/routes";
+import { LAIKA_AVATAR_URL } from "@/lib/constants";
+
 import {
   ANATOMY_PARTS,
+  REQUIRED_MEET_PARTS,
   type AnatomyPartId,
 } from "../lib/parts";
 import {
   ANATOMY_STEPS,
-  DATA_FLOWS,
-  FLOW_KIND_META,
+  CUBESAT_RECAP,
+  INTRO_ANALOGY_CARDS,
+  isCheckpointMet,
   type AnatomyStep,
+  type CheckpointState,
 } from "../lib/lesson";
-import QuizPanel from "./QuizPanel";
+import { FLOW_SCENARIOS, type ScenarioId } from "../lib/scenarios";
+import TraceSequencePanel from "./TraceSequencePanel";
+
+type AnatomyPanelProps = {
+  step: AnatomyStep;
+  stepIndex: number;
+  completedSteps: Set<number>;
+  checkpoint: CheckpointState;
+  moduleCompleted: boolean;
+  finishing: boolean;
+  activePart: AnatomyPartId;
+  activeScenarioId: ScenarioId | null;
+  flatsatPreferred: boolean;
+  courseId: string;
+  onStepChange: (step: AnatomyStep) => void;
+  onSelectPart: (id: AnatomyPartId) => void;
+  onPlayScenario: (id: ScenarioId) => void;
+  onIntroOpenCard: () => void;
+  onIntroAck: () => void;
+  onTracePassedChange: (count: number) => void;
+  onFlatsatPreferredChange: (v: boolean) => void;
+  onMarkComplete: () => Promise<void>;
+};
 
 export default function AnatomyPanel({
   step,
+  stepIndex,
+  completedSteps,
+  checkpoint,
+  moduleCompleted,
+  finishing,
   activePart,
-  activeFlowId,
-  flowPaused,
+  activeScenarioId,
+  flatsatPreferred,
+  courseId,
   onStepChange,
   onSelectPart,
-  onSelectFlow,
-  onFlowPausedChange,
-}: {
-  step: AnatomyStep;
-  activePart: AnatomyPartId;
-  activeFlowId: string | null;
-  flowPaused: boolean;
-  onStepChange: (step: AnatomyStep) => void;
-  onSelectPart: (id: AnatomyPartId) => void;
-  onSelectFlow: (id: string) => void;
-  onFlowPausedChange: (paused: boolean) => void;
-}) {
-  const part = ANATOMY_PARTS.find((p) => p.id === activePart) ?? ANATOMY_PARTS[0];
-  const flowIndex = Math.max(
-    0,
-    DATA_FLOWS.findIndex((f) => f.id === activeFlowId),
+  onPlayScenario,
+  onIntroOpenCard,
+  onIntroAck,
+  onTracePassedChange,
+  onFlatsatPreferredChange,
+  onMarkComplete,
+}: AnatomyPanelProps) {
+  const coursePath = spaceCoursePath(courseId);
+  const stepMeta = ANATOMY_STEPS[stepIndex]!;
+  const gateOpen = isCheckpointMet(
+    step,
+    checkpoint,
+    moduleCompleted,
   );
-  const flow = DATA_FLOWS[flowIndex] ?? DATA_FLOWS[0];
-  const [autoFlow, setAutoFlow] = useState(false);
+  const part = ANATOMY_PARTS.find((p) => p.id === activePart) ?? ANATOMY_PARTS[0]!;
+  const [introSeen, setIntroSeen] = useState<Set<string>>(new Set());
 
+  const meetCount = useMemo(() => {
+    let n = 0;
+    for (const id of REQUIRED_MEET_PARTS) {
+      if (checkpoint.openedParts.has(id)) n += 1;
+    }
+    return n;
+  }, [checkpoint.openedParts]);
+
+  const scenarioCount = checkpoint.playedScenarios.size;
+  const progressLabel = `${stepIndex + 1} / ${ANATOMY_STEPS.length}`;
+
+  const laikaText =
+    step === "meet" && part.laikaTip ? part.laikaTip : stepMeta.laikaSays;
+
+  function goNext() {
+    if (stepIndex >= ANATOMY_STEPS.length - 1) return;
+    if (!gateOpen && step !== "close") return;
+    onStepChange(ANATOMY_STEPS[stepIndex + 1]!.id);
+  }
+
+  function goPrev() {
+    if (stepIndex <= 0) return;
+    onStepChange(ANATOMY_STEPS[stepIndex - 1]!.id);
+  }
+
+  function handleIntroCard(cardId: string) {
+    if (!introSeen.has(cardId)) {
+      const next = new Set(introSeen);
+      next.add(cardId);
+      setIntroSeen(next);
+      onIntroOpenCard();
+    }
+  }
+
+  // Sync intro opened count if remounting with existing checkpoint
   useEffect(() => {
-    if (step !== "dataflow" || !autoFlow || flowPaused) return;
-    const id = window.setInterval(() => {
-      const next = DATA_FLOWS[(flowIndex + 1) % DATA_FLOWS.length];
-      onSelectFlow(next.id);
-    }, 3200);
-    return () => window.clearInterval(id);
-  }, [step, autoFlow, flowPaused, flowIndex, onSelectFlow]);
+    if (checkpoint.introOpened > 0 && introSeen.size === 0) {
+      setIntroSeen(new Set(INTRO_ANALOGY_CARDS.slice(0, checkpoint.introOpened).map((c) => c.id)));
+    }
+  }, [checkpoint.introOpened, introSeen.size]);
 
-  const stepIndex = ANATOMY_STEPS.findIndex((s) => s.id === step);
-  const kindMeta = FLOW_KIND_META[flow.kind];
-
-  function goFlow(delta: number) {
-    setAutoFlow(false);
-    onFlowPausedChange(true);
-    const next = DATA_FLOWS[(flowIndex + delta + DATA_FLOWS.length) % DATA_FLOWS.length];
-    onSelectFlow(next.id);
+  function stepNavAllowed(i: number): boolean {
+    if (moduleCompleted) return true;
+    if (i <= stepIndex) return true;
+    if (completedSteps.has(i)) return true;
+    if (i === stepIndex + 1 && gateOpen) return true;
+    return false;
   }
-
-  function pickFlow(id: string) {
-    setAutoFlow(false);
-    onFlowPausedChange(true);
-    onSelectFlow(id);
-  }
-
   return (
     <aside className="flex h-full min-h-0 w-full flex-col border-l border-white/10 bg-[rgba(5,10,20,0.92)] backdrop-blur-xl">
-      <div className="shrink-0 border-b border-white/10 px-5 py-4">
-        <p className="font-mono text-[0.62rem] tracking-[0.2em] text-cyan/80 uppercase">
-          Anatomy of CubeSat
-        </p>
-        <h2 className="font-display mt-1 text-[1.25rem] font-bold tracking-wide text-text">
-          {ANATOMY_STEPS[stepIndex]?.label ?? "บทเรียน"}
-        </h2>
-        <p className="font-section-thai mt-1.5 text-[0.8rem] leading-relaxed text-text/60">
-          {ANATOMY_STEPS[stepIndex]?.blurb}
-        </p>
-      </div>
+      <header className="shrink-0 border-b border-white/10 px-4 py-3">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="font-mono text-[0.58rem] tracking-[0.2em] text-cyan/80 uppercase">
+              Anatomy of CubeSat
+            </p>
+            {moduleCompleted && (
+              <span className="mt-1 inline-flex items-center rounded-md border border-emerald-400/30 bg-emerald-500/15 px-2 py-0.5 font-mono text-[0.55rem] tracking-wider text-emerald-200">
+                ✓ เสร็จแล้ว
+              </span>
+            )}
+          </div>
+          <span className="font-mono shrink-0 text-[10px] text-white/30">
+            {progressLabel}
+          </span>
+        </div>
 
-      <div className="shrink-0 border-b border-white/10 px-3 py-3">
-        <div className="grid grid-cols-4 gap-1">
+        <div className="mt-3 grid grid-cols-5 gap-1">
           {ANATOMY_STEPS.map((s, i) => {
             const on = s.id === step;
+            const done = completedSteps.has(i) || moduleCompleted;
+            const locked = !stepNavAllowed(i);
             return (
               <button
                 key={s.id}
                 type="button"
-                onClick={() => onStepChange(s.id)}
-                className={`rounded-lg px-1 py-2 text-center transition ${
+                disabled={locked}
+                onClick={() => {
+                  if (stepNavAllowed(i)) onStepChange(s.id);
+                }}
+                className={`rounded-lg px-0.5 py-2 text-center transition ${
                   on
                     ? "bg-cyan/20 text-cyan"
-                    : "bg-white/[0.03] text-text/40 hover:text-text/70"
+                    : done
+                      ? "bg-emerald-500/10 text-emerald-300/90"
+                      : locked
+                        ? "bg-white/[0.02] text-text/25"
+                        : "bg-white/[0.03] text-text/45 hover:text-text/70"
                 }`}
               >
-                <span className="font-mono block text-[0.55rem] tracking-wider">
-                  {String(i + 1).padStart(2, "0")}
+                <span className="font-mono block text-[0.5rem] tracking-wider">
+                  {done && !on ? "✓" : s.shortLabel}
                 </span>
-                <span className="font-section-thai mt-0.5 block text-[0.68rem] leading-tight">
-                  {s.label}
+                <span className="font-section-thai mt-0.5 block text-[0.62rem] leading-tight">
+                  {s.id === "intro"
+                    ? "ทบทวน"
+                    : s.id === "meet"
+                      ? "ระบบ"
+                      : s.id === "flow"
+                        ? "ไหล"
+                        : s.id === "trace"
+                          ? "ตามรอย"
+                          : "จบ"}
                 </span>
               </button>
             );
           })}
         </div>
-      </div>
+      </header>
 
-      <div className="min-h-0 flex-1 overflow-hidden">
-        {step === "quiz" ? (
-          <QuizPanel onExit={() => onStepChange("dataflow")} />
-        ) : (
-          <div className="h-full overflow-y-auto px-4 py-4">
-            {(step === "explore" || step === "flatsat") && (
-              <>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {ANATOMY_PARTS.map((p) => {
-                    const on = p.id === activePart;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => onSelectPart(p.id)}
-                        className={`rounded-xl border px-2.5 py-2.5 text-left transition ${
-                          on
-                            ? "border-white/25 bg-white/[0.08]"
-                            : "border-white/8 bg-white/[0.02] hover:border-white/15"
-                        }`}
-                        style={
-                          on
-                            ? {
-                                boxShadow: `0 0 24px ${p.accent}33`,
-                                borderColor: `${p.accent}66`,
-                              }
-                            : undefined
-                        }
-                      >
-                        <span
-                          className="mb-1.5 block h-1 w-8 rounded-full"
-                          style={{ background: p.accent }}
-                        />
-                        <span className="font-mono text-[0.55rem] tracking-wider text-text/45">
-                          {p.labelEn}
-                        </span>
-                        <span className="font-section-thai mt-0.5 block text-[0.8rem] text-text/90">
-                          {p.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+        {/* LAIKA bubble */}
+        <div className="flex items-start gap-3">
+          <div className="flex shrink-0 flex-col items-center gap-1.5">
+            <div className="h-11 w-11 overflow-hidden rounded-full border-2 border-amber-400/25 shadow-[0_0_12px_rgba(251,191,36,0.15)]">
+              <img
+                src={LAIKA_AVATAR_URL}
+                alt="LAIKA"
+                className="h-full w-full object-cover object-center"
+              />
+            </div>
+            <p className="font-mono text-[0.5rem] tracking-wider text-amber-400/70">
+              LAIKA
+            </p>
+          </div>
+          <div className="relative min-w-0 flex-1 rounded-2xl rounded-tl-md border border-amber-400/15 bg-amber-400/[0.06] px-3.5 py-3">
+            <p className="font-section-thai text-[0.88rem] leading-relaxed text-white/85">
+              <KnowledgeText text={laikaText} />
+            </p>
+          </div>
+        </div>
 
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={part.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.25 }}
-                    className="mt-4 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-transparent p-4"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{
-                          background: part.accent,
-                          boxShadow: `0 0 12px ${part.accent}`,
-                        }}
-                      />
-                      <h3 className="font-display text-[1.05rem] font-semibold tracking-wide">
-                        {part.labelEn}
-                      </h3>
-                    </div>
-                    <p className="font-section-thai mt-2 text-[0.88rem] leading-relaxed text-text/75">
-                      {part.summary}
-                    </p>
-                    <ul className="mt-3 space-y-2">
-                      {part.details.map((line) => (
-                        <li
-                          key={line}
-                          className="font-section-thai flex gap-2 text-[0.8rem] text-text/65"
-                        >
-                          <span
-                            className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
-                            style={{ background: part.accent }}
-                          />
-                          {line}
-                        </li>
-                      ))}
-                    </ul>
-                  </motion.div>
-                </AnimatePresence>
-              </>
-            )}
+        <div className="mt-5 space-y-1">
+          <h2 className="text-[17px] font-semibold tracking-tight text-white">
+            {stepMeta.title}
+          </h2>
+        </div>
 
-            {step === "dataflow" && (
-              <div className="space-y-3">
-                <p className="font-section-thai text-[0.78rem] text-text/55">
-                  กดเส้นบนบอร์ด หรือใช้ปุ่มทีละสเต็ป — ดูว่าสิ่งที่ไหลคือไฟฟ้า / ข้อมูล / คำสั่งอะไร
+        <div className="mt-3 space-y-3">
+          {stepMeta.body.split("\n\n").map((paragraph, i) => (
+            <p
+              key={i}
+              className="font-section-thai text-[0.85rem] leading-relaxed text-white/55"
+            >
+              <KnowledgeText text={paragraph} />
+            </p>
+          ))}
+        </div>
+
+        <div className="mt-4 rounded-xl border border-violet-400/20 bg-violet-400/[0.06] p-4">
+          <p className="font-mono mb-2 text-[0.58rem] tracking-wider text-violet-300/80 uppercase">
+            ลองทำ
+          </p>
+          <p className="font-section-thai text-[0.82rem] leading-relaxed text-white/75">
+            <KnowledgeText text={stepMeta.tryThis} />
+          </p>
+        </div>
+
+        <p
+          className={`mt-3 font-section-thai text-[0.78rem] ${
+            gateOpen && step !== "close"
+              ? "text-emerald-300/90"
+              : "text-white/40"
+          }`}
+        >
+          {gateOpen && step !== "close"
+            ? "✓ ผ่านจุดตรวจแล้ว กดถัดไปได้"
+            : stepMeta.checkpoint.hint}
+          {step === "meet" ? ` (${meetCount}/4)` : null}
+          {step === "flow" ? ` (${scenarioCount}/3)` : null}
+          {step === "trace"
+            ? ` (${checkpoint.tracePassed}/3)`
+            : null}
+        </p>
+
+        {/* Step-specific UI */}
+        <div className="mt-5 space-y-3">
+          {step === "intro" && (
+            <>
+              <div className="rounded-xl border border-cyan/20 bg-cyan/[0.06] p-4">
+                <p className="font-mono mb-2 text-[0.58rem] tracking-wider text-cyan/80 uppercase">
+                  จากโมดูล Overview
                 </p>
+                <h3 className="font-section-thai text-[0.95rem] font-medium text-text">
+                  {CUBESAT_RECAP.heading}
+                </h3>
+                <ul className="mt-3 space-y-2">
+                  {CUBESAT_RECAP.points.map((line) => (
+                    <li
+                      key={line}
+                      className="font-section-thai flex gap-2 text-[0.8rem] leading-relaxed text-text/65"
+                    >
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan/70" />
+                      <span>
+                        <KnowledgeText text={line} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-                {/* Stepper controls */}
-                <div className="flex items-center gap-2">
+              <p className="font-mono text-[0.58rem] tracking-wider text-text/40">
+                จากนั้นเทียบกับร่างกาย
+              </p>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {INTRO_ANALOGY_CARDS.map((card) => {
+                  const on = introSeen.has(card.id);
+                  return (
+                    <button
+                      key={card.id}
+                      type="button"
+                      onClick={() => handleIntroCard(card.id)}
+                      className={`rounded-xl border px-3 py-3 text-left transition ${
+                        on
+                          ? "border-white/25 bg-white/[0.08]"
+                          : "border-white/10 bg-white/[0.03] hover:border-white/20"
+                      }`}
+                      style={
+                        on
+                          ? {
+                              borderColor: `${card.accent}66`,
+                              boxShadow: `0 0 20px ${card.accent}22`,
+                            }
+                          : undefined
+                      }
+                    >
+                      <span
+                        className="mb-1.5 block h-1 w-8 rounded-full"
+                        style={{ background: card.accent }}
+                      />
+                      <span className="font-section-thai block text-[0.85rem] text-text/90">
+                        {card.title}
+                      </span>
+                      <span className="font-section-thai mt-1 block text-[0.75rem] text-text/55">
+                        <KnowledgeText text={card.body} />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                disabled={introSeen.size < 1 && checkpoint.introOpened < 1}
+                onClick={onIntroAck}
+                className="w-full rounded-xl border border-cyan/40 bg-cyan/15 px-3 py-2.5 font-mono text-[0.7rem] tracking-wider text-cyan disabled:opacity-35"
+              >
+                {checkpoint.introAck ? "✓ เข้าใจแล้ว" : "เข้าใจแล้ว พร้อมไปต่อ"}
+              </button>
+            </>
+          )}
+
+          {step === "meet" && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-mono text-[0.58rem] tracking-wider text-text/40">
+                  มุมมองฉาก
+                </p>
+                <button
+                  type="button"
+                  onClick={() => onFlatsatPreferredChange(!flatsatPreferred)}
+                  className="rounded-lg border border-white/12 px-2.5 py-1.5 font-mono text-[0.6rem] text-text/65"
+                >
+                  {flatsatPreferred ? "3D ประกอบ" : "FlatSat แบน"}
+                </button>
+              </div>
+              <p className="font-section-thai text-[0.78rem] leading-relaxed text-text/50">
+                คลิกป้ายในฉากซ้ายที่มีเส้นชี้ไปยังแต่ละระบบ อ่านรายละเอียดบน popup
+                แล้วเปิดให้ครบสี่ระบบ
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {REQUIRED_MEET_PARTS.map((id) => {
+                  const p = ANATOMY_PARTS.find((x) => x.id === id)!;
+                  const visited = checkpoint.openedParts.has(id);
+                  const on = activePart === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => onSelectPart(id)}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[0.62rem] tracking-wider transition ${
+                        on
+                          ? "border-white/30 bg-white/10 text-text"
+                          : visited
+                            ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-100/90"
+                            : "border-white/10 bg-white/[0.03] text-text/45 hover:text-text/70"
+                      }`}
+                    >
+                      <span
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ background: p.accent }}
+                      />
+                      {p.labelEn}
+                      {visited ? " ✓" : ""}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {step === "flow" && (
+            <div className="space-y-2">
+              {FLOW_SCENARIOS.map((sc) => {
+                const on = activeScenarioId === sc.id;
+                const played = checkpoint.playedScenarios.has(sc.id);
+                return (
                   <button
+                    key={sc.id}
                     type="button"
-                    onClick={() => goFlow(-1)}
-                    className="rounded-lg border border-white/15 px-3 py-2 font-mono text-[0.65rem] text-text/70"
-                  >
-                    ← ก่อน
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onFlowPausedChange(!flowPaused)}
-                    className={`flex-1 rounded-lg border px-3 py-2 font-mono text-[0.65rem] tracking-wider ${
-                      flowPaused
-                        ? "border-amber/40 bg-amber/10 text-amber"
-                        : "border-cyan/40 bg-cyan/15 text-cyan"
+                    onClick={() => onPlayScenario(sc.id)}
+                    className={`w-full rounded-xl border px-3 py-3 text-left transition ${
+                      on
+                        ? "border-cyan/40 bg-cyan/10"
+                        : "border-white/10 bg-white/[0.03] hover:border-white/20"
                     }`}
                   >
-                    {flowPaused ? "▶ เล่นจุดวิ่ง" : "⏸ หยุดจุดวิ่ง"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => goFlow(1)}
-                    className="rounded-lg border border-white/15 px-3 py-2 font-mono text-[0.65rem] text-text/70"
-                  >
-                    ถัดไป →
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-mono text-[0.6rem] tracking-wider text-text/45">
-                    สเต็ป {flowIndex + 1} / {DATA_FLOWS.length}
-                  </p>
-                  <label className="flex items-center gap-1.5 font-section-thai text-[0.7rem] text-text/50">
-                    <input
-                      type="checkbox"
-                      checked={autoFlow}
-                      onChange={(e) => {
-                        setAutoFlow(e.target.checked);
-                        if (e.target.checked) onFlowPausedChange(false);
-                      }}
-                      className="accent-cyan"
-                    />
-                    เล่นสเต็ปอัตโนมัติ
-                  </label>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5">
-                  {(Object.keys(FLOW_KIND_META) as (keyof typeof FLOW_KIND_META)[]).map(
-                    (k) => (
-                      <span
-                        key={k}
-                        className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2 py-1 font-section-thai text-[0.68rem] text-text/70"
-                      >
-                        <span
-                          className="h-2 w-2 rounded-full"
-                          style={{ background: FLOW_KIND_META[k].color }}
-                        />
-                        {FLOW_KIND_META[k].icon} {FLOW_KIND_META[k].short}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-section-thai text-[0.88rem] text-text/90">
+                        {sc.title}
                       </span>
-                    ),
-                  )}
-                </div>
-
-                <div className="space-y-1.5">
-                  {DATA_FLOWS.map((f, i) => {
-                    const on = f.id === flow.id;
-                    return (
-                      <button
-                        key={f.id}
-                        type="button"
-                        onClick={() => pickFlow(f.id)}
-                        className={`flex w-full items-start gap-2 rounded-xl border px-3 py-2.5 text-left transition ${
-                          on
-                            ? "border-white/25 bg-white/[0.07]"
-                            : "border-white/8 bg-white/[0.02] hover:border-white/15"
-                        }`}
-                        style={
-                          on
-                            ? {
-                                borderColor: `${FLOW_KIND_META[f.kind].color}66`,
-                                boxShadow: `0 0 18px ${FLOW_KIND_META[f.kind].color}22`,
-                              }
-                            : undefined
-                        }
-                      >
-                        <span className="font-mono mt-0.5 w-5 shrink-0 text-[0.55rem] text-text/35">
-                          {String(i + 1).padStart(2, "0")}
+                      {played && (
+                        <span className="font-mono text-[0.55rem] text-emerald-300/80">
+                          ✓
                         </span>
-                        <span
-                          className="mt-1 h-2 w-2 shrink-0 rounded-full"
-                          style={{ background: FLOW_KIND_META[f.kind].color }}
-                        />
-                        <span>
-                          <span className="font-mono text-[0.58rem] tracking-wider text-text/45">
-                            {f.from.toUpperCase()} → {f.to.toUpperCase()}
-                          </span>
-                          <span className="font-section-thai mt-0.5 block text-[0.82rem] text-text/90">
-                            {FLOW_KIND_META[f.kind].icon} {f.labelTh}
-                          </span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Inspector: what is flowing */}
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={flow.id}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="rounded-2xl border p-4"
-                    style={{
-                      borderColor: `${kindMeta.color}55`,
-                      background: `linear-gradient(180deg, ${kindMeta.color}18, transparent)`,
-                    }}
-                  >
-                    <p className="font-mono text-[0.58rem] tracking-[0.16em]" style={{ color: kindMeta.color }}>
-                      สิ่งที่ไหลอยู่ในลิงก์นี้
-                    </p>
-                    <h3 className="font-section-thai mt-1 text-[1.05rem] font-medium text-text">
-                      {kindMeta.icon} {flow.labelTh}
-                      <span className="ml-2 font-mono text-[0.7rem] text-text/45">
-                        {flow.label}
-                      </span>
-                    </h3>
-                    <p className="font-section-thai mt-2 text-[0.85rem] leading-relaxed text-text/80">
-                      {flow.carries}
-                    </p>
-                    <p className="font-mono mt-2 text-[0.62rem] text-text/45">
-                      {flow.unitHint}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {flow.examples.map((ex) => (
-                        <span
-                          key={ex}
-                          className="rounded-md border border-white/10 bg-black/35 px-2 py-1 font-mono text-[0.62rem] text-text/70"
-                        >
-                          {ex}
-                        </span>
-                      ))}
+                      )}
                     </div>
-                    <p className="font-section-thai mt-3 border-t border-white/8 pt-3 text-[0.8rem] leading-relaxed text-text/60">
-                      ทำไมสำคัญ: {flow.why}
-                    </p>
-                    <p className="font-mono mt-2 text-[0.58rem] tracking-wider text-text/40">
-                      {flow.from.toUpperCase()} → {flow.to.toUpperCase()} · คลิกเส้นบนบอร์ดได้เช่นกัน
-                    </p>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            )}
-
-            <div className="mt-5 flex gap-2">
-              <button
-                type="button"
-                disabled={stepIndex <= 0}
-                onClick={() => onStepChange(ANATOMY_STEPS[stepIndex - 1].id)}
-                className="flex-1 rounded-xl border border-white/15 px-3 py-2.5 font-mono text-[0.65rem] tracking-wider text-text/60 disabled:opacity-30"
-              >
-                ← ก่อนหน้า
-              </button>
-              <button
-                type="button"
-                disabled={stepIndex >= ANATOMY_STEPS.length - 1}
-                onClick={() => onStepChange(ANATOMY_STEPS[stepIndex + 1].id)}
-                className="flex-1 rounded-xl border border-cyan/40 bg-cyan/15 px-3 py-2.5 font-mono text-[0.65rem] tracking-wider text-cyan disabled:opacity-30"
-              >
-                ถัดไป →
-              </button>
+                    {on && (
+                      <p className="font-section-thai mt-2 text-[0.78rem] leading-relaxed text-text/60">
+                        <KnowledgeText text={sc.caption} />
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+              <p className="font-section-thai text-[0.72rem] text-text/40">
+                เส้นเหลืองคือพลังงาน เส้นฟ้าหรือเขียวคือข้อมูล ทุกอย่างผ่าน OBC
+              </p>
             </div>
-          </div>
-        )}
+          )}
+
+          {step === "trace" && (
+            <TraceSequencePanel onPassedCountChange={onTracePassedChange} />
+          )}
+
+          {step === "close" && (
+            <div className="space-y-3">
+              {!moduleCompleted ? (
+                <button
+                  type="button"
+                  disabled={finishing}
+                  onClick={() => void onMarkComplete()}
+                  className="w-full rounded-xl bg-emerald-400 px-4 py-3 font-mono text-[0.75rem] font-semibold tracking-wider text-[#042016] disabled:opacity-50"
+                >
+                  {finishing ? "กำลังบันทึก…" : "เสร็จโมดูลนี้"}
+                </button>
+              ) : (
+                <Link
+                  to={coursePath}
+                  className="block rounded-xl border border-emerald-400/30 bg-emerald-500/15 px-4 py-3 text-center font-mono text-[0.75rem] tracking-wider text-emerald-100"
+                >
+                  กลับหน้าคอร์ส
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
       </div>
+
+      <footer className="shrink-0 border-t border-white/10 px-4 py-3">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            disabled={stepIndex <= 0}
+            onClick={goPrev}
+            className="flex-1 rounded-xl border border-white/15 px-3 py-2.5 font-mono text-[0.65rem] tracking-wider text-text/60 disabled:opacity-30"
+          >
+            ← ก่อนหน้า
+          </button>
+          {step !== "close" ? (
+            <button
+              type="button"
+              disabled={!gateOpen || stepIndex >= ANATOMY_STEPS.length - 1}
+              onClick={goNext}
+              className="flex-1 rounded-xl border border-cyan/40 bg-cyan/15 px-3 py-2.5 font-mono text-[0.65rem] tracking-wider text-cyan disabled:opacity-30"
+            >
+              ถัดไป →
+            </button>
+          ) : moduleCompleted ? (
+            <Link
+              to={coursePath}
+              className="flex flex-1 items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-500/15 px-3 py-2.5 font-mono text-[0.65rem] tracking-wider text-emerald-100"
+            >
+              กลับคอร์ส
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled={finishing}
+              onClick={() => void onMarkComplete()}
+              className="flex-1 rounded-xl bg-emerald-400 px-3 py-2.5 font-mono text-[0.65rem] font-semibold tracking-wider text-[#042016] disabled:opacity-50"
+            >
+              {finishing ? "…" : "เสร็จโมดูลนี้"}
+            </button>
+          )}
+        </div>
+      </footer>
     </aside>
   );
 }
