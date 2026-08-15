@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { IoPlanetOutline } from "react-icons/io5";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
+import SpaceLoadingState from "@/components/space/SpaceLoadingState";
 import {
   getLearningPath,
   getSpaceCatalog,
@@ -23,12 +24,13 @@ export default function PathSessionLayout({ user }: { user: User }) {
   const [draft, setDraft] = useState<PathProposal | null>(null);
   const [initialMessages, setInitialMessages] = useState<LearningPathChatMessage[] | null>(null);
   const [started, setStarted] = useState(false);
+  const [loading, setLoading] = useState(true);
   const handleStarted = useCallback(() => setStarted(true), []);
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([getSpaceCatalog().catch(() => null), getLearningPath().catch(() => null)]).then(
-      ([cat, path]) => {
+    void Promise.all([getSpaceCatalog().catch(() => null), getLearningPath().catch(() => null)])
+      .then(([cat, path]) => {
         if (cancelled) return;
         setCatalog(cat);
         if (path?.chatTranscript && path.chatTranscript.length > 0) {
@@ -47,12 +49,16 @@ export default function PathSessionLayout({ user }: { user: User }) {
             final: true,
           });
         }
-      },
-    );
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  const ready = !loading && initialMessages !== null;
 
   return (
     <div className="relative flex h-screen overflow-hidden bg-bg text-text">
@@ -63,7 +69,12 @@ export default function PathSessionLayout({ user }: { user: User }) {
           <button
             type="button"
             onClick={() => navigate(spacePathTabPath())}
-            className="cursor-pointer text-lg text-text/40 transition hover:text-cyan"
+            disabled={!ready}
+            className={`text-lg transition ${
+              ready
+                ? "cursor-pointer text-text/40 hover:text-cyan"
+                : "cursor-default text-text/20"
+            }`}
           >
             ←
           </button>
@@ -73,41 +84,48 @@ export default function PathSessionLayout({ user }: { user: User }) {
           </h1>
         </header>
 
-        <div className={`relative min-h-0 flex-1 ${started ? "flex" : ""}`}>
-          {started ? (
-            <section className="relative min-h-0 min-w-0 flex-1">
-              <EarthBackdrop />
-              <div className="relative z-[1] h-full">
-                <PathGraph
-                  steps={draft?.steps ?? []}
-                  edges={draft?.edges ?? []}
-                  catalog={catalog}
-                  saved={false}
-                />
-              </div>
-            </section>
-          ) : null}
-
-          <section
-            className={
-              started
-                ? "relative z-[1] flex min-h-0 w-[42%] min-w-[360px] max-w-[520px] flex-col border-l border-white/[0.06] bg-bg/80"
-                : "fixed inset-0 z-50 flex min-h-0 w-full flex-col"
-            }
-          >
-            {!started ? <EarthBackdrop /> : null}
-            {!started ? (
-              <button
-                type="button"
-                onClick={() => navigate(spacePathTabPath())}
-                className="absolute left-5 top-5 z-[2] cursor-pointer text-lg text-text/45 transition hover:text-cyan"
-                aria-label="กลับ"
-              >
-                ←
-              </button>
+        {!ready ? (
+          <div className="relative min-h-0 flex-1">
+            <EarthBackdrop />
+            <div className="relative z-[1] h-full">
+              <SpaceLoadingState label="กำลังโหลดบทสนทนา…" />
+            </div>
+          </div>
+        ) : (
+          <div className={`relative min-h-0 flex-1 ${started ? "flex" : ""}`}>
+            {started ? (
+              <section className="relative min-h-0 min-w-0 flex-1">
+                <EarthBackdrop />
+                <div className="relative z-[1] h-full">
+                  <PathGraph
+                    steps={draft?.steps ?? []}
+                    edges={draft?.edges ?? []}
+                    catalog={catalog}
+                    saved={false}
+                  />
+                </div>
+              </section>
             ) : null}
-            <div className="relative z-[1] flex h-full min-h-0 flex-col">
-              {initialMessages ? (
+
+            <section
+              className={
+                started
+                  ? "relative z-[1] flex min-h-0 w-[42%] min-w-[360px] max-w-[520px] flex-col border-l border-white/[0.06] bg-bg/80"
+                  : "fixed inset-0 z-50 flex min-h-0 w-full flex-col"
+              }
+            >
+              {!started ? <EarthBackdrop /> : null}
+              {!started ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(spacePathTabPath())}
+                  className="absolute left-5 top-5 z-[2] cursor-pointer text-lg text-text/45 transition hover:text-cyan"
+                  aria-label="กลับ"
+                >
+                  ←
+                </button>
+              ) : null}
+              <div className="relative z-[1] flex h-full min-h-0 flex-col">
                 <PathOnboardingChat
                   draft={draft}
                   onPlan={setDraft}
@@ -115,14 +133,10 @@ export default function PathSessionLayout({ user }: { user: User }) {
                   fullBleed={!started}
                   initialMessages={initialMessages}
                 />
-              ) : (
-                <div className="flex flex-1 items-center justify-center font-section-thai text-text/40">
-                  กำลังโหลดบทสนทนา…
-                </div>
-              )}
-            </div>
-          </section>
-        </div>
+              </div>
+            </section>
+          </div>
+        )}
       </div>
     </div>
   );

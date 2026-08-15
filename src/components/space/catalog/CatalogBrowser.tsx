@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { getSpaceCatalog, type SpaceCatalog } from "@/lib/api";
 import { getCourse } from "@/components/space/core/registry";
 import { useSpaceProgress } from "@/components/space/hooks/useSpaceProgress";
+import SpaceLoadingState from "@/components/space/SpaceLoadingState";
 
 import CatalogCourseCard from "./CatalogCourseCard";
 import CatalogFolderTile from "./CatalogFolderTile";
@@ -78,11 +79,7 @@ export default function CatalogBrowser() {
     : "#00e5ff";
 
   if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center px-6">
-        <p className="font-mono text-[0.72rem] tracking-wider text-muted">กำลังโหลด…</p>
-      </div>
-    );
+    return <SpaceLoadingState />;
   }
 
   if (error || !catalog) {

@@ -5,6 +5,7 @@ import { IoPlanetOutline } from "react-icons/io5";
 import ModuleSidebar from "@/components/app/ModuleSidebar";
 import CatalogBrowser from "@/components/space/catalog/CatalogBrowser";
 import PathTab from "@/components/space/path/PathTab";
+import SpaceLoadingState from "@/components/space/SpaceLoadingState";
 import { listCourses } from "@/components/space/core/registry";
 import {
   spaceCoursePath,
@@ -55,6 +56,8 @@ export default function SpaceHome({ user }: { user: User }) {
   const tab = spaceTabFromPath(location.pathname);
   const [path, setPath] = useState<LearningPath | null>(null);
   const [catalog, setCatalog] = useState<SpaceCatalog | null>(null);
+  const [shellLoading, setShellLoading] = useState(true);
+  const [replanning, setReplanning] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,10 +69,12 @@ export default function SpaceHome({ user }: { user: User }) {
         // First visit with no path: open LAIKA — but not when already browsing a tab URL.
         if (learningPath.status === "none" && tab === "home") {
           navigate(spacePathSessionPath(), { replace: true });
+          return;
         }
+        setShellLoading(false);
       })
       .catch(() => {
-        /* stay on Space Home if path API is unavailable */
+        if (!cancelled) setShellLoading(false);
       });
     return () => {
       cancelled = true;
@@ -79,14 +84,21 @@ export default function SpaceHome({ user }: { user: User }) {
   }, []);
 
   function goTab(next: SpaceShellTab) {
+    if (shellLoading || replanning) return;
     const to = spacePathForTab(next);
     if (to !== location.pathname) navigate(to);
   }
 
   async function handleReplan() {
+    if (shellLoading || replanning) return;
     if (!window.confirm("ล้างเส้นทางนี้แล้วคุยกับ LAIKA ใหม่?")) return;
-    await deleteLearningPath();
-    navigate(spacePathSessionPath());
+    setReplanning(true);
+    try {
+      await deleteLearningPath();
+      navigate(spacePathSessionPath());
+    } catch {
+      setReplanning(false);
+    }
   }
 
   return (
@@ -111,10 +123,15 @@ export default function SpaceHome({ user }: { user: User }) {
               key={t.id}
               type="button"
               onClick={() => goTab(t.id)}
-              className={`cursor-pointer border-b-2 pb-2 pt-3 font-mono text-[0.72rem] tracking-[0.15em] uppercase transition ${
+              disabled={shellLoading || replanning}
+              className={`border-b-2 pb-2 pt-3 font-mono text-[0.72rem] tracking-[0.15em] uppercase transition ${
                 tab === t.id
                   ? "border-cyan text-cyan"
                   : "border-transparent text-text/40 hover:text-text/70"
+              } ${
+                shellLoading || replanning
+                  ? "cursor-default opacity-40"
+                  : "cursor-pointer"
               }`}
             >
               {t.label}
@@ -125,7 +142,11 @@ export default function SpaceHome({ user }: { user: User }) {
         <main className="relative min-h-0 flex-1 overflow-hidden">
           <SpaceEarthBackdrop />
           <div className="relative z-[1] h-full min-h-0">
-            {tab === "home" ? (
+            {shellLoading || replanning ? (
+              <SpaceLoadingState
+                label={replanning ? "กำลังเปิดเซสชันใหม่…" : "กำลังโหลด…"}
+              />
+            ) : tab === "home" ? (
               <HomeView
                 onGoToExplore={() => goTab("explore")}
                 onGoToPath={() => goTab("path")}

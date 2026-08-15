@@ -112,7 +112,7 @@ export default function PathOnboardingChat({
 
     try {
       await streamSpacePathAssist(
-        { content: text, messages: history },
+        { content: text, messages: history, currentPlan: draft },
         {
           onToken: (delta) => {
             assistant += delta;

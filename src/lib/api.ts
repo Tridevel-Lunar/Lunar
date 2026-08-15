@@ -896,7 +896,11 @@ export type PathStreamHandlers = {
 };
 
 export async function streamSpacePathAssist(
-  body: { content: string; messages: LearningPathChatMessage[] },
+  body: {
+    content: string;
+    messages: LearningPathChatMessage[];
+    currentPlan?: PathProposal | null;
+  },
   handlers: PathStreamHandlers,
   signal?: AbortSignal,
   retried = false,
@@ -905,7 +909,13 @@ export async function streamSpacePathAssist(
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      content: body.content,
+      messages: body.messages,
+      ...(body.currentPlan && body.currentPlan.steps.length > 0
+        ? { currentPlan: body.currentPlan }
+        : {}),
+    }),
     signal,
   });
 
