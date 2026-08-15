@@ -28,16 +28,31 @@ type Transform = {
   scale: number;
 };
 
+type Velocity = {
+  vx: number;
+  vy: number;
+};
+
 const MIN_SCALE = 0.35;
 const MAX_SCALE = 2.2;
 const DRAG_THRESHOLD = 6;
+const PAN_FRICTION = 0.92;
+const MIN_PAN_SPEED = 0.35;
+const ZOOM_FACTOR = 1.1;
 
 function clampScale(scale: number): number {
   return Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
 }
 
-function isPathNodeTarget(target: EventTarget | null): boolean {
-  return target instanceof Element && Boolean(target.closest("[data-path-node]"));
+function zoomAtPoint(current: Transform, nextScale: number, focusX: number, focusY: number): Transform {
+  const scale = clampScale(nextScale);
+  const worldX = (focusX - current.x) / current.scale;
+  const worldY = (focusY - current.y) / current.scale;
+  return {
+    scale,
+    x: focusX - worldX * scale,
+    y: focusY - worldY * scale,
+  };
 }
 
 export default function PathGraph({ steps, edges, catalog, saved }: Props) {
@@ -64,6 +79,11 @@ export default function PathGraph({ steps, edges, catalog, saved }: Props) {
   );
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const transformRef = useRef<Transform>({ x: 0, y: 0, scale: 1 });
+  const velocityRef = useRef<Velocity>({ vx: 0, vy: 0 });
+  const rafRef = useRef(0);
+  const zoomTransitionTimerRef = useRef(0);
+  const sampleRef = useRef({ t: 0, x: 0, y: 0 });
   const panRef = useRef({
     active: false,
     moved: false,
@@ -73,9 +93,68 @@ export default function PathGraph({ steps, edges, catalog, saved }: Props) {
     originX: 0,
     originY: 0,
   });
+  /** Suppress card link navigation after a pan gesture that started on a card. */
+  const suppressCardClickRef = useRef(false);
 
   const [viewport, setViewport] = useState({ w: 0, h: 0 });
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
+  const [zoomTransition, setZoomTransition] = useState(false);
+
+  function commitTransform(next: Transform) {
+    transformRef.current = next;
+    setTransform(next);
+  }
+
+  function stopInertia() {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
+    }
+    velocityRef.current = { vx: 0, vy: 0 };
+  }
+
+  function clearZoomTransition() {
+    if (zoomTransitionTimerRef.current) {
+      window.clearTimeout(zoomTransitionTimerRef.current);
+      zoomTransitionTimerRef.current = 0;
+    }
+    setZoomTransition(false);
+  }
+
+  function kickInertia() {
+    if (rafRef.current) return;
+
+    const tick = () => {
+      const velocity = velocityRef.current;
+      let next = transformRef.current;
+      let moving = false;
+
+      if (Math.hypot(velocity.vx, velocity.vy) > MIN_PAN_SPEED) {
+        next = {
+          ...next,
+          x: next.x + velocity.vx,
+          y: next.y + velocity.vy,
+        };
+        velocity.vx *= PAN_FRICTION;
+        velocity.vy *= PAN_FRICTION;
+        if (Math.hypot(velocity.vx, velocity.vy) <= MIN_PAN_SPEED) {
+          velocity.vx = 0;
+          velocity.vy = 0;
+        } else {
+          moving = true;
+        }
+      }
+
+      commitTransform(next);
+      if (moving) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        rafRef.current = 0;
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+  }
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -89,15 +168,18 @@ export default function PathGraph({ steps, edges, catalog, saved }: Props) {
 
   useLayoutEffect(() => {
     if (viewport.w === 0 || viewport.h === 0 || layout.nodes.length === 0) return;
+    stopInertia();
+    clearZoomTransition();
     const pad = 64;
     const sx = (viewport.w - pad * 2) / Math.max(layout.width, 1);
     const sy = (viewport.h - pad * 2) / Math.max(layout.height, 1);
     const scale = clampScale(Math.min(sx, sy, 1));
-    setTransform({
+    commitTransform({
       scale,
       x: (viewport.w - layout.width * scale) / 2,
       y: (viewport.h - layout.height * scale) / 2,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fit once per layout/viewport change
   }, [layout.height, layout.nodes.length, layout.width, layoutKey, viewport.h, viewport.w]);
 
   useEffect(() => {
@@ -107,36 +189,47 @@ export default function PathGraph({ steps, edges, catalog, saved }: Props) {
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
       const rect = container.getBoundingClientRect();
-      const mouseX = event.clientX - rect.left;
-      const mouseY = event.clientY - rect.top;
-      const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
-
-      setTransform((current) => {
-        const nextScale = clampScale(current.scale * zoomFactor);
-        const worldX = (mouseX - current.x) / current.scale;
-        const worldY = (mouseY - current.y) / current.scale;
-        return {
-          scale: nextScale,
-          x: mouseX - worldX * nextScale,
-          y: mouseY - worldY * nextScale,
-        };
-      });
+      const focusX = event.clientX - rect.left;
+      const focusY = event.clientY - rect.top;
+      const factor = event.deltaY < 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
+      setZoomTransition(true);
+      if (zoomTransitionTimerRef.current) {
+        window.clearTimeout(zoomTransitionTimerRef.current);
+      }
+      zoomTransitionTimerRef.current = window.setTimeout(() => {
+        setZoomTransition(false);
+        zoomTransitionTimerRef.current = 0;
+      }, 220);
+      commitTransform(
+        zoomAtPoint(transformRef.current, transformRef.current.scale * factor, focusX, focusY),
+      );
     };
 
     container.addEventListener("wheel", onWheel, { passive: false });
-    return () => container.removeEventListener("wheel", onWheel);
+    return () => {
+      container.removeEventListener("wheel", onWheel);
+      stopInertia();
+      if (zoomTransitionTimerRef.current) {
+        window.clearTimeout(zoomTransitionTimerRef.current);
+      }
+    };
   }, []);
 
   function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
-    if (event.button !== 0 || isPathNodeTarget(event.target)) return;
+    if (event.button !== 0) return;
+    stopInertia();
+    clearZoomTransition();
+    suppressCardClickRef.current = false;
+    const now = performance.now();
+    sampleRef.current = { t: now, x: event.clientX, y: event.clientY };
     panRef.current = {
       active: true,
       moved: false,
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
-      originX: transform.x,
-      originY: transform.y,
+      originX: transformRef.current.x,
+      originY: transformRef.current.y,
     };
   }
 
@@ -147,22 +240,46 @@ export default function PathGraph({ steps, edges, catalog, saved }: Props) {
     if (!panRef.current.moved) {
       if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
       panRef.current.moved = true;
+      suppressCardClickRef.current = true;
       event.currentTarget.setPointerCapture(event.pointerId);
     }
-    setTransform((current) => ({
-      scale: current.scale,
+
+    const now = performance.now();
+    const sample = sampleRef.current;
+    const dt = now - sample.t;
+    if (dt > 0 && dt < 64) {
+      velocityRef.current.vx = ((event.clientX - sample.x) / dt) * 16.67;
+      velocityRef.current.vy = ((event.clientY - sample.y) / dt) * 16.67;
+    }
+    sampleRef.current = { t: now, x: event.clientX, y: event.clientY };
+
+    commitTransform({
+      scale: transformRef.current.scale,
       x: panRef.current.originX + dx,
       y: panRef.current.originY + dy,
-    }));
+    });
   }
 
   function endPan(event: React.PointerEvent<HTMLDivElement>) {
     if (!panRef.current.active || event.pointerId !== panRef.current.pointerId) return;
+    const moved = panRef.current.moved;
     panRef.current.active = false;
     panRef.current.moved = false;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+    if (!moved) {
+      velocityRef.current.vx = 0;
+      velocityRef.current.vy = 0;
+      return;
+    }
+    // Drop stale velocity if the pointer paused before release.
+    if (performance.now() - sampleRef.current.t > 48) {
+      velocityRef.current.vx = 0;
+      velocityRef.current.vy = 0;
+      return;
+    }
+    kickInertia();
   }
 
   return (
@@ -195,6 +312,10 @@ export default function PathGraph({ steps, edges, catalog, saved }: Props) {
             transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
             transformOrigin: "0 0",
             position: "relative",
+            willChange: "transform",
+            transition: zoomTransition
+              ? "transform 200ms cubic-bezier(0.22, 1, 0.36, 1)"
+              : "none",
           }}
         >
           <svg
@@ -293,6 +414,7 @@ export default function PathGraph({ steps, edges, catalog, saved }: Props) {
                   saved={saved}
                   focused={hoverId === node.id}
                   linked={targetIds.has(node.id)}
+                  shouldSuppressClick={() => suppressCardClickRef.current}
                 />
               </div>
             );
@@ -309,12 +431,14 @@ function PathMapCard({
   saved,
   focused,
   linked,
+  shouldSuppressClick,
 }: {
   step: LearningPathStep;
   course: CatalogCourse | undefined;
   saved: boolean;
   focused: boolean;
   linked: boolean;
+  shouldSuppressClick: () => boolean;
 }) {
   const title = course?.title ?? step.courseId;
   const titleTh = course?.titleTh ?? "";
@@ -341,7 +465,7 @@ function PathMapCard({
     </>
   );
 
-  const shell = `relative flex h-full min-h-0 flex-col justify-center overflow-hidden rounded-xl border bg-bg/70 p-3 backdrop-blur-md transition ${
+  const shell = `relative flex h-full min-h-0 cursor-grab flex-col justify-center overflow-hidden rounded-xl border bg-bg/70 p-3 backdrop-blur-md transition select-none [-webkit-user-drag:none] active:cursor-grabbing ${
     focused
       ? "border-cyan/70 shadow-[0_0_18px_rgba(94,234,212,0.22)]"
       : linked
@@ -351,13 +475,35 @@ function PathMapCard({
           : "border-white/10"
   }`;
 
+  function handleClick(event: React.MouseEvent) {
+    if (!shouldSuppressClick()) return;
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
   if (saved) {
     return (
-      <Link to={spaceCoursePath(step.courseId)} className={`${shell} no-underline`} data-path-node>
+      <Link
+        to={spaceCoursePath(step.courseId)}
+        className={`${shell} no-underline`}
+        data-path-node
+        draggable={false}
+        onDragStart={(event) => event.preventDefault()}
+        onClick={handleClick}
+      >
         {inner}
       </Link>
     );
   }
 
-  return <div className={shell}>{inner}</div>;
+  return (
+    <div
+      className={shell}
+      draggable={false}
+      onDragStart={(event) => event.preventDefault()}
+      onClick={handleClick}
+    >
+      {inner}
+    </div>
+  );
 }
