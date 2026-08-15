@@ -97,8 +97,8 @@ function SpaceHero({
 
         <GlassCard className="col-span-full flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-cyan/25 bg-cyan/5">
-              <GiCube className="text-2xl text-cyan drop-shadow-[0_0_10px_rgba(0,229,255,0.5)]" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-cyan/25 bg-cyan/5 leading-none">
+              <GiCube className="size-5 shrink-0 text-cyan drop-shadow-[0_0_10px_rgba(0,229,255,0.5)]" aria-hidden />
             </div>
             <div>
               <p className="font-display text-[1rem] font-semibold tracking-wide text-text">{title}</p>

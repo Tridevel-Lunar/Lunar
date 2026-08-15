@@ -8,6 +8,7 @@ import ModuleSidebar from "@/components/app/ModuleSidebar";
 import CollectionGrid from "@/components/studio/landing/CollectionGrid";
 import LaikaHeroGreeting from "@/components/studio/landing/LaikaHeroGreeting";
 import StarField from "@/components/studio/landing/StarField";
+import StudioLoadingState from "@/components/studio/StudioLoadingState";
 import type { CollectionEntry } from "@/components/studio/data/studio-data";
 import { ApiError } from "@/lib/api";
 import { listCollections } from "@/lib/studio-storage";
@@ -101,7 +102,9 @@ export default function StudioLanding({ user }: StudioLandingProps) {
               {error ? (
                 <p className="font-section-thai text-[0.85rem] text-red-400/90">{error}</p>
               ) : loading ? (
-                <p className="font-mono text-[0.62rem] tracking-wider text-muted">กำลังโหลด…</p>
+                <div className="flex min-h-[120px] items-center justify-center py-6">
+                  <StudioLoadingState label="กำลังโหลด collections…" />
+                </div>
               ) : (
                 <CollectionGrid collections={collections} />
               )}

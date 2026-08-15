@@ -11,6 +11,7 @@ import BranchMapDialog from "@/components/studio/branch-map/BranchMapDialog";
 import ChatDateDivider from "@/components/studio/chat/ChatDateDivider";
 import LaikaMarkdown from "@/components/studio/chat/LaikaMarkdown";
 import StudioChatComposer from "@/components/studio/chat/StudioChatComposer";
+import StudioLoadingState from "@/components/studio/StudioLoadingState";
 import {
   AssistantMessageActions,
   UserMessageActions,
@@ -685,8 +686,14 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
     return (
       <div className="flex h-screen overflow-hidden bg-bg text-text">
         <ModuleSidebar user={user} activeModule="studio" />
-        <div className="flex min-h-0 flex-1 items-center justify-center">
-          <p className="font-mono text-[0.62rem] tracking-wider text-muted">กำลังโหลด…</p>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <header className="flex shrink-0 items-center gap-2.5 border-b border-white/[0.06] px-5 py-3">
+            <IoRocketOutline className="text-xl text-amber" />
+            <h1 className="font-display text-[1.35rem] font-bold tracking-[0.18em] text-text">
+              STUDIO
+            </h1>
+          </header>
+          <StudioLoadingState label="กำลังเปิด collection…" />
         </div>
       </div>
     );

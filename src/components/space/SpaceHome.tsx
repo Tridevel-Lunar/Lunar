@@ -6,6 +6,7 @@ import { IoPlanetOutline } from "react-icons/io5";
 import ModuleSidebar from "@/components/app/ModuleSidebar";
 import CatalogBrowser from "@/components/space/catalog/CatalogBrowser";
 import PathTab from "@/components/space/path/PathTab";
+import { iconForCourse } from "@/components/space/path/courseIcon";
 import SpaceLoadingState from "@/components/space/SpaceLoadingState";
 import { listCourses } from "@/components/space/core/registry";
 import {
@@ -283,6 +284,7 @@ function HomeView({
               course.id,
               course.modules.map((m) => m.id),
             );
+            const CourseIcon = iconForCourse(course.id);
             return (
               <motion.div
                 key={course.id}
@@ -299,8 +301,8 @@ function HomeView({
                   state={spaceCourseLinkState(spaceHomePath())}
                   className="group flex items-center gap-4 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 no-underline backdrop-blur-2xl transition hover:border-cyan/25 hover:bg-white/[0.05]"
                 >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-cyan/25 bg-cyan/5">
-                    <IoPlanetOutline className="text-xl text-cyan" />
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-cyan/25 bg-cyan/5 leading-none">
+                    <CourseIcon className="size-5 shrink-0 text-cyan" aria-hidden />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-display text-[0.9rem] font-semibold tracking-wide text-text">
@@ -321,7 +323,9 @@ function HomeView({
                       </span>
                     </div>
                   </div>
-                  <span className="text-xl text-text/25 transition group-hover:text-cyan/70">→</span>
+                  <span className="flex size-6 shrink-0 items-center justify-center text-xl leading-none text-text/25 transition group-hover:text-cyan/70" aria-hidden>
+                    →
+                  </span>
                 </Link>
               </motion.div>
             );
