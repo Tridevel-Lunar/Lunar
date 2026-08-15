@@ -14,78 +14,86 @@
 
 | Module | Tagline | บทบาทหลัก |
 |--------|---------|-----------|
-| **Space** | Learn | เรียนรู้ทฤษฎีพื้นฐานวิศวกรรมอวกาศแบบ Interactive · **Courses** ประกอบด้วย **Modules** (ปัจจุบัน 4 โมดูลใน CubeSat course) |
-| **Arena** | Build & Mission Simulation | ด่านลงมือตามกิ่ง Space — Blockly + ซิมสำหรับด่านที่เปิดแล้ว |
-| **Studio** | Launch, Tech-Transfer & Venture | เก็บผลงาน · LAIKA ช่วยต่อยอดไอเดีย · (อนาคต) แผนธุรกิจ / tech transfer |
+| **Space** | Learn Space Tech | สำรวจ catalog โดเมน · เส้นทางเรียน · เข้าคอร์ส (นำร่อง: CubeSat) — ดู [concept.md](concept.md) |
+| **Arena** | Build & Mission Simulation | ด่านตามกิ่ง Space Technology — Blockly + ซิมเมื่อมี runner |
+| **Studio** | Launch, Tech-Transfer & Venture | เก็บผลงาน · LAIKA ต่อยอดไอเดีย · (อนาคต) venture / tech transfer |
+| **Account** | Identity & session | Auth · Settings · รูป local · (อนาคต) nametag / badges — [badges.md](badges.md) |
 
 ---
 
-## ฟีเจอร์ที่ 1: Space (Learn)
+## ฟีเจอร์ที่ 1: Space (Learn Space Tech)
 
-ระบบเรียนรู้ทฤษฎีพื้นฐานวิศวกรรมอวกาศแบบ **Interactive Learning**
+โมดูล Learn ของ Lunar = เรียนรู้ **เทคโนโลยีอวกาศทั้งโดเมน** ไม่ใช่คอร์ส CubeSat อย่างเดียว  
+CubeSat = คอร์สนำร่องใต้กิ่ง FLIGHT — รายละเอียดโดเมน: [space_technology_hierarchy.md](../../docs/space_technology_hierarchy.md)
 
-### โครงสร้าง Course / Module
+### โครงชั้นข้อมูล
 
 | ชั้น | ความหมาย | ตัวอย่าง |
 |------|----------|---------|
 | **Space** | Product (Learn) | `/space` |
-| **Course** | หลักสูตรที่ลงทะเบียนใน registry | `cubesat-for-beginner` |
-| **Module** | หน้า React แบบ custom ของเพื่อน / ทีม | `physics`, `overview`, `anatomy`, `programming` |
+| **Catalog** | ต้นไม้โฟลเดอร์ → คอร์ส | AROUND US, ACCESS, FLIGHT, … |
+| **Course** | ใบที่เข้าเรียนได้ | `cubesat-for-beginner` |
+| **Module** | หน้าเรียนในคอร์ส | `physics`, `anatomy`, `programming` |
+| **Path** | ลำดับคอร์สส่วนตัว | `GET`/`PUT /space/learning-path` |
 
-- แต่ละ course มีรายการ modules ตามลำดับใน `course.ts`
-- แต่ละ module ส่งมอบ **custom page** (`lazy` component) ผ่าน `SpaceModuleDefinition.Component` — ไม่บังคับ layout เดียวกัน
-- Route: `/space/course/:courseId/module/:moduleId` → `SpaceModuleRoute` resolve แล้ว render หน้าของโมดูลนั้น
-- รายละเอียดสำหรับ contributor: [`src/components/space/courses/README.md`](../src/components/space/courses/README.md)
+### พื้นผิว UI วันนี้
 
-เนื้อหาเรียนรู้ที่วางแผนไว้ (map ไปยัง modules ของ course ปัจจุบัน):
+| พื้นผิว | บทบาท |
+|--------|--------|
+| **Home** | สรุปเส้นทาง + เข้า Explore / Path |
+| **Explore** | `CatalogBrowser` — เดินโฟลเดอร์ถึงคอร์ส |
+| **Path** | คุย LAIKA + กราฟเส้นทางเรียน |
+| **Course / Module** | เนื้อหา interactive ของคอร์สที่เปิดแล้ว |
 
-### 1. โมเดล 3 มิติ (3D Model — Spatial Learning) · module `anatomy` / overview
+### กิ่งโดเมน (สรุป)
 
-| รายการ | รายละเอียด |
-|--------|------------|
-| **กิจกรรม** | หมุนดู CubeSat 101 แบบ 360° (Three.js / R3F) |
-| **Exploded View** | ปรับ Slider แยกชิ้นส่วนแบบระเบิดวงแหวน — เรียนรู้โครงสร้างภายนอก |
-| **Interactive detail** | คลิกชิ้นส่วน (เช่น Camera Payload) เพื่อเรียนรู้หน้าที่และการเชื่อมต่อ |
+AROUND US · ACCESS · FLIGHT · GROUND · FOR EARTH · MISSION — แต่ละกิ่งมีโฟลเดอร์ย่อยและคอร์ส (ส่วนใหญ่ `[next]`/`[later]`)
 
-**Output:** ความเข้าใจโครงสร้างกายภาพ · progress ตามกิจกรรมที่ทำครบ
+### คอร์สนำร่อง: `cubesat-for-beginner` (ใต้ FLIGHT)
 
-### 2. ระบบฝังตัว (Embedded System — Schematic Architecture) · (planned under course modules)
+เนื้อหา interactive ที่มีอยู่จริง — **ไม่แทนที่** นิยาม Space ทั้งก้อน
 
-| รายการ | รายละเอียด |
-|--------|------------|
-| **กิจกรรม** | ลากเส้นจำลองสัญญาณ Data Bus และพลังงาน |
-| **องค์ประกอบ** | เชื่อม OBC (On-Board Computer), EPS (Electrical Power System), กล้องถ่ายภาพ (Payload) เข้าล็อกที่ถูกต้อง |
-| **เป้าหมาย** | จำลองการไหลของข้อมูล — ผู้เรียนเข้าใจในระดับพื้นฐานว่าระบบทำงานอย่างไร |
+รายละเอียดสำหรับ contributor: [`src/components/space/courses/README.md`](../src/components/space/courses/README.md)
 
-**Output:** แผนผังที่เชื่อมถูกต้อง / feedback เมื่อผิด
-
-### 3. ฟิสิกส์ (Physics — Simulation-Based Trial) · module `physics`
+#### 1. โมเดล 3 มิติ · module `anatomy` / overview
 
 | รายการ | รายละเอียด |
 |--------|------------|
-| **กิจกรรม** | แผงควบคุมปรับตัวแปรแบบ real-time |
-| **เนื้อหา** | กฎพลังงาน · วงโคจรระดับต่ำ (LEO) · จัดสรร Power Budget · สถานการณ์เข้าเงามืดของโลก (Eclipse) |
+| **กิจกรรม** | หมุนดู CubeSat แบบ 360° (Three.js / R3F) |
+| **Exploded View** | Slider แยกชิ้นส่วน |
+| **Interactive detail** | คลิกชิ้นส่วนเพื่อดูหน้าที่ |
 
-**Output:** กราฟ/ตัวเลข power · สถานะวงโคจร · checkpoint
+**Output:** ความเข้าใจโครงสร้าง · progress
 
-**Backend:** คำนวณ orbital / power budget (Poliastro, PyEphem) — ดู [backend/docs/development.md](../../backend/docs/development.md)
-
-### 4. การเขียนโปรแกรม (Programming — Algorithmic Thinking) · module `programming`
+#### 2. ระบบฝังตัว · (ในคอร์ส / planned)
 
 | รายการ | รายละเอียด |
 |--------|------------|
-| **กิจกรรม** | กระดานเขียนคำสั่งควบคุมแบบภาพ (Google Blockly) |
-| **เป้าหมาย** | ต่อบล็อก Logic ชุดแรกให้ดาวเทียม (Autopilot) ทำงานได้ในขอบเขตที่กำหนด |
+| **กิจกรรม** | จำลอง Data Bus / พลังงานระหว่าง OBC, EPS, Payload |
 
-**Output:** บล็อกที่ compile/validate ผ่าน · preview พฤติกรรม
+**Output:** แผนผังที่เชื่อมถูกต้อง / feedback
+
+#### 3. ฟิสิกส์ · module `physics`
+
+| รายการ | รายละเอียด |
+|--------|------------|
+| **เนื้อหา** | พลังงาน · LEO · Power Budget · Eclipse |
+
+**Backend:** orbital / power — [backend/docs/development.md](../../backend/docs/development.md)
+
+#### 4. การเขียนโปรแกรม · module `programming`
+
+| รายการ | รายละเอียด |
+|--------|------------|
+| **กิจกรรม** | Blockly — ตรรกะควบคุมภายใต้ข้อจำกัดอวกาศ |
 
 ### Space — Progress model
 
 ```
-เรียนครบกิจกรรมใน modules ของ course → บันทึก progress → เปิด Arena เมื่อพร้อม
+สำรวจ catalog / วาง path → เข้าคอร์ส → จบโมดูล → บันทึก progress → เปิด Arena ที่เกี่ยวข้องเมื่อพร้อม
 ```
 
-Progress ใน UI ปัจจุบันเป็น metadata ชั่วคราว (ยังไม่ persist ผ่าน API)
+Progress บันทึกผ่าน Space progress API (PostgreSQL)
 
 ---
 
@@ -124,12 +132,12 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 
 ## ฟีเจอร์ที่ 3: Studio (Launch, Tech-Transfer & Venture)
 
-หลังภารกิจ Arena สำเร็จ → **Launch** เก็บในพอร์ตโฟลิโอ Studio ของผู้เรียน
+พื้นที่ต่อยอดหลังเรียน Space และ/หรือลอง Arena — **Launch** เก็บผลงานและไอเดียในบริบท Space Tech (ไม่บังคับว่าต้องเป็นดาวเทียม)
 
 ### พอร์ตโฟลิโอ & ประวัติภารกิจ
 
-- เก็บผลงาน / mission log ที่ทำสำเร็จ
-- แสดงความก้าวหน้าและผลจำลองย้อนหลัง
+- เก็บผลงาน / mission log / โน้ตไอเดีย
+- แสดงความก้าวหน้าและผลจำลองย้อนหลังเมื่อมี
 
 ### LAIKA (AI Mentor)
 
@@ -138,7 +146,7 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 | **บทบาท** | Mentor ภาษาไทยสุภาพ เป็นกลาง — ช่วยสรุป/อธิบาย/ต่อยอดโน้ตและไอเดีย (ไม่ใช้คำลงท้ายเจาะจงเพศ) |
 | **โทนการสนทนา** | รู้ชื่อผู้เรียน (จากบัญชี) · รู้เวลาและช่วงห่างจากข้อความก่อนหน้า · ไม่ทักทายซ้ำทุกตอบ · ต้อนรับกลับเมื่อหายไปหลายวัน |
 | **LLM** | Gemini / DeepSeek / Ollama (backend config) |
-| **RAG** | อ้างอิงเอกสารวิศวกรรม / NASA CubeSat ฯลฯ — ลด hallucination |
+| **RAG** | อ้างอิงเอกสาร Space Technology / วิศวกรรมอวกาศ ฯลฯ — ลด hallucination |
 
 **Studio landing:** ข้อความ hero แบบ static + typewriter (ไม่เรียก LLM) — สุ่มข้อความ casual / ต้อนรับกลับตาม last visit
 
@@ -158,25 +166,26 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 
 | Landing (`PlatformSection`) | Module | Spec section |
 |-----------------------------|--------|--------------|
-| LEARN | **Space** | § Space — Courses / Modules |
+| LEARN | **Space** | § Catalog + Path + Courses (นำร่อง CubeSat) |
 | BUILD | **Arena** | § Blockly + Simulation |
 | LAUNCH | **Studio** | § Portfolio + LAIKA |
 
 ---
 
-## ฟีเจอร์ที่ 4: Authentication
+## ฟีเจอร์ที่ 4: Authentication & Settings
 
-ระบบเข้าสู่ระบบและสมัครสมาชิก — รองรับ email/password และ Google Sign-In
+ระบบเข้าสู่ระบบ สมัครสมาชิก และจัดการบัญชี — รองรับ email/password และ Google Sign-In  
+Contract เต็ม: [backend/docs/api.md](../../backend/docs/api.md#auth) · ร่าง badge/nametag: [badges.md](badges.md)
 
 ### Email / Password
 
 | รายการ | รายละเอียด |
 |--------|------------|
-| **Register** | สร้างบัญชีด้วย email + password (≥ 8 ตัวอักษร) |
+| **Register** | สร้างบัญชีด้วย email + password (≥ 8 ตัวอักษร) · `display_name` optional |
 | **Login** | เข้าสู่ระบบด้วย email + password |
 | **Session** | httpOnly cookies `lunar_token` (access JWT) + `lunar_refresh` (refresh token) จาก backend |
 | **Refresh** | access หมดอายุ → `POST /api/auth/refresh` อัตโนมัติ (rotate refresh token) |
-| **Protected routes** | `/space`, `/studio`, `/backoffice` — redirect ไป `/login?next=...` ถ้ายังไม่ login |
+| **Protected routes** | `/space`, `/arena`, `/studio`, `/settings`, `/backoffice` — redirect ไป `/login?next=...` ถ้ายังไม่ login |
 
 **Input:** email, password, display name (optional)  
 **Output:** session cookies · redirect ไป `/space` (หรือ `?next=` path)
@@ -188,6 +197,8 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 | **One Tap** | แสดงอัตโนมัติบนหน้า guest (`/login`, `/register`) — optional |
 | **Sign-in button** | ปุ่ม Google อย่างเป็นทางการ (`renderButton`) บน login/register |
 | **Flow** | GIS คืน credential JWT → `POST /api/auth/google/onetap` → backend verify + upsert user |
+| **ชื่อ** | **ไม่**คัดลอก/อัปเดต `display_name` จาก Google ตอนสมัคร ลิงก์ หรือล็อกอินซ้ำ |
+| **รูป** | ดาวน์โหลดจาก URL Google แล้วเก็บ local → `users.picture` = `/api/avatars/{user_id}` (ไม่เก็บ hotlink CDN) |
 | **Config** | `GOOGLE_CLIENT_ID` เดียวกันทั้ง frontend/backend และ OAuth client ใน Google Cloud (workspace `.env`) |
 
 **Input:** การเลือกบัญชี Google  
@@ -195,11 +206,33 @@ Blockly → Backend Simulation Engine → 3D + metrics / errors
 
 **หมายเหตุ:** GIS ทำงานใน browser; การสร้าง/ค้นหาผู้ใช้ใน PostgreSQL อยู่ที่ backend — ต้องมี DB รันอยู่ login จึงจะสำเร็จ
 
+### Settings (`/settings`)
+
+หน้าจัดการบัญชีภายใต้ `ModuleSidebar` — อัปเดตชื่อ/รูปใน sidebar ผ่าน `AuthUserProvider` + `refreshUser()`
+
+| ส่วน | พฤติกรรม | API |
+|------|----------|-----|
+| **โปรไฟล์** | แก้ `display_name`, อัปโหลด/ลบรูป | `PATCH /auth/me` · `POST`/`DELETE /auth/me/picture` |
+| **รหัสผ่าน** | เปลี่ยนรหัส (ต้องใส่รหัสเดิม) หรือตั้งรหัสครั้งแรกถ้ายังไม่มี | `POST /auth/me/password` |
+| **เชื่อมกับระบบอื่น** | ลิงก์ / ยกเลิกลิงก์ Google — ยกเลิกได้เมื่อมีรหัสผ่านแล้ว | `POST /auth/google/link` · `POST /auth/google/unlink` |
+
+รูป serve ที่ `GET /avatars/{user_id}` (FE เรียกผ่าน `/api/avatars/...` + Vite proxy)
+
+### Nametag & Badges (ออกแบบ — ยังไม่ implement)
+
+| แนวคิด | บทบาท |
+|--------|--------|
+| **Nametag** | ชิปเดียวข้างชื่อ (เช่น Adventurer) — เลือกสวมจากชุดที่ปลดแล้ว |
+| **Badge** | ของสะสมหลายอันในคลัง — ปลดจาก event การเรียน/ภารกิจ |
+
+รายละเอียดชื่อ + เงื่อนไขปลดล็อก: [badges.md](badges.md)
+
 ### Auth — Route guards & silent refresh
 
 ```
 GuestRoute     → /login, /register  (redirect ถ้า login แล้ว)
-ProtectedRoute → /space, /studio, /backoffice  (redirect /login?next= ถ้ายังไม่ login)
+ProtectedRoute → /space, /arena, /studio, /settings, /backoffice
+                 (redirect /login?next= ถ้ายังไม่ login; wrap AuthUserProvider)
 
 API 401 (access หมดอายุ)
   → tryRefreshSession() → POST /api/auth/refresh
@@ -215,7 +248,9 @@ API 401 (access หมดอายุ)
 | Physics / orbit | แสดงผล 3D + charts | Poliastro, PyEphem, power calc |
 | LAIKA | chat UI ใน Studio | FastAPI → RAG → Gemini |
 | Auth (email) | LoginForm, Register, route guards, `tryRefreshSession` | `/auth/register`, `/auth/login`, `/auth/refresh`, JWT cookies |
-| Auth (Google) | GIS One Tap + `renderButton` → `googleIdentity.ts` | `/auth/google/onetap`, token verify |
-| Progress | UI state, lesson completion | PostgreSQL (users, progress) |
+| Auth (Google) | GIS One Tap + `renderButton` → `googleIdentity.ts` | `/auth/google/onetap`, token verify; picture localize |
+| Settings | `SettingsView`, `AuthUserContext` | `/auth/me*`, `/auth/google/link\|unlink`, `/avatars/{id}` |
+| Progress | Space progress UI + API | PostgreSQL (users, progress) |
+| Badges / nametag | *(planned)* | *(planned)* — ดู [badges.md](badges.md) |
 
 เมื่อ implement API ใหม่ บันทึก contract ใน `backend/docs/api.md`

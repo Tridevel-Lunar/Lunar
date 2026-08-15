@@ -238,17 +238,18 @@ frontend/
 │   ├── main.tsx           # createRoot + BrowserRouter
 │   ├── App.tsx            # React Router routes
 │   ├── index.css          # Fonts, CSS variables, Tailwind
-│   ├── pages/             # Home, Login, Register, Space, Arena, ArenaMission, Studio
-│   ├── routes/            # ProtectedRoute, GuestRoute, useAuthUser
+│   ├── pages/             # Home, Login, Register, Space, Arena, ArenaMission, Studio, Settings
+│   ├── routes/            # ProtectedRoute (+ AuthUserProvider), GuestRoute, useAuthUser
 │   ├── ast/               # Arena AST type contracts
 │   ├── components/
 │   │   ├── auth/          # GoogleSignInButton, GoogleOneTap, LoginForm, ...
+│   │   ├── settings/      # SettingsView — profile, password, Google link
 │   │   ├── arena/         # Arena hub, mission/, blockly/, feedback/, orbit/, timeline/
 │   │   ├── space/         # SpaceHome, SpaceCourse, SpaceModuleRoute, core/, courses/
 │   │   ├── studio/
 │   │   └── ...            # Landing sections, Navbar, SpaceCanvas
 │   ├── lib/
-│   │   ├── api.ts         # User type, studio + arena API helpers
+│   │   ├── api.ts         # User type, settings + studio + arena API helpers
 │   │   ├── auth.ts        # tryRefreshSession, getCurrentUser, clearSession, Google sign-in
 │   │   ├── googleIdentity.ts  # GIS script load, initialize, renderButton, One Tap
 │   │   └── constants.ts   # API_URL
@@ -256,7 +257,7 @@ frontend/
 │       └── google-identity.d.ts
 ├── public/
 │   └── blockly/media/     # Blockly trashcan / zoom icons
-├── docs/
+├── docs/                  # concept, functional-spec, stack, development, badges
 ├── tailwind.config.ts
 └── tsconfig.json          # @/* → src/*
 ```
@@ -268,8 +269,9 @@ frontend/
 - **Pages** — compose sections หรือ module UI
 - **Canvas / WebGL** — `React.lazy()` + `<Suspense>` สำหรับ browser-only (ดู `HeroSection` → `SpaceCanvas`)
 - **Auth** — httpOnly cookies (`lunar_token` + `lunar_refresh`) จาก FastAPI; เรียก `/api/auth/*` (Vite proxy)
-- **Google Sign-In** — Google Identity Services (`gsi/client`); credential ส่งไป `POST /auth/google/onetap`
-- **Route guards** — `GuestRoute` (login/register) · `ProtectedRoute` (space/arena/studio)
+- **Settings** — `/settings` · รูปผ่าน `/api/avatars/{id}` · `display_name` ไม่ sync จาก Google
+- **Google Sign-In** — Google Identity Services (`gsi/client`); credential ส่งไป `POST /auth/google/onetap` (หรือ link จาก Settings)
+- **Route guards** — `GuestRoute` (login/register) · `ProtectedRoute` (space/arena/studio/settings/backoffice) + `AuthUserProvider`
 - **Styling** — Tailwind v4 utilities เป็นหลัก; `@theme` tokens ใน `index.css`
 
 ### Auth flow
@@ -280,7 +282,11 @@ Login/Register page
   ├─ GoogleSignInButton → GIS renderButton → credential → POST /api/auth/google/onetap → cookies
   └─ GoogleOneTap (GuestRoute) → auto prompt on guest pages
 
-ProtectedRoute → GET /api/auth/me (cookie) → allow or redirect /login?next=
+ProtectedRoute → GET /api/auth/me (cookie) → AuthUserProvider → allow or redirect /login?next=
+
+Settings (/settings)
+  ├─ PATCH /api/auth/me · POST/DELETE /api/auth/me/picture · POST /api/auth/me/password
+  └─ POST /api/auth/google/link | unlink → setUser / refreshUser (sidebar อัปเดต)
 
 API call 401 (access expired)
   → tryRefreshSession() → POST /api/auth/refresh → retry once

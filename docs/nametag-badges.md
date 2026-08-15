@@ -3,7 +3,7 @@
 ไอเดียระบบ badge สำหรับกระตุ้นการเรียนรู้และสะสมตัวตนนักสำรวจบน Lunar  
 ยังไม่ใช่สเปก implement — เป็นรายการชื่อ + เงื่อนไขปลดล็อกเพื่อออกแบบต่อ
 
-อ้างอิง product: [concept.md](concept.md) · [functional-spec.md](functional-spec.md)
+อ้างอิง product: [concept.md](concept.md) · [functional-spec.md](functional-spec.md) (Account / Settings)
 
 ---
 

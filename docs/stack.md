@@ -28,10 +28,11 @@
 
 | เครื่องมือ | สถานะ | บทบาท |
 |-----------|--------|--------|
-| **FastAPI auth API** | ใช้อยู่ | register, login, refresh, `/auth/me`, logout — httpOnly cookies `lunar_token` + `lunar_refresh` |
+| **FastAPI auth API** | ใช้อยู่ | register, login, refresh, `/auth/me`, password, picture, Google link/unlink, logout — httpOnly cookies |
+| **Local avatars** | ใช้อยู่ | `GET /api/avatars/{user_id}` (Vite proxy) · อัปโหลดจาก Settings |
 | **Google Identity Services (GIS)** | ใช้อยู่ | One Tap + `renderButton` — โหลด `accounts.google.com/gsi/client` |
 | **`googleIdentity.ts`** | ใช้อยู่ | โหลด GIS script, `initialize()`, `renderGoogleSignInButton()`, `promptGoogleOneTap()` |
-| **`auth.ts`** | ใช้อยู่ | `tryRefreshSession()`, `getCurrentUser()`, Google sign-in → `/auth/google/onetap` |
+| **`auth.ts` + `AuthUserContext`** | ใช้อยู่ | session helpers · `ProtectedRoute` ให้ `user` / `refreshUser()` หลัง Settings |
 
 ### Google Sign-In flow
 
