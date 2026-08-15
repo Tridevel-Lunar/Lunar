@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { HiOutlinePlus } from "react-icons/hi2";
 import { IoRocketOutline } from "react-icons/io5";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
@@ -71,9 +73,18 @@ export default function StudioLanding({ user }: StudioLandingProps) {
 
           <section className="shrink-0 border-t border-white/[0.06] px-5 py-5">
             <div className="mx-auto max-w-[960px]">
-              <h2 className="font-mono mb-3 text-[0.72rem] tracking-[0.18em] text-muted">
-                COLLECTION ({loading ? "…" : collections.length})
-              </h2>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h2 className="font-mono text-[0.72rem] tracking-[0.18em] text-muted">
+                  COLLECTION ({loading ? "…" : collections.length})
+                </h2>
+                <Link
+                  to="/studio/new"
+                  className="font-mono inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-amber/35 bg-amber/[0.08] px-2.5 py-1 text-[0.62rem] tracking-[0.14em] text-amber no-underline transition hover:border-amber/55 hover:bg-amber/[0.14]"
+                >
+                  <HiOutlinePlus className="text-sm" />
+                  NEW
+                </Link>
+              </div>
               {error ? (
                 <p className="font-section-thai text-[0.85rem] text-red-400/90">{error}</p>
               ) : loading ? (

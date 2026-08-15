@@ -18,6 +18,9 @@ import {
 import UserBranchPager from "@/components/studio/chat/UserBranchPager";
 import UserMessageTimestamp from "@/components/studio/chat/UserMessageTimestamp";
 import {
+  IDEA_INTENTS,
+  LEARN_INTENTS,
+  NOTE_INTENTS,
   type ChatNode,
   type CollectionEntry,
   type LaikaIntent,
@@ -40,7 +43,6 @@ import {
 import { getCollection } from "@/lib/studio-storage";
 import {
   conversationToSession,
-  sessionToComposerEntry,
   type StudioChatSession,
 } from "@/lib/studio-conversation";
 import { buildContextUsageEstimate, type ContextUsageEstimate } from "@/lib/laika-context";
@@ -871,9 +873,27 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
                   <p className="font-section-thai mb-1 text-[0.88rem] text-text">
                     ว่าไง อยากให้ LAIKA ช่วยเรื่องอะไร?
                   </p>
-                  <p className="font-mono text-[0.52rem] tracking-wider text-muted">
+                  <p className="font-mono mb-3 text-[0.52rem] tracking-wider text-muted">
                     เลือกคำสั่งด้านล่าง แล้วมาเริ่มกันเลย
                   </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(session.type === "learn"
+                      ? LEARN_INTENTS
+                      : session.type === "idea"
+                        ? IDEA_INTENTS
+                        : NOTE_INTENTS
+                    ).map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        disabled={laikaLoading}
+                        onClick={() => void handleLaikaIntent(item.id)}
+                        className="cursor-pointer rounded-full border border-amber/25 bg-amber/[0.06] px-2.5 py-1 font-section-thai text-[0.72rem] text-text/85 transition hover:border-amber/45 hover:bg-amber/[0.12] disabled:cursor-wait disabled:opacity-60"
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -881,7 +901,6 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
         </div>
 
         <StudioChatComposer
-          entry={sessionToComposerEntry(session)}
           laikaLoading={laikaLoading}
           laikaError={laikaError}
           awaitingLaika={awaitingLaika}
@@ -890,7 +909,6 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
           laikaMode={laikaMode}
           contextUsage={contextUsage}
           onOpenBranchMap={() => setBranchMapOpen(true)}
-          onLaikaIntent={handleLaikaIntent}
           onSend={handleSend}
           onStop={handleStopGeneration}
           onWebSearchChange={setWebSearch}

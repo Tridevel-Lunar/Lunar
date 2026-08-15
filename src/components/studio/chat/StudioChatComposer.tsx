@@ -14,16 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { HintTooltip } from "@/components/ui/tooltip";
-import {
-  IDEA_INTENTS,
-  LEARN_INTENTS,
-  NOTE_INTENTS,
-  type CollectionEntry,
-  type LaikaIntent,
-} from "@/components/studio/data/studio-data";
 
 type StudioChatComposerProps = {
-  entry: CollectionEntry;
   laikaLoading: boolean;
   laikaError: string | null;
   awaitingLaika: boolean;
@@ -33,7 +25,6 @@ type StudioChatComposerProps = {
   contextUsage?: ContextUsageEstimate;
   showScrollButton?: boolean;
   onOpenBranchMap: () => void;
-  onLaikaIntent: (intent: LaikaIntent) => void;
   onSend: (text: string) => void;
   onStop: () => void;
   onScrollToBottom?: () => void;
@@ -43,7 +34,6 @@ type StudioChatComposerProps = {
 
 /** Composer footer — local draft state so keystrokes do not re-render the message list. */
 export default function StudioChatComposer({
-  entry,
   laikaLoading,
   laikaError,
   awaitingLaika,
@@ -53,7 +43,6 @@ export default function StudioChatComposer({
   contextUsage,
   showScrollButton,
   onOpenBranchMap,
-  onLaikaIntent,
   onSend,
   onStop,
   onScrollToBottom,
@@ -61,10 +50,6 @@ export default function StudioChatComposer({
   onModeChange,
 }: StudioChatComposerProps) {
   const [draft, setDraft] = useState("");
-
-  const intents =
-    entry.type === "learn" ? LEARN_INTENTS : entry.type === "idea" ? IDEA_INTENTS : NOTE_INTENTS;
-
 
   function handleSend() {
     const text = draft.trim();
@@ -93,22 +78,6 @@ export default function StudioChatComposer({
         </button>
       )}
       <div className="mx-auto w-full max-w-[75%] space-y-2">
-        {awaitingLaika && (
-          <div className="flex flex-wrap gap-1.5">
-            {intents.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                disabled={laikaLoading}
-                onClick={() => onLaikaIntent(item.id)}
-                className="cursor-pointer rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 font-section-thai text-[0.72rem] text-text/80 transition hover:border-amber/35 hover:bg-amber/[0.06] disabled:cursor-wait disabled:opacity-60"
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        )}
-
         {laikaError && (
           <p className="font-section-thai text-[0.78rem] text-red-400">{laikaError}</p>
         )}
@@ -149,7 +118,7 @@ export default function StudioChatComposer({
               rows={1}
               placeholder={
                 awaitingLaika
-                  ? "เลือกคำสั่งด้านบนเพื่อเริ่มแชทกับ LAIKA…"
+                  ? "เลือกคำสั่งจากข้อความของ LAIKA เพื่อเริ่มแชท…"
                   : "พิมพ์ข้อความ… (Enter ส่ง, Shift+Enter ขึ้นบรรทัดใหม่)"
               }
               className="grow max-h-28 min-h-8 flex-1 resize-none bg-transparent px-2 py-2 font-section-thai text-[0.85rem] text-text outline-none placeholder:text-muted/70 disabled:cursor-not-allowed disabled:opacity-50"

@@ -1,17 +1,20 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { HiOutlineArrowLeft, HiOutlineLightBulb, HiOutlinePencilSquare } from "react-icons/hi2";
-import { IoRocketOutline } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
+import { HiOutlineLightBulb, HiOutlinePaperAirplane, HiOutlinePencilSquare } from "react-icons/hi2";
 import { RiGraduationCapFill } from "react-icons/ri";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
+import StarField from "@/components/studio/landing/StarField";
 import type { EntryType } from "@/components/studio/data/studio-data";
-import { GlassCard } from "@/components/studio/shared/studio-shared";
 import { ApiError } from "@/lib/api";
 import type { User } from "@/lib/api";
+import { LAIKA_AVATAR_URL } from "@/lib/constants";
 import { createCollection } from "@/lib/studio-storage";
 
-/** Create a new note or idea collection and navigate to its chat view. */
+/** Create a new note or idea collection — full-bleed welcome layout (path-session style, no motion). */
+
+const INTRO =
+  "สวัสดี เราคือ LAIKA อยากเริ่มจากโน้ต ไอเดีย หรือหัวข้อเรียนรู้ดี? เล่ามาได้เลย";
 
 type StudioNewCollectionProps = {
   user: User;
@@ -39,31 +42,42 @@ export default function StudioNewCollection({ user }: StudioNewCollectionProps) 
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-bg text-text">
+    <div className="relative flex h-screen overflow-hidden bg-bg text-text">
       <ModuleSidebar user={user} activeModule="studio" />
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex shrink-0 items-center gap-3 border-b border-white/[0.06] px-5 py-3">
-          <Link
-            to="/studio"
-            className="flex cursor-pointer items-center gap-1.5 font-mono text-[0.62rem] tracking-wider text-text/50 no-underline transition hover:text-amber"
-          >
-            <HiOutlineArrowLeft />
-            Studio
-          </Link>
-          <IoRocketOutline className="text-lg text-amber" />
-          <h1 className="font-display text-[1rem] font-bold tracking-[0.14em] text-text">
-            NEW COLLECTION
-          </h1>
-        </header>
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <StudioNewBackdrop />
 
-        <main className="min-h-0 flex-1 overflow-y-auto px-5 py-6">
-          <GlassCard className="mx-auto max-w-[640px] p-5">
-            <p className="font-mono mb-3 text-[0.62rem] tracking-[0.16em] text-muted">
-              สร้าง collection ใหม่
-            </p>
+        <button
+          type="button"
+          onClick={() => navigate("/studio")}
+          className="absolute left-5 top-5 z-[2] cursor-pointer text-lg text-text/45 transition hover:text-amber"
+          aria-label="กลับ"
+        >
+          ←
+        </button>
 
-            <div className="mb-3 flex gap-2">
+        <div className="relative z-[1] flex h-full min-h-0 flex-col px-6 pb-8 pt-10 sm:px-10">
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center">
+            <div className="flex w-full max-w-xl flex-col items-center text-center">
+              <div className="relative h-36 w-36 overflow-hidden rounded-full border-2 border-amber-400/30 shadow-[0_0_28px_rgba(251,191,36,0.22)]">
+                <img
+                  src={LAIKA_AVATAR_URL}
+                  alt="LAIKA"
+                  className="h-full w-full object-cover object-center"
+                />
+              </div>
+              <p className="font-mono mt-4 text-[0.68rem] tracking-[0.22em] text-amber-400/80">
+                LAIKA
+              </p>
+              <p className="font-section-thai mt-4 text-[1.15rem] leading-[1.75] text-text/88 sm:text-[1.22rem]">
+                {INTRO}
+              </p>
+            </div>
+          </div>
+
+          <div className="mx-auto w-full max-w-lg shrink-0">
+            <div className="mb-3 flex flex-wrap justify-center gap-2">
               {(
                 [
                   { type: "note" as const, label: "โน้ต", icon: HiOutlinePencilSquare },
@@ -82,7 +96,7 @@ export default function StudioNewCollection({ user }: StudioNewCollectionProps) 
                         : type === "learn"
                           ? "border-violet-400/50 bg-violet-500/10 text-violet-300"
                           : "border-teal/50 bg-teal/10 text-teal"
-                      : "border-white/10 text-text/50 hover:border-white/20"
+                      : "border-white/10 bg-white/[0.03] text-text/50 hover:border-white/20"
                   }`}
                 >
                   <Icon className="text-base" />
@@ -91,34 +105,69 @@ export default function StudioNewCollection({ user }: StudioNewCollectionProps) 
               ))}
             </div>
 
-            <textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder={
-                draftType === "idea"
-                  ? "เช่น อยากทำดาวเทียมถ่ายภาพนาข้าวโซนภาคเหนือ..."
-                  : draftType === "learn"
-                    ? "เช่น การเขียนโปรแกรมควบคุม Arduino สำหรับ CubeSat..."
-                    : "เช่น ยังงงเรื่อง power budget ตอน eclipse..."
-              }
-              rows={5}
-              className="mb-4 w-full resize-none rounded-lg border border-white/10 bg-[rgba(3,8,18,0.5)] px-4 py-3 font-section-thai text-[0.9rem] text-text outline-none transition focus:border-amber/40"
-            />
-
-            <button
-              type="button"
-              onClick={() => void handleSave()}
-              disabled={!draft.trim() || saving}
-              className="btn-clip font-mono cursor-pointer border border-amber/50 bg-amber/15 px-5 py-2.5 text-[0.62rem] tracking-[0.12em] text-amber transition hover:bg-amber hover:text-bg disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {saving ? "กำลังสร้าง…" : "สร้างและเปิดแชท"}
-            </button>
             {error ? (
-              <p className="font-section-thai mt-3 text-[0.8rem] text-red-400/90">{error}</p>
+              <p className="font-section-thai mb-2 text-center text-[0.78rem] text-red-400/90">
+                {error}
+              </p>
             ) : null}
-          </GlassCard>
-        </main>
+
+            <form
+              className="flex items-stretch gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleSave();
+              }}
+            >
+              <textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void handleSave();
+                  }
+                }}
+                rows={2}
+                placeholder={
+                  draftType === "idea"
+                    ? "เช่น อยากทำดาวเทียมถ่ายภาพนาข้าวโซนภาคเหนือ..."
+                    : draftType === "learn"
+                      ? "เช่น การเขียนโปรแกรมควบคุม Arduino สำหรับ CubeSat..."
+                      : "เช่น ยังงงเรื่อง power budget ตอน eclipse..."
+                }
+                disabled={saving}
+                autoFocus
+                className="font-section-thai min-h-[52px] w-full resize-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5 text-[0.88rem] text-text outline-none placeholder:text-text/30 focus:border-amber/40"
+              />
+              <button
+                type="submit"
+                disabled={saving || !draft.trim()}
+                aria-label="สร้างและเปิดแชท"
+                className="flex w-[52px] shrink-0 cursor-pointer items-center justify-center self-stretch rounded-lg border border-amber/40 bg-amber/15 text-amber transition hover:bg-amber/25 disabled:cursor-default disabled:opacity-40"
+              >
+                <HiOutlinePaperAirplane className="text-xl" />
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
+    </div>
+  );
+}
+
+function StudioNewBackdrop() {
+  return (
+    <div className="absolute inset-0 overflow-hidden" aria-hidden>
+      <div className="absolute inset-0 bg-bg" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.08)_0%,transparent_60%)]" />
+      <StarField />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(3,8,18,0.55) 0%, rgba(3,8,18,0.35) 45%, rgba(3,8,18,0.78) 100%)",
+        }}
+      />
     </div>
   );
 }
