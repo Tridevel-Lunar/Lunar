@@ -138,14 +138,20 @@ export default function CatalogBrowser() {
               </button>
             ) : null}
             <h2
-              className="font-display text-[clamp(1.25rem,3vw,1.75rem)] font-bold tracking-[0.1em] text-text"
+              className="font-thai text-[clamp(1.25rem,3vw,1.75rem)] font-semibold tracking-wide text-text"
               style={atRoot ? undefined : { color: accent }}
             >
               {atRoot ? "สำรวจ" : currentFolder!.title}
             </h2>
-            <p className="font-section-thai mt-1 text-[0.9rem] text-text/55">
-              {atRoot ? "เลือกหัวข้อที่อยากเรียนรู้" : currentFolder!.titleTh}
-            </p>
+            {atRoot ? (
+              <p className="font-section-thai mt-1 text-[0.9rem] text-text/55">
+                เลือกหัวข้อที่อยากเรียนรู้
+              </p>
+            ) : (
+              <p className="font-thai mt-1 text-[1.05rem] font-medium text-text/65">
+                {currentFolder!.titleTh}
+              </p>
+            )}
             {!atRoot && currentFolder?.summary ? (
               <p className="font-section-thai mt-2 max-w-xl text-[0.84rem] leading-relaxed text-text/50">
                 {currentFolder.summary}

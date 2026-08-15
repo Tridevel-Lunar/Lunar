@@ -87,7 +87,10 @@ Browse UI (`SpaceHome` → Explore) reads the catalog. Entering a course uses th
 
 | Route | หน้าที่ |
 |-------|---------|
-| `/space` | Home (pilot progress) + Explore catalog browser (`SpaceHome`) |
+| `/space` | Home tab (`SpaceHome`) |
+| `/space/path` | Path tab — saved DAG map + details |
+| `/space/path/session` | LAIKA path session: live course graph + chat (`PathSessionLayout`) |
+| `/space/explore` | Explore catalog browser |
 | `/space/course/:courseId` | Course overview + module list (`SpaceCourse`) — registry only |
 | `/space/course/:courseId/module/:moduleId` | Resolves module via registry and renders its `Component` (`SpaceModuleRoute`) |
 
@@ -98,6 +101,7 @@ Current published course: **`cubesat-for-beginner`** with modules `overview`, `a
 - Catalog answers: what exists, how nested, coarse “what this course teaches”
 - Registry answers: which lazy React pages power a published course
 - LAIKA digest (`GET /space/catalog/digest` + prompt helper) is a flat, prompt-sized view; Studio assist may recommend **only** course ids from that digest (prefer `published`; may mention `coming_soon` as upcoming; never recommend folders)
+- **My Path** is owned by Space (`GET/PUT/DELETE /space/learning-path`, `POST /space/laika/path/stream`) — Space tab **Path** (`/space/path`) shows the saved DAG map plus course details; LAIKA planning is a desktop split chat|pannable map at `/space/path/session`. Skip = browse catalog at `/space/explore`. Mobile layout is out of scope.
 
 **Sync when publishing a course**
 
@@ -107,9 +111,9 @@ Current published course: **`cubesat-for-beginner`** with modules `overview`, `a
 
 | ใน scope | นอก scope |
 |----------|-----------|
-| Backend catalog SoT + Explore browser | Space LAIKA onboarding / editable learning map |
-| Explicit course/module registry (`core/registry.ts`) | Persisting user learning plans |
-| Custom module pages (`SpaceModulePageProps`) | Plugin / auto-discovery (`import.meta.glob`) |
+| Backend catalog SoT + Explore browser | Mobile path session layout |
+| Explicit course/module registry (`core/registry.ts`) | Drag-drop learning-map editor |
+| Space LAIKA path chat + saved path (course ids, DAG map) | Topic-level graph / backoffice catalog editor |
 | Physics: slides + WebGPU scenes + sim clock | Backoffice catalog editor |
 
 **Lib / components**
@@ -119,7 +123,8 @@ Current published course: **`cubesat-for-beginner`** with modules `overview`, `a
 | `src/components/space/catalog/` | Types/helpers + `CatalogBrowser` / tree / course cards |
 | `src/components/space/core/types.ts` | `SpaceCourseDefinition`, `SpaceModuleDefinition`, page props |
 | `src/components/space/core/registry.ts` | `listCourses` / `getCourse` / `getModule` |
-| `src/components/space/core/routes.ts` | Path builders (`spaceCoursePath`, `spaceModulePath`) |
+| `src/components/space/path/` | Path tab (map + details), LAIKA session chat/graph |
+| `src/components/space/core/routes.ts` | Path builders (`spaceCoursePath`, `spaceModulePath`, `spacePathSessionPath`) |
 | `src/components/space/courses/` | Per-course folders + [README](../src/components/space/courses/README.md) for contributors |
 | `src/components/space/courses/cubesat-for-beginner/` | Course def + modules |
 | `…/modules/physics/` | Physics page, `LessonScene`, `scene/`, `sim/`, `physics/` |

@@ -18,7 +18,10 @@ LAIKA recommends **only** ids from the catalog digest — never invent courses, 
 
 | Path | Component |
 |------|-----------|
-| `/space` | Home + Explore catalog browser (`SpaceHome`) |
+| `/space` | Home tab |
+| `/space/path` | Path tab (saved DAG map) |
+| `/space/path/session` | LAIKA path session (chat + live graph) |
+| `/space/explore` | Explore catalog browser |
 | `/space/course/:courseId` | Course overview (`SpaceCourse`) |
 | `/space/course/:courseId/module/:moduleId` | Custom module page via `SpaceModuleRoute` |
 

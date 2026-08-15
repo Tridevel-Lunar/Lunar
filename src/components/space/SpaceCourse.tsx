@@ -6,7 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import ModuleSidebar from "@/components/app/ModuleSidebar";
 import type { User } from "@/lib/api";
 import { getCourse } from "@/components/space/core/registry";
-import { spaceHomePath, spaceModulePath } from "@/components/space/core/routes";
+import { spaceExplorePath, spaceHomePath, spaceModulePath } from "@/components/space/core/routes";
 import type { SpaceModuleDefinition } from "@/components/space/core/types";
 import { useSpaceProgress } from "@/components/space/hooks/useSpaceProgress";
 
@@ -211,7 +211,7 @@ export default function SpaceCourse({ user }: { user: User }) {
         <header className="flex shrink-0 items-center gap-2.5 border-b border-white/[0.06] px-5 py-3">
           <button
             type="button"
-            onClick={() => navigate(spaceHomePath(), { state: { tab: "explore" } })}
+            onClick={() => navigate(spaceExplorePath())}
             className="cursor-pointer text-lg text-text/40 transition hover:text-cyan"
           >
             ←

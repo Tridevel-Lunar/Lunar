@@ -29,7 +29,7 @@ export default function CatalogCourseCard({ course, progressPercent }: Props) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p
-            className={`font-display text-[0.88rem] font-semibold tracking-wide ${
+            className={`font-thai text-[1rem] font-semibold tracking-wide ${
               enterable ? "text-text" : "text-text/70"
             }`}
           >
@@ -47,7 +47,7 @@ export default function CatalogCourseCard({ course, progressPercent }: Props) {
             {statusLabel(course.status)}
           </span>
         </div>
-        <p className="font-section-thai mt-0.5 text-[0.8rem] text-text/55">{course.titleTh}</p>
+        <p className="font-thai mt-0.5 text-[0.92rem] font-medium text-text/65">{course.titleTh}</p>
         <p className="font-section-thai mt-1.5 line-clamp-2 text-[0.76rem] leading-relaxed text-text/42">
           {course.summary}
         </p>

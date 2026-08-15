@@ -1,22 +1,93 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { IoPlanetOutline } from "react-icons/io5";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
 import CatalogBrowser from "@/components/space/catalog/CatalogBrowser";
+import PathTab from "@/components/space/path/PathTab";
 import { listCourses } from "@/components/space/core/registry";
-import { spaceCoursePath } from "@/components/space/core/routes";
+import {
+  spaceCoursePath,
+  spacePathForTab,
+  spacePathSessionPath,
+  spaceTabFromPath,
+  type SpaceShellTab,
+} from "@/components/space/core/routes";
 import { useSpaceProgress } from "@/components/space/hooks/useSpaceProgress";
-import type { User } from "@/lib/api";
+import {
+  deleteLearningPath,
+  getLearningPath,
+  getSpaceCatalog,
+  type LearningPath,
+  type SpaceCatalog,
+  type User,
+} from "@/lib/api";
 
-type SpaceTab = "home" | "explore";
+function SpaceEarthBackdrop() {
+  return (
+    <div className="absolute inset-0 overflow-hidden" aria-hidden>
+      <img
+        src="/earth-center.jpg"
+        alt=""
+        className="h-full w-full scale-105 object-cover object-center brightness-[0.8] saturate-90"
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(3,8,18,0.72) 0%, rgba(3,8,18,0.55) 40%, rgba(3,8,18,0.78) 100%)",
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to right, rgba(3,8,18,0.55) 0%, rgba(3,8,18,0.2) 35%, transparent 70%)",
+        }}
+      />
+    </div>
+  );
+}
 
 export default function SpaceHome({ user }: { user: User }) {
   const location = useLocation();
-  const rawTab = (location.state as { tab?: string } | null)?.tab;
-  const initialTab: SpaceTab =
-    rawTab === "explore" || rawTab === "courses" ? "explore" : "home";
-  const [tab, setTab] = useState<SpaceTab>(initialTab);
+  const navigate = useNavigate();
+  const tab = spaceTabFromPath(location.pathname);
+  const [path, setPath] = useState<LearningPath | null>(null);
+  const [catalog, setCatalog] = useState<SpaceCatalog | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all([getLearningPath(), getSpaceCatalog().catch(() => null)])
+      .then(([learningPath, cat]) => {
+        if (cancelled) return;
+        setPath(learningPath);
+        setCatalog(cat);
+        // First visit with no path: open LAIKA — but not when already browsing a tab URL.
+        if (learningPath.status === "none" && tab === "home") {
+          navigate(spacePathSessionPath(), { replace: true });
+        }
+      })
+      .catch(() => {
+        /* stay on Space Home if path API is unavailable */
+      });
+    return () => {
+      cancelled = true;
+    };
+    // first landing only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function goTab(next: SpaceShellTab) {
+    const to = spacePathForTab(next);
+    if (to !== location.pathname) navigate(to);
+  }
+
+  async function handleReplan() {
+    if (!window.confirm("ล้างเส้นทางนี้แล้วคุยกับ LAIKA ใหม่?")) return;
+    await deleteLearningPath();
+    navigate(spacePathSessionPath());
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg text-text">
@@ -32,13 +103,14 @@ export default function SpaceHome({ user }: { user: User }) {
           {(
             [
               { id: "home" as const, label: "Home" },
+              { id: "path" as const, label: "Path" },
               { id: "explore" as const, label: "Explore" },
             ] as const
           ).map((t) => (
             <button
               key={t.id}
               type="button"
-              onClick={() => setTab(t.id)}
+              onClick={() => goTab(t.id)}
               className={`cursor-pointer border-b-2 pb-2 pt-3 font-mono text-[0.72rem] tracking-[0.15em] uppercase transition ${
                 tab === t.id
                   ? "border-cyan text-cyan"
@@ -51,51 +123,44 @@ export default function SpaceHome({ user }: { user: User }) {
         </div>
 
         <main className="relative min-h-0 flex-1 overflow-hidden">
-          {tab === "home" ? (
-            <>
-              <div className="absolute inset-0 overflow-hidden">
-                <img src="/earth-center.jpg" alt="" className="h-full w-full object-cover" />
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      "linear-gradient(to right, rgba(3,8,18,0.94) 0%, rgba(3,8,18,0.7) 30%, rgba(3,8,18,0.15) 60%, transparent 80%)",
-                  }}
-                  aria-hidden
-                />
-              </div>
-              <div className="relative z-[1] h-full">
-                <HomeView onGoToExplore={() => setTab("explore")} />
-              </div>
-            </>
-          ) : (
-            <div className="relative z-[1] h-full">
-              <div className="absolute inset-0 overflow-hidden" aria-hidden>
-                <img
-                  src="/earth-center.jpg"
-                  alt=""
-                  className="h-full w-full scale-105 object-cover brightness-[0.8] saturate-90"
-                />
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, rgba(3,8,18,0.72) 0%, rgba(3,8,18,0.55) 40%, rgba(3,8,18,0.78) 100%)",
-                  }}
-                />
-              </div>
-              <div className="relative z-[1] h-full">
-                <CatalogBrowser />
-              </div>
-            </div>
-          )}
+          <SpaceEarthBackdrop />
+          <div className="relative z-[1] h-full min-h-0">
+            {tab === "home" ? (
+              <HomeView
+                onGoToExplore={() => goTab("explore")}
+                onGoToPath={() => goTab("path")}
+                path={path}
+                onAskLaika={() => navigate(spacePathSessionPath())}
+              />
+            ) : tab === "path" ? (
+              <PathTab
+                path={path}
+                catalog={catalog}
+                onReplan={() => void handleReplan()}
+                onExplore={() => goTab("explore")}
+              />
+            ) : (
+              <CatalogBrowser />
+            )}
+          </div>
+          <Outlet />
         </main>
       </div>
     </div>
   );
 }
 
-function HomeView({ onGoToExplore }: { onGoToExplore: () => void }) {
+function HomeView({
+  onGoToExplore,
+  onGoToPath,
+  path,
+  onAskLaika,
+}: {
+  onGoToExplore: () => void;
+  onGoToPath: () => void;
+  path: LearningPath | null;
+  onAskLaika: () => void;
+}) {
   const courses = listCourses();
   const { courseProgressPercent } = useSpaceProgress();
 
@@ -104,20 +169,27 @@ function HomeView({ onGoToExplore }: { onGoToExplore: () => void }) {
       <p className="font-mono mb-3 text-[0.7rem] tracking-[0.3em] text-cyan/70 uppercase">
         SPACE MODULE
       </p>
-      <h2 className="font-display mb-4 text-[clamp(1.8rem,4vw,2.8rem)] font-bold tracking-wide text-text">
+      <h2 className="font-thai mb-4 text-[clamp(1.8rem,4vw,2.8rem)] font-semibold tracking-wide text-text">
         เรียนรู้เทคโนโลยีอวกาศ
       </h2>
-      <p className="mb-6 max-w-[480px] text-[0.92rem] leading-relaxed text-text/65">
-        สำรวจคลังหัวข้อ Space Technology — จากอวกาศรอบตัว การใช้บนโลก ไปจนถึงคอร์สนำร่อง
+      <p className="font-section-thai mb-6 max-w-[480px] text-[0.92rem] leading-relaxed text-text/65">
+        สำรวจคลังหัวข้อ Space Technology จากอวกาศรอบตัว การใช้บนโลก ไปจนถึงคอร์ส
         CubeSat ที่เรียนได้จริงวันนี้
       </p>
       <div className="mb-8 flex flex-wrap gap-3">
         <button
           type="button"
-          onClick={onGoToExplore}
-          className="btn-clip cursor-pointer border border-cyan/50 bg-cyan/10 px-8 py-3 font-mono text-[0.78rem] tracking-[0.12em] text-cyan uppercase transition hover:bg-cyan hover:text-bg"
+          onClick={path?.status === "active" ? onGoToPath : onAskLaika}
+          className="btn-clip cursor-pointer border border-cyan/50 bg-cyan/10 px-8 py-3 font-section-thai text-[0.95rem] font-medium text-cyan transition hover:bg-cyan hover:text-bg"
         >
-          สำรวจคลัง →
+          เส้นทางเรียนของฉัน →
+        </button>
+        <button
+          type="button"
+          onClick={onGoToExplore}
+          className="btn-clip cursor-pointer border border-white/20 bg-white/[0.04] px-6 py-3 font-section-thai text-[0.95rem] font-medium text-text/80 transition hover:border-cyan/30 hover:text-cyan"
+        >
+          สำรวจคลัง
         </button>
       </div>
 

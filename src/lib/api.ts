@@ -41,6 +41,10 @@ export async function apiFetch<T>(
     throw new ApiError(response.status, detail);
   }
 
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   return data as T;
 }
 
@@ -822,4 +826,179 @@ export type SpaceCatalog = {
 
 export function getSpaceCatalog(): Promise<SpaceCatalog> {
   return apiFetch<SpaceCatalog>("/space/catalog");
+}
+
+export type LearningPathStatus = "none" | "skipped" | "active";
+
+export type LearningPathStep = {
+  courseId: string;
+  note?: string | null;
+};
+
+export type PathEdge = {
+  from: string;
+  to: string;
+};
+
+export type LearningPathChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+export type LearningPath = {
+  status: LearningPathStatus;
+  intentText: string | null;
+  intentTags: string[];
+  steps: LearningPathStep[];
+  edges: PathEdge[];
+  chatTranscript: LearningPathChatMessage[];
+  generatedBy: "laika" | "skipped" | null;
+  skippedAt: string | null;
+  updatedAt: string | null;
+};
+
+export type PathProposal = {
+  intentTags: string[];
+  steps: LearningPathStep[];
+  edges: PathEdge[];
+  final: boolean;
+};
+
+export function getLearningPath(): Promise<LearningPath> {
+  return apiFetch<LearningPath>("/space/learning-path");
+}
+
+export function putLearningPath(body: {
+  status: "skipped" | "active";
+  intentText?: string | null;
+  intentTags?: string[];
+  steps?: LearningPathStep[];
+  edges?: PathEdge[];
+  chatTranscript?: LearningPathChatMessage[];
+}): Promise<LearningPath> {
+  return apiFetch<LearningPath>("/space/learning-path", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export function deleteLearningPath(): Promise<void> {
+  return apiFetch<void>("/space/learning-path", { method: "DELETE" });
+}
+
+export type PathStreamHandlers = {
+  onStatus?: (phase: string, message: string) => void;
+  onToken: (delta: string) => void;
+  onPlanDelta?: (plan: PathProposal) => void;
+  onPlan?: (plan: PathProposal) => void;
+  onDone: (response: string) => void;
+  onError?: (message: string) => void;
+};
+
+export async function streamSpacePathAssist(
+  body: { content: string; messages: LearningPathChatMessage[] },
+  handlers: PathStreamHandlers,
+  signal?: AbortSignal,
+  retried = false,
+): Promise<boolean> {
+  const response = await fetch(`${API_URL}/space/laika/path/stream`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal,
+  });
+
+  if (response.status === 401 && !retried) {
+    const refreshed = await tryRefreshSession();
+    if (refreshed) {
+      return streamSpacePathAssist(body, handlers, signal, true);
+    }
+  }
+
+  if (!response.ok) {
+    const data = (await response.json().catch(() => ({}))) as { detail?: string };
+    const detail = typeof data.detail === "string" ? data.detail : "Request failed";
+    throw new ApiError(response.status, detail);
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error("LAIKA path stream has no body");
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let completed = false;
+
+  const handle = (event: string, data: string): "done" | "error" | null => {
+    const payload = JSON.parse(data) as Record<string, unknown>;
+    if (event === "status" && typeof payload.message === "string") {
+      const phase = typeof payload.phase === "string" ? payload.phase : "generating";
+      handlers.onStatus?.(phase, payload.message);
+      return null;
+    }
+    if (event === "token" && typeof payload.delta === "string") {
+      handlers.onToken(payload.delta);
+      return null;
+    }
+    if ((event === "plan" || event === "plan_delta") && Array.isArray(payload.steps)) {
+      const plan: PathProposal = {
+        intentTags: Array.isArray(payload.intentTags)
+          ? (payload.intentTags as string[])
+          : [],
+        steps: payload.steps as LearningPathStep[],
+        edges: Array.isArray(payload.edges) ? (payload.edges as PathEdge[]) : [],
+        final: payload.final === true || event === "plan",
+      };
+      if (event === "plan" || plan.final) handlers.onPlan?.(plan);
+      else handlers.onPlanDelta?.(plan);
+      return null;
+    }
+    if (event === "done") {
+      handlers.onDone(typeof payload.response === "string" ? payload.response : "");
+      return "done";
+    }
+    if (event === "error" && typeof payload.detail === "string") {
+      handlers.onError?.(payload.detail);
+      throw new ApiError(503, payload.detail);
+    }
+    return null;
+  };
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
+      let boundary = buffer.indexOf("\n\n");
+      while (boundary >= 0) {
+        const block = buffer.slice(0, boundary);
+        buffer = buffer.slice(boundary + 2);
+        if (block.trim()) {
+          const parsed = parseSseBlock(block);
+          if (parsed) {
+            const outcome = handle(parsed.event, parsed.data);
+            if (outcome === "done") completed = true;
+          }
+        }
+        boundary = buffer.indexOf("\n\n");
+      }
+    }
+    buffer += decoder.decode();
+    if (buffer.trim()) {
+      const parsed = parseSseBlock(buffer);
+      if (parsed) {
+        const outcome = handle(parsed.event, parsed.data);
+        if (outcome === "done") completed = true;
+      }
+    }
+  } catch (err) {
+    if (!completed && !isAbortError(err)) throw err;
+    if (isAbortError(err)) return false;
+  } finally {
+    reader.releaseLock();
+  }
+
+  return completed;
 }

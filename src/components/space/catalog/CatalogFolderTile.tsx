@@ -57,13 +57,13 @@ export default function CatalogFolderTile({
         </span>
 
         <h3
-          className={`font-display font-bold tracking-[0.08em] text-text ${
-            isSector ? "text-[1.05rem]" : "text-[0.88rem]"
+          className={`font-thai font-semibold tracking-wide text-text ${
+            isSector ? "text-[1.15rem]" : "text-[1rem]"
           }`}
         >
           {folder.title}
         </h3>
-        <p className="font-section-thai mt-1 text-[0.84rem] text-text/60">{folder.titleTh}</p>
+        <p className="font-thai mt-1 text-[0.95rem] font-medium text-text/70">{folder.titleTh}</p>
         <p
           className={`font-section-thai mt-2 leading-relaxed text-text/42 ${
             isSector ? "line-clamp-2 text-[0.8rem]" : "line-clamp-2 text-[0.74rem]"
