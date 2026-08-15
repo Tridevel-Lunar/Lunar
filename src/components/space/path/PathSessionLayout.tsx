@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { IoPlanetOutline } from "react-icons/io5";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
+import KnowledgeDialog from "@/components/knowledge/KnowledgeDialog";
+import { KnowledgeProvider } from "@/components/knowledge/KnowledgeProvider";
 import SpaceLoadingState from "@/components/space/SpaceLoadingState";
 import {
   getLearningPath,
@@ -61,6 +63,7 @@ export default function PathSessionLayout({ user }: { user: User }) {
   const ready = !loading && initialMessages !== null;
 
   return (
+    <KnowledgeProvider>
     <div className="relative flex h-screen overflow-hidden bg-bg text-text">
       <ModuleSidebar user={user} activeModule="space" />
 
@@ -140,6 +143,8 @@ export default function PathSessionLayout({ user }: { user: User }) {
         )}
       </div>
     </div>
+    <KnowledgeDialog />
+    </KnowledgeProvider>
   );
 }
 

@@ -192,8 +192,8 @@ const ENTRIES: KnowledgeEntry[] = [
       "สมองกลางของดาวเทียม รับข้อมูลจากทุกระบบ ตัดสินใจ แล้วสั่งงานกลับไป",
     body: [
       "OBC เป็นตัวกลางของการสื่อสารภายในดาวเทียม ระบบอื่นมักไม่คุยตรงกันเอง แต่ส่งเรื่องมาที่ OBC ก่อน",
-      "ของจริงหน้าตาไม่ต่างจากคอมพิวเตอร์จิ๋วหรือไมโครคอนโทรลเลอร์ CubeSat การศึกษาจำนวนมากเริ่มจากบอร์ดราคาย่อมเยาก่อนยกระดับเป็นเกรดอวกาศ",
-      "คิดง่ายๆ เหมือนพนักงานรับสายกลางของบริษัท ทุกแผนกส่งเรื่องมาที่คนคนนี้ก่อน แล้วค่อยตัดสินใจส่งต่อ",
+      "OBC อ่านค่าจาก sensor แล้วรัน [[flight-software|flight software]] ที่มนุษย์เขียนไว้ ทุก [[tick|tick]] วน [[main-loop|Main Loop]]",
+      "ไม่ได้ฉลาดเอง ทำตามกฎ: อ่าน → ตัดสินใจ → สั่ง [[eps|EPS]] [[comm|COMM]] [[payload|Payload]]",
     ],
   },
   {
@@ -276,9 +276,207 @@ const ENTRIES: KnowledgeEntry[] = [
       "ถ้าอยู่นอกระยะสัญญาณ จะคุยกับดาวเทียมไม่ได้จนกว่าจะวนกลับมาในระยะอีกครั้ง",
     ],
   },
+  {
+    id: "tick",
+    title: "รอบจำลอง (tick)",
+    english: "Simulation Tick",
+    summary:
+      "หนึ่งรอบที่ OBC อ่านค่า ตัดสินใจ และสั่งงาน ใน Mission 01 มี 10 tick",
+    body: [
+      "tick ไม่ใช่เวลาจริงเป็นวินาที แต่เป็นรอบจำลองที่วิศวกรกำหนด OBC วนซ้ำ Main Loop ทุก tick",
+      "Mission 01 ใช้ 10 tick tick 8 มี [[radiation-glitch|radiation glitch]] และ tick 10 เป็น Comms Check",
+      "บล็อก wait 1 tick หมายถึงจบรอบปัจจุบันทันที แล้วไป tick ถัดไป",
+    ],
+  },
+  {
+    id: "safe-mode",
+    title: "Safe Mode",
+    english: "Safe Mode",
+    summary:
+      "โหมดประหยัดพลังงานสูงสุด ปิด payload และ heater เพื่อให้ดาวเทียมอยู่รอด",
+    body: [
+      "เมื่อแบตต่ำมาก glitch จากรังสี หรือเหตุฉุกเฉินอื่น OBC จะ enter safe mode",
+      "ใน safe mode ดาวเทียมลดการใช้พลังงานสูงสุด payload และ heater ถูกปิด",
+      "เมื่อแบตฟื้นหรือสถานการณ์ปลอดภัย ใช้ exit safe mode เพื่อกลับโหมดปกติ (มีผล tick ถัดไป)",
+    ],
+  },
+  {
+    id: "flight-software",
+    title: "Flight Software",
+    english: "Flight Software",
+    summary:
+      "โปรแกรมที่ OBC รันในวงโคจร เป็นกฎที่มนุษย์เขียนไว้ล่วงหน้า",
+    body: [
+      "Flight software คือชุดกฎที่บอก [[obc|OBC]] ว่าเมื่ออ่านค่าจาก sensor แล้วต้องสั่งอะไร",
+      "ใน LUNAR ใช้บล็อกแทนโค้ด โครงสร้างหลักคือ Setup → [[main-loop|Main Loop]] → Check",
+      "ไม่ใช่ AI OBC ทำตามที่เขียนไว้เท่านั้น เปลี่ยนพฤติกรรมได้เมื่ออัปโหลดโปรแกรมใหม่",
+    ],
+  },
+  {
+    id: "setup-threshold",
+    title: "Threshold (Setup)",
+    english: "Threshold",
+    summary:
+      "ค่าเส้นที่ตั้งไว้ล่วงหน้าใน Setup เช่น แบตต่ำกี่ % ถือว่าอันตราย",
+    body: [
+      "threshold ตั้งใน Setup block ก่อน tick แรก รันครั้งเดียวตอนเริ่มภารกิจ",
+      "ตัวอย่าง: battery threshold low = 20% ถ้าแบตต่ำกว่านี้ ระบบ trigger event battery_low",
+      "temp min/max และ heater power ก็ตั้งใน Setup เช่นกัน",
+    ],
+  },
+  {
+    id: "main-loop",
+    title: "Main Loop",
+    english: "Main Loop",
+    summary:
+      "บล็อกที่ OBC วนซ้ำทุก tick ใส่ if/when และสั่ง actuator ที่นี่",
+    body: [
+      "Main Loop รันซ้ำทุก [[tick|tick]] อ่าน sensor ตัดสินใจ แล้วสั่ง heater/payload",
+      "when events (battery_low, glitch_tick) ประมวลผลก่อน body ของ loop ในแต่ละ tick",
+      "wait 1 tick อยู่ท้าย loop เพื่อไม่ให้ spin หลาย action ใน tick เดียว",
+    ],
+  },
+  {
+    id: "radiation-glitch",
+    title: "Radiation Glitch",
+    english: "Radiation Glitch",
+    summary:
+      "เหตุการณ์จำลองที่ tick 8 แบตลด 25% ทันทีจากรังสีในอวกาศ",
+    body: [
+      "ใน Mission 01 glitch เกิดที่ tick 8 แน่นอน ต้องเตรียม when glitch_tick do enter [[safe-mode|safe mode]]",
+      "glitch ไม่ใช่ bug ของโค้ด แต่เป็นเหตุการณ์ที่จำลองให้ผู้เรียนฝึกรับมือฉุกเฉิน",
+      "when ต่างจาก if ตอบสนอง event ทันทีใน tick ที่เกิด",
+    ],
+  },
+  {
+    id: "space-debris",
+    title: "ขยะอวกาศ",
+    english: "Space Debris",
+    summary: "วัตถุที่ลอยในวงโคจรโดยไม่ทำงาน อาจชนกับดาวเทียมที่ใช้งานอยู่",
+    body: [
+      "ดาวเทียมที่หยุดทำงานแต่ยังอยู่ในวงโคจรกลายเป็นขยะอวกาศ",
+      "ถ้า OBC ว่างและไม่มีการควบคุม ดาวเทียมอาจกลายเป็นขยะแทนที่จะทำภารกิจ",
+    ],
+  },
+  {
+    id: "subsolar",
+    title: "Subsolar point",
+    english: "Subsolar Point",
+    summary:
+      "จุดบนวงโคจรที่ดาวเทียมโดนแสงอาทิตย์เต็มที่ เป็นจุดเริ่มภารกิจ v3.1",
+    body: [
+      "ภารกิจ orbit-based เริ่มที่ sim_sec = 0 ซึ่งเป็น subsolar ตอนนั้น is_in_sunlight = true",
+      "หลังจากนั้น phase เพิ่มขึ้นตาม sim_sec / orbitPeriodSec",
+    ],
+  },
+  {
+    id: "eclipse",
+    title: "Eclipse (เงาโลก)",
+    english: "Orbital Eclipse",
+    summary:
+      "ช่วงที่ดาวเทียมอยู่ในเงาโลก ไม่มีแสงอาทิตย์ชาร์จ (~35% ของวงโคจร LEO)",
+    body: [
+      "ในโมเดลสอน eclipseFraction ≈ 0.35 ลำดับคือ แดด → eclipse → แดด",
+      "ใช้ when eclipse_enter / eclipse_exit ตอบสนองทันทีเมื่อข้ามขอบเขต",
+    ],
+  },
+  {
+    id: "orbit-phase",
+    title: "Orbit phase",
+    english: "Orbit Phase",
+    summary:
+      "ตำแหน่งบนวงโคจร 0..1 คำนวณจาก sim_sec / orbitPeriodSec",
+    body: [
+      "phase = 0 ที่ subsolar แล้ว phase เพิ่มเรื่อยๆ จนครบ 1 รอบ",
+      "ใช้กำหนด is_in_sunlight และ eclipse_enter/exit",
+    ],
+  },
+  {
+    id: "sim-sec",
+    title: "sim_sec",
+    english: "Simulation Second",
+    summary:
+      "วินาทีจำลองบนวงโคจร โดย 1 sim_sec = 1 รอบควบคุม OBC",
+    body: [
+      "ใน lesson demo ใช้ 120 sim_sec (compressed) ส่วนภารกิจจริงประมาณ 5550 sim_sec",
+      "obc_sim_sec อ่านค่าปัจจุบันเพื่อจับเวลา comm pass",
+    ],
+  },
+  {
+    id: "mission-config",
+    title: "Mission config",
+    english: "Mission Configuration",
+    summary:
+      "การตั้งค่าภารกิจในแท็บ EPS/Payload/COMM ไม่ใช่บล็อก Blockly",
+    body: [
+      "threshold แบต/อุณหภูมิ heater power payload module pass_sim_sec ตั้งก่อนรัน",
+      "แยกจาก flight software วิศวกรตั้ง config นักเรียนเขียน logic ใน OBC",
+    ],
+  },
+  {
+    id: "flight-software-lib",
+    title: "Flight software lib",
+    english: "Flight Software Library",
+    summary:
+      "ชุดบล็อกตาม subsystem: OBC EPS Payload COMM",
+    body: [
+      "OBC คือโครงโปรแกรมและ control flow EPS คือพลังงานและแสง Payload คือเครื่องมือ",
+      "เรียกใช้ใน OBC program เหมือน import จาก subsystem",
+    ],
+  },
 ];
 
 const MAP = new Map(ENTRIES.map((e) => [e.id, e]));
+
+/** Normalize free-form marker text (e.g. "Van Allen belts") toward entry ids. */
+export function slugifyKnowledgeKey(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * Resolve `[[id|label]]` left side to a catalog id.
+ * Accepts kebab ids, spaced English titles, and close matches on `english` / `title`.
+ */
+export function resolveKnowledgeId(raw: string): string | undefined {
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+  if (MAP.has(trimmed)) return trimmed;
+
+  const slug = slugifyKnowledgeKey(trimmed);
+  if (slug && MAP.has(slug)) return slug;
+
+  const lower = trimmed.toLowerCase();
+  for (const entry of ENTRIES) {
+    if (entry.english.toLowerCase() === lower) return entry.id;
+    if (entry.title === trimmed || entry.title.toLowerCase() === lower) return entry.id;
+    if (slugifyKnowledgeKey(entry.english) === slug) return entry.id;
+    if (slugifyKnowledgeKey(entry.title) === slug) return entry.id;
+  }
+
+  // Soft match: marker is a subset of english title (e.g. "Van Allen belts"
+  // vs "Van Allen Radiation Belts") or the reverse.
+  let best: { id: string; score: number } | undefined;
+  for (const entry of ENTRIES) {
+    const eng = entry.english.toLowerCase();
+    const engSlug = slugifyKnowledgeKey(entry.english);
+    if (eng.includes(lower) || lower.includes(eng)) {
+      const score = Math.min(eng.length, lower.length);
+      if (!best || score > best.score) best = { id: entry.id, score };
+      continue;
+    }
+    if (slug && (engSlug.includes(slug) || slug.includes(engSlug))) {
+      const score = Math.min(engSlug.length, slug.length);
+      if (!best || score > best.score) best = { id: entry.id, score };
+    }
+  }
+  return best?.id;
+}
 
 export function getKnowledge(id: string): KnowledgeEntry | undefined {
   return MAP.get(id);

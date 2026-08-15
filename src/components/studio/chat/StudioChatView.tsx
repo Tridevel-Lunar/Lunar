@@ -7,6 +7,8 @@ import { HiOutlineArrowLeft, } from "react-icons/hi2";
 import { IoRocketOutline } from "react-icons/io5";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
+import KnowledgeDialog from "@/components/knowledge/KnowledgeDialog";
+import { KnowledgeProvider } from "@/components/knowledge/KnowledgeProvider";
 import BranchMapDialog from "@/components/studio/branch-map/BranchMapDialog";
 import ChatDateDivider from "@/components/studio/chat/ChatDateDivider";
 import LaikaMarkdown from "@/components/studio/chat/LaikaMarkdown";
@@ -48,6 +50,7 @@ import {
 } from "@/lib/studio-conversation";
 import { buildContextUsageEstimate, type ContextUsageEstimate } from "@/lib/laika-context";
 import { resolveDeepestVisibleUserNodeId, scrollChatToBottom, scrollUserBubbleToTop } from "@/lib/studio-visible-focus";
+import { knowledgeMarkersToPlainLabels } from "@/lib/knowledge/parseKnowledgeText";
 import {
   buildActivePath,
   defaultIntentForEntry,
@@ -327,18 +330,21 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   const streamingDivRef = useRef<HTMLDivElement | null>(null);
 
   function scheduleStreamingUi(text: string) {
+    const prepared = knowledgeMarkersToPlainLabels(text);
     if (streamingDivRef.current) {
-      streamingDivRef.current.innerHTML = micromark(text, {
+      streamingDivRef.current.innerHTML = micromark(prepared, {
         allowDangerousHtml: false,
         extensions: [gfm(), math()],
         htmlExtensions: [gfmHtml(), mathHtml()],
       });
     } else {
-      setStreamingText(micromark(text, {
-        allowDangerousHtml: false,
-        extensions: [gfm(), math()],
-        htmlExtensions: [gfmHtml(), mathHtml()],
-      }));
+      setStreamingText(
+        micromark(prepared, {
+          allowDangerousHtml: false,
+          extensions: [gfm(), math()],
+          htmlExtensions: [gfmHtml(), mathHtml()],
+        }),
+      );
     }
   }
 
@@ -684,18 +690,21 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
 
   if (entryLoading || !session) {
     return (
-      <div className="flex h-screen overflow-hidden bg-bg text-text">
-        <ModuleSidebar user={user} activeModule="studio" />
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <header className="flex shrink-0 items-center gap-2.5 border-b border-white/[0.06] px-5 py-3">
-            <IoRocketOutline className="text-xl text-amber" />
-            <h1 className="font-display text-[1.35rem] font-bold tracking-[0.18em] text-text">
-              STUDIO
-            </h1>
-          </header>
-          <StudioLoadingState label="กำลังเปิด collection…" />
+      <KnowledgeProvider>
+        <div className="flex h-screen overflow-hidden bg-bg text-text">
+          <ModuleSidebar user={user} activeModule="studio" />
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <header className="flex shrink-0 items-center gap-2.5 border-b border-white/[0.06] px-5 py-3">
+              <IoRocketOutline className="text-xl text-amber" />
+              <h1 className="font-display text-[1.35rem] font-bold tracking-[0.18em] text-text">
+                STUDIO
+              </h1>
+            </header>
+            <StudioLoadingState label="กำลังเปิด collection…" />
+          </div>
         </div>
-      </div>
+        <KnowledgeDialog />
+      </KnowledgeProvider>
     );
   }
 
@@ -716,6 +725,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
   })();
 
   return (
+    <KnowledgeProvider>
     <div className="flex h-screen overflow-hidden bg-bg text-text">
       <ModuleSidebar user={user} activeModule="studio" />
 
@@ -936,5 +946,7 @@ export default function StudioChatView({ user }: StudioChatViewProps) {
         onSelectNode={handleBranchMapSelect}
       />
     </div>
+    <KnowledgeDialog />
+    </KnowledgeProvider>
   );
 }

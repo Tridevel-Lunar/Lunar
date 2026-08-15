@@ -1,18 +1,38 @@
 import { memo } from "react";
-import Markdown from "react-markdown";
+import Markdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 
 import React from "react";
+
+import KnowledgeTerm from "@/components/knowledge/KnowledgeTerm";
+import { knowledgeMarkersToMarkdown } from "@/lib/knowledge/parseKnowledgeText";
+
 import MermaidBlock from "./MermaidBlock";
 
-/** Renders LAIKA assistant bubbles (GFM, plain markdown). */
+/** Renders LAIKA assistant bubbles (GFM + `[[id|label]]` knowledge markers). */
 
 type LaikaMarkdownProps = {
   content: string;
   size?: "default" | "chat";
 };
+
+function childrenToLabel(children: React.ReactNode): string {
+  if (typeof children === "string") return children;
+  if (typeof children === "number") return String(children);
+  if (Array.isArray(children)) return children.map(childrenToLabel).join("");
+  if (React.isValidElement<{ children?: React.ReactNode }>(children)) {
+    return childrenToLabel(children.props.children);
+  }
+  return "";
+}
+
+/** Keep `knowledge:` links — defaultUrlTransform only allows http(s)/mailto/… */
+function laikaUrlTransform(url: string): string {
+  if (url.startsWith("knowledge:")) return url;
+  return defaultUrlTransform(url);
+}
 
 const MARKDOWN_COMPONENTS = {
   p: ({ children }: { children?: React.ReactNode }) => (
@@ -37,6 +57,23 @@ const MARKDOWN_COMPONENTS = {
   em: ({ children }: { children?: React.ReactNode }) => (
     <em className="text-text/80">{children}</em>
   ),
+  a: ({ href, children }: { href?: string; children?: React.ReactNode }) => {
+    if (href?.startsWith("knowledge:")) {
+      const id = href.slice("knowledge:".length);
+      const label = childrenToLabel(children) || undefined;
+      return <KnowledgeTerm id={id} label={label} />;
+    }
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className="text-cyan underline-offset-2 hover:underline"
+      >
+        {children}
+      </a>
+    );
+  },
   code: ({
     className,
     children,
@@ -69,8 +106,12 @@ const MARKDOWN_COMPONENTS = {
     );
   },
   pre: ({ children }: { children?: React.ReactNode }) => {
-    // MermaidBlock handles its own styling — don't wrap in <pre>
-    if (React.isValidElement(children) && typeof children.type !== "string" && (children.type as React.ComponentType & { displayName?: string }).displayName === "MermaidBlock") {
+    if (
+      React.isValidElement(children) &&
+      typeof children.type !== "string" &&
+      (children.type as React.ComponentType & { displayName?: string }).displayName ===
+        "MermaidBlock"
+    ) {
       return <>{children}</>;
     }
     return (
@@ -86,34 +127,25 @@ const MARKDOWN_COMPONENTS = {
   ),
   table: ({ children }: { children?: React.ReactNode }) => (
     <div className="laika-table-wrap mb-3 overflow-x-auto last:mb-0">
-      <table className="laika-table w-full border-collapse text-[0.82rem]">
-        {children}
-      </table>
+      <table className="laika-table w-full border-collapse text-[0.82rem]">{children}</table>
     </div>
   ),
   thead: ({ children }: { children?: React.ReactNode }) => (
     <thead className="border-b border-white/15">{children}</thead>
   ),
-  tbody: ({ children }: { children?: React.ReactNode }) => (
-    <tbody>{children}</tbody>
-  ),
+  tbody: ({ children }: { children?: React.ReactNode }) => <tbody>{children}</tbody>,
   tr: ({ children }: { children?: React.ReactNode }) => (
     <tr className="border-b border-white/[0.06] last:border-0">{children}</tr>
   ),
   th: ({ children }: { children?: React.ReactNode }) => (
-    <th className="px-3 py-2 text-left font-semibold text-text/90">
-      {children}
-    </th>
+    <th className="px-3 py-2 text-left font-semibold text-text/90">{children}</th>
   ),
   td: ({ children }: { children?: React.ReactNode }) => (
     <td className="px-3 py-2 text-text/80">{children}</td>
   ),
 };
 
-function LaikaMarkdown({
-  content,
-  size = "default",
-}: LaikaMarkdownProps) {
+function LaikaMarkdown({ content, size = "default" }: LaikaMarkdownProps) {
   if (!content) {
     return null;
   }
@@ -128,9 +160,10 @@ function LaikaMarkdown({
       <Markdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}
+        urlTransform={laikaUrlTransform}
         components={MARKDOWN_COMPONENTS}
       >
-        {content}
+        {knowledgeMarkersToMarkdown(content)}
       </Markdown>
     </div>
   );
