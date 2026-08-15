@@ -125,7 +125,7 @@ function RecommendPanel({ path }: { path: LearningPath | null }) {
 
   return (
     <motion.div
-      className="mx-auto w-full max-w-7xl space-y-5"
+      className="mx-auto flex w-full max-w-7xl flex-col"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
@@ -134,14 +134,12 @@ function RecommendPanel({ path }: { path: LearningPath | null }) {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        className="shrink-0 border-b border-white/[0.06] pb-4"
       >
-        <p className="font-mono mb-2 text-[0.62rem] tracking-[0.18em] text-cyan/70">
-          RECOMMENDED
-        </p>
-        <h2 className="font-thai text-[1.35rem] font-semibold tracking-wide text-text">
+        <h2 className="font-thai text-[clamp(1.25rem,3vw,1.75rem)] font-semibold tracking-wide text-text">
           แนะนำสำหรับคุณ
         </h2>
-        <p className="font-section-thai mt-2 max-w-xl text-[0.88rem] leading-relaxed text-text/55">
+        <p className="font-section-thai mt-1 max-w-xl text-[0.9rem] text-text/55">
           {fromPath
             ? "ด่านตาม Path ที่คุณวางใน Space"
             : hasPath
@@ -150,51 +148,53 @@ function RecommendPanel({ path }: { path: LearningPath | null }) {
         </p>
       </motion.div>
 
-      {!hasPath && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.24, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-white/[0.1] bg-bg/45 px-4 py-3 backdrop-blur-md"
-        >
-          <p className="font-section-thai flex-1 text-[0.82rem] text-text/65">
-            วาง Path ใน Space แล้ว Arena จะแนะนำด่านที่ตรงกับคอร์สที่สนใจ
-          </p>
-          <Link
-            to={spacePathSessionPath()}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-cyan/45 bg-cyan/10 px-3 py-1.5 font-section-thai text-[0.82rem] text-cyan no-underline hover:bg-cyan/15"
-          >
-            คุยกับ LAIKA
-            <IoArrowForward className="text-sm" />
-          </Link>
-          <Link
-            to={spacePathTabPath()}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-1.5 font-section-thai text-[0.82rem] text-text/75 no-underline hover:border-cyan/35 hover:text-cyan"
-          >
-            ดู Path
-          </Link>
-        </motion.div>
-      )}
-
-      <div className="space-y-2.5">
-        {missions.map((mission, i) => (
+      <div className="space-y-5 py-6 pb-10">
+        {!hasPath && (
           <motion.div
-            key={mission.id}
-            className="w-full"
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.28,
-              delay: 0.06 + 0.05 * i,
-              ease: [0.16, 1, 0.3, 1],
-            }}
+            transition={{ duration: 0.24, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-wrap items-center gap-3 rounded-xl border border-white/[0.1] bg-bg/45 px-4 py-3 backdrop-blur-md"
           >
-            <MissionCard
-              mission={mission}
-              matchHint={fromPath ? "จาก Path ของคุณ" : undefined}
-            />
+            <p className="font-section-thai flex-1 text-[0.82rem] text-text/65">
+              วาง Path ใน Space แล้ว Arena จะแนะนำด่านที่ตรงกับคอร์สที่สนใจ
+            </p>
+            <Link
+              to={spacePathSessionPath()}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-cyan/45 bg-cyan/10 px-3 py-1.5 font-section-thai text-[0.82rem] text-cyan no-underline hover:bg-cyan/15"
+            >
+              คุยกับ LAIKA
+              <IoArrowForward className="text-sm" />
+            </Link>
+            <Link
+              to={spacePathTabPath()}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-1.5 font-section-thai text-[0.82rem] text-text/75 no-underline hover:border-cyan/35 hover:text-cyan"
+            >
+              ดู Path
+            </Link>
           </motion.div>
-        ))}
+        )}
+
+        <div className="space-y-2.5">
+          {missions.map((mission, i) => (
+            <motion.div
+              key={mission.id}
+              className="w-full"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.28,
+                delay: 0.06 + 0.05 * i,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+            >
+              <MissionCard
+                mission={mission}
+                matchHint={fromPath ? "จาก Path ของคุณ" : undefined}
+              />
+            </motion.div>
+          ))}
+        </div>
       </div>
     </motion.div>
   );
