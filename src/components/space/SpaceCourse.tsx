@@ -1,12 +1,20 @@
 import { IoPlanetOutline } from "react-icons/io5";
 import { GiCube, GiOrbital } from "react-icons/gi";
 import { TbBlocks } from "react-icons/tb";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
 import type { User } from "@/lib/api";
 import { getCourse } from "@/components/space/core/registry";
-import { spaceExplorePath, spaceHomePath, spaceModulePath } from "@/components/space/core/routes";
+import {
+  rememberSpaceCourseBack,
+  resolveSpaceCourseBack,
+  spaceExplorePath,
+  spaceHomePath,
+  spaceModulePath,
+  type SpaceCourseLocationState,
+} from "@/components/space/core/routes";
 import type { SpaceModuleDefinition } from "@/components/space/core/types";
 import { useSpaceProgress } from "@/components/space/hooks/useSpaceProgress";
 
@@ -170,9 +178,16 @@ function TopicRow({
 
 export default function SpaceCourse({ user }: { user: User }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { courseId = "" } = useParams<{ courseId: string }>();
   const course = getCourse(courseId);
   const { isModuleCompleted, courseProgressPercent } = useSpaceProgress();
+
+  useEffect(() => {
+    if (!courseId) return;
+    const from = (location.state as SpaceCourseLocationState | null)?.from;
+    rememberSpaceCourseBack(courseId, from);
+  }, [courseId, location.state]);
 
   if (!course) {
     return (
@@ -203,6 +218,10 @@ export default function SpaceCourse({ user }: { user: User }) {
     }
   }
 
+  function handleBack() {
+    navigate(resolveSpaceCourseBack(course.id, spaceExplorePath()));
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-bg text-text">
       <ModuleSidebar user={user} activeModule="space" />
@@ -211,7 +230,7 @@ export default function SpaceCourse({ user }: { user: User }) {
         <header className="flex shrink-0 items-center gap-2.5 border-b border-white/[0.06] px-5 py-3">
           <button
             type="button"
-            onClick={() => navigate(spaceExplorePath())}
+            onClick={handleBack}
             className="cursor-pointer text-lg text-text/40 transition hover:text-cyan"
           >
             ←

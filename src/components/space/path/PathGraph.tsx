@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { spaceCoursePath } from "@/components/space/core/routes";
+import { spaceCourseLinkState, spaceCoursePath } from "@/components/space/core/routes";
 import { findCourse, type CatalogCourse, type SpaceCatalog } from "@/components/space/catalog/types";
 import type { LearningPathStep, PathEdge } from "@/lib/api";
 
@@ -20,6 +20,8 @@ type Props = {
   edges?: PathEdge[];
   catalog: SpaceCatalog | null;
   saved: boolean;
+  /** Where course Back should return (e.g. /space/path). */
+  fromPath?: string;
 };
 
 type Transform = {
@@ -36,7 +38,7 @@ type Velocity = {
 const MIN_SCALE = 0.35;
 const MAX_SCALE = 2.2;
 const DRAG_THRESHOLD = 6;
-const PAN_FRICTION = 0.92;
+const PAN_FRICTION = 0.85;
 const MIN_PAN_SPEED = 0.35;
 const ZOOM_FACTOR = 1.1;
 
@@ -55,7 +57,7 @@ function zoomAtPoint(current: Transform, nextScale: number, focusX: number, focu
   };
 }
 
-export default function PathGraph({ steps, edges, catalog, saved }: Props) {
+export default function PathGraph({ steps, edges, catalog, saved, fromPath }: Props) {
   const uid = useId().replace(/:/g, "");
   const markerId = `path-map-arrow-${uid}`;
   const markerHotId = `${markerId}-hot`;
@@ -415,6 +417,7 @@ export default function PathGraph({ steps, edges, catalog, saved }: Props) {
                   focused={hoverId === node.id}
                   linked={targetIds.has(node.id)}
                   shouldSuppressClick={() => suppressCardClickRef.current}
+                  fromPath={fromPath}
                 />
               </div>
             );
@@ -432,6 +435,7 @@ function PathMapCard({
   focused,
   linked,
   shouldSuppressClick,
+  fromPath,
 }: {
   step: LearningPathStep;
   course: CatalogCourse | undefined;
@@ -439,6 +443,7 @@ function PathMapCard({
   focused: boolean;
   linked: boolean;
   shouldSuppressClick: () => boolean;
+  fromPath?: string;
 }) {
   const title = course?.title ?? step.courseId;
   const titleTh = course?.titleTh ?? "";
@@ -485,6 +490,7 @@ function PathMapCard({
     return (
       <Link
         to={spaceCoursePath(step.courseId)}
+        state={fromPath ? spaceCourseLinkState(fromPath) : undefined}
         className={`${shell} no-underline`}
         data-path-node
         draggable={false}

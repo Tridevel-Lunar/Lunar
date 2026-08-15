@@ -192,16 +192,16 @@ export default function CatalogBrowser() {
 
               {courses.length > 0 ? (
                 <section>
-                  <ul className="mx-auto max-w-3xl space-y-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     {courses.map((course) => (
-                      <li key={course.id}>
-                        <CatalogCourseCard
-                          course={course}
-                          progressPercent={pilotProgress(course.id, courseProgressPercent)}
-                        />
-                      </li>
+                      <CatalogCourseCard
+                        key={course.id}
+                        course={course}
+                        accent={accent}
+                        progressPercent={pilotProgress(course.id, courseProgressPercent)}
+                      />
                     ))}
-                  </ul>
+                  </div>
                 </section>
               ) : null}
 

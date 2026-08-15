@@ -1,40 +1,45 @@
-import { Link } from "react-router-dom";
-import { IoPlanetOutline } from "react-icons/io5";
+import { Link, useLocation } from "react-router-dom";
+import { IoArrowForward } from "react-icons/io5";
 
-import { spaceCoursePath } from "@/components/space/core/routes";
+import { spaceCourseLinkState, spaceCoursePath, spaceExplorePath } from "@/components/space/core/routes";
 
 import type { CatalogCourse } from "./types";
 import { isEnterable, statusLabel } from "./types";
 
 type Props = {
   course: CatalogCourse;
+  accent?: string;
   progressPercent?: number | null;
 };
 
-export default function CatalogCourseCard({ course, progressPercent }: Props) {
+export default function CatalogCourseCard({
+  course,
+  accent = "#00e5ff",
+  progressPercent,
+}: Props) {
+  const location = useLocation();
   const enterable = isEnterable(course);
+  const from = location.pathname.startsWith("/space") ? location.pathname : spaceExplorePath();
 
   const body = (
     <>
       <div
-        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border ${
-          enterable
-            ? "border-cyan/30 bg-cyan/10 text-cyan"
-            : "border-white/10 bg-white/[0.03] text-text/35"
-        }`}
-      >
-        <IoPlanetOutline className="text-xl" />
-      </div>
+        className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100"
+        style={{
+          background: `radial-gradient(500px circle at 15% 0%, ${accent}22, transparent 55%)`,
+        }}
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-px opacity-50 transition group-hover:opacity-100"
+        style={{
+          background: `linear-gradient(90deg, transparent, ${accent}, transparent)`,
+        }}
+        aria-hidden
+      />
 
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p
-            className={`font-thai text-[1rem] font-semibold tracking-wide ${
-              enterable ? "text-text" : "text-text/70"
-            }`}
-          >
-            {course.title}
-          </p>
+      <div className="relative z-[1] flex h-full flex-col">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
           <span
             className={`font-mono rounded-md border px-2 py-0.5 text-[0.52rem] tracking-wider ${
               enterable
@@ -47,8 +52,15 @@ export default function CatalogCourseCard({ course, progressPercent }: Props) {
             {statusLabel(course.status)}
           </span>
         </div>
-        <p className="font-thai mt-0.5 text-[0.92rem] font-medium text-text/65">{course.titleTh}</p>
-        <p className="font-section-thai mt-1.5 line-clamp-2 text-[0.76rem] leading-relaxed text-text/42">
+        <h3
+          className={`font-thai text-[1.05rem] font-semibold tracking-wide ${
+            enterable ? "text-text" : "text-text/70"
+          }`}
+        >
+          {course.title}
+        </h3>
+        <p className="font-thai mt-1 text-[0.92rem] font-medium text-text/65">{course.titleTh}</p>
+        <p className="font-section-thai mt-2 line-clamp-2 flex-1 text-[0.76rem] leading-relaxed text-text/45">
           {course.summary}
         </p>
         {enterable && progressPercent != null ? (
@@ -64,26 +76,38 @@ export default function CatalogCourseCard({ course, progressPercent }: Props) {
             </span>
           </div>
         ) : null}
+        <div className="mt-4 flex items-center justify-end gap-1">
+          <span
+            className={`font-section-thai inline-flex items-center gap-1 text-[0.78rem] transition ${
+              enterable ? "group-hover:translate-x-0.5" : ""
+            }`}
+            style={{ color: enterable ? accent : "rgba(255,255,255,0.25)" }}
+          >
+            {enterable ? "เข้าเรียน" : "เร็ว ๆ นี้"}
+            {enterable ? <IoArrowForward className="text-sm" /> : null}
+          </span>
+        </div>
       </div>
-
-      <span
-        className={`shrink-0 text-xl transition ${
-          enterable ? "text-text/25 group-hover:text-cyan/70" : "text-text/15"
-        }`}
-      >
-        {enterable ? "→" : "·"}
-      </span>
     </>
   );
 
-  const className =
-    "group flex w-full items-start gap-4 rounded-xl border border-white/[0.1] bg-bg/45 p-4 backdrop-blur-md transition";
+  const className = `group relative flex min-h-[168px] w-full flex-col overflow-hidden rounded-2xl border p-5 backdrop-blur-md transition ${
+    enterable
+      ? "border-white/[0.12] hover:border-white/25"
+      : "cursor-default border-white/[0.08] opacity-90"
+  }`;
+
+  const style = {
+    background: `linear-gradient(145deg, ${accent}18 0%, rgba(6,14,28,0.72) 48%, rgba(3,8,18,0.78) 100%)`,
+  };
 
   if (enterable) {
     return (
       <Link
         to={spaceCoursePath(course.id)}
-        className={`${className} no-underline hover:border-cyan/30 hover:bg-cyan/[0.06]`}
+        state={spaceCourseLinkState(from)}
+        className={`${className} no-underline`}
+        style={style}
       >
         {body}
       </Link>
@@ -91,11 +115,7 @@ export default function CatalogCourseCard({ course, progressPercent }: Props) {
   }
 
   return (
-    <div
-      className={`${className} cursor-default opacity-85`}
-      aria-disabled
-      title="คอร์สนี้ยังไม่เปิดเรียน"
-    >
+    <div className={className} style={style} aria-disabled title="คอร์สนี้ยังไม่เปิดเรียน">
       {body}
     </div>
   );
