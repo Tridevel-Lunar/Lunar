@@ -12,6 +12,9 @@ import {
   type PathProposal,
 } from "@/lib/api";
 import { spaceExplorePath, spacePathTabPath } from "@/components/space/core/routes";
+import LaikaMarkdown from "@/components/studio/chat/LaikaMarkdown";
+import LaikaTypingStatus from "@/components/studio/chat/LaikaTypingStatus";
+import { LaikaAvatar } from "@/components/studio/shared/studio-shared";
 import { useQueuedTypewriter } from "@/lib/use-queued-typewriter";
 
 import { SPACE_PATH_OPENING, SPACE_PATH_PLACEHOLDER } from "./copy";
@@ -263,7 +266,7 @@ export default function PathOnboardingChat({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           {items.map((item, i) =>
             item.role === "assistant" ? (
               <LaikaBubble
@@ -367,17 +370,19 @@ function Composer({
 
 function LaikaBubble({ text, pending }: { text: string; pending?: boolean }) {
   return (
-    <div className="flex items-start gap-3">
-      <div className="flex shrink-0 flex-col items-center gap-1.5">
-        <div className="h-11 w-11 overflow-hidden rounded-full border-2 border-amber-400/25 shadow-[0_0_12px_rgba(251,191,36,0.15)]">
-          <img src={LAIKA_AVATAR_URL} alt="LAIKA" className="h-full w-full object-cover object-center" />
+    <div className="flex justify-start">
+      <div className="flex max-w-full gap-2.5">
+        <LaikaAvatar />
+        <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md border border-white/10 bg-white/[0.04] px-4 py-2.5">
+          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+            <p className="font-mono text-[0.85rem] tracking-[0.14em] text-amber">LAIKA</p>
+          </div>
+          {pending ? (
+            <LaikaTypingStatus message="LAIKA กำลังคิดเส้นทาง…" />
+          ) : (
+            <LaikaMarkdown content={text} size="chat" />
+          )}
         </div>
-        <p className="font-mono text-[0.5rem] tracking-wider text-amber-400/70">LAIKA</p>
-      </div>
-      <div className="relative min-w-0 flex-1 rounded-2xl rounded-tl-md border border-amber-400/15 bg-amber-400/[0.06] px-3.5 py-3">
-        <p className="font-section-thai text-[0.88rem] leading-relaxed text-white/85 whitespace-pre-wrap">
-          {text || (pending ? "…" : "")}
-        </p>
       </div>
     </div>
   );
@@ -385,9 +390,9 @@ function LaikaBubble({ text, pending }: { text: string; pending?: boolean }) {
 
 function UserBubble({ text }: { text: string }) {
   return (
-    <div className="flex justify-end">
-      <div className="max-w-[85%] rounded-2xl rounded-tr-md border border-cyan/20 bg-cyan/[0.08] px-3.5 py-3">
-        <p className="font-section-thai text-[0.88rem] leading-relaxed text-text/90 whitespace-pre-wrap">
+    <div className="flex w-full justify-end">
+      <div className="max-w-[min(100%,28rem)] rounded-2xl rounded-tr-md border border-teal/25 bg-teal/10 px-4 py-2.5">
+        <p className="font-section-thai whitespace-pre-wrap text-[0.88rem] leading-relaxed text-text/90">
           {text}
         </p>
       </div>
