@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { HiOutlineEllipsisVertical } from "react-icons/hi2";
 
 import { findCourse, type SpaceCatalog } from "@/components/space/catalog/types";
@@ -41,13 +42,20 @@ export default function PathTab({ path, catalog, onReplan, onExplore }: Props) {
     <div className="relative flex h-full min-h-0">
       <section className="min-h-0 min-w-0 flex-1">
         {saved ? (
-          <PathGraph
-            steps={saved.steps}
-            edges={saved.edges ?? []}
-            catalog={catalog}
-            saved
-            fromPath={spacePathTabPath()}
-          />
+          <motion.div
+            className="h-full min-h-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <PathGraph
+              steps={saved.steps}
+              edges={saved.edges ?? []}
+              catalog={catalog}
+              saved
+              fromPath={spacePathTabPath()}
+            />
+          </motion.div>
         ) : (
           <EmptyPath path={path} onExplore={onExplore} />
         )}
@@ -70,7 +78,12 @@ function EmptyPath({
   const draft = path?.status === "draft";
   return (
     <div className="flex h-full items-center justify-center px-8">
-      <div className="max-w-md text-center">
+      <motion.div
+        className="max-w-md text-center"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+      >
         <p className="font-mono mb-3 text-[0.62rem] tracking-[0.18em] text-cyan/70">YOUR PATH</p>
         <h2 className="font-thai mb-3 text-[1.35rem] font-semibold tracking-wide text-text">
           {draft ? "คุยกับ LAIKA ค้างไว้" : skipped ? "ยังไม่มีผังส่วนตัว" : "ยังไม่มีเส้นทาง"}
@@ -97,7 +110,7 @@ function EmptyPath({
             สำรวจคลัง
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -119,7 +132,12 @@ function PathInfoPanel({
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <aside className="flex w-[min(100%,380px)] shrink-0 flex-col border-l border-white/[0.08] bg-bg/55 backdrop-blur-md">
+    <motion.aside
+      className="flex w-[min(100%,380px)] shrink-0 flex-col border-l border-white/[0.08] bg-bg/55 backdrop-blur-md"
+      initial={{ opacity: 0, x: 24 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="shrink-0 border-b border-white/[0.06] px-5 py-4">
         <div className="flex items-center justify-between gap-2">
           <p className="font-mono text-[0.58rem] tracking-[0.16em] text-cyan/70">เส้นทางของฉัน</p>
@@ -193,16 +211,26 @@ function PathInfoPanel({
         </p>
       </div>
       <ol className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-4">
-        {path.steps.map((step) => (
-          <CourseInfoCard
+        {path.steps.map((step, i) => (
+          <motion.li
             key={step.courseId}
-            step={step}
-            catalog={catalog}
-            progress={courseProgressPercent(step.courseId, moduleIdsFor(step.courseId, catalog))}
-          />
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.24,
+              delay: 0.08 + 0.04 * i,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+          >
+            <CourseInfoCard
+              step={step}
+              catalog={catalog}
+              progress={courseProgressPercent(step.courseId, moduleIdsFor(step.courseId, catalog))}
+            />
+          </motion.li>
         ))}
       </ol>
-    </aside>
+    </motion.aside>
   );
 }
 
@@ -252,14 +280,12 @@ function CourseInfoCard({
   );
 
   return (
-    <li>
-      <Link
-        to={spaceCoursePath(step.courseId)}
-        state={spaceCourseLinkState(spacePathTabPath())}
-        className="relative block overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-3 no-underline transition hover:border-cyan/30"
-      >
-        {body}
-      </Link>
-    </li>
+    <Link
+      to={spaceCoursePath(step.courseId)}
+      state={spaceCourseLinkState(spacePathTabPath())}
+      className="relative block overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-3 no-underline transition hover:border-cyan/30"
+    >
+      {body}
+    </Link>
   );
 }

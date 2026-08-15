@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   IoArrowForward,
   IoGameControllerOutline,
@@ -123,8 +124,17 @@ function RecommendPanel({ path }: { path: LearningPath | null }) {
     path.steps.length > 0;
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
-      <div>
+    <motion.div
+      className="mx-auto w-full max-w-7xl space-y-5"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+      >
         <p className="font-mono mb-2 text-[0.62rem] tracking-[0.18em] text-cyan/70">
           RECOMMENDED
         </p>
@@ -138,10 +148,15 @@ function RecommendPanel({ path }: { path: LearningPath | null }) {
               ? "ยังไม่มีด่านที่ตรงกับคอร์สใน Path เลย โชว์ด่านเด่นไว้ก่อน"
               : "ยังไม่ได้วาง Path โชว์ด่านเด่นไว้ก่อน หรือไปคุยกับ LAIKA ก็ได้"}
         </p>
-      </div>
+      </motion.div>
 
       {!hasPath && (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/[0.1] bg-bg/45 px-4 py-3 backdrop-blur-md">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.24, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-white/[0.1] bg-bg/45 px-4 py-3 backdrop-blur-md"
+        >
           <p className="font-section-thai flex-1 text-[0.82rem] text-text/65">
             วาง Path ใน Space แล้ว Arena จะแนะนำด่านที่ตรงกับคอร์สที่สนใจ
           </p>
@@ -158,19 +173,30 @@ function RecommendPanel({ path }: { path: LearningPath | null }) {
           >
             ดู Path
           </Link>
-        </div>
+        </motion.div>
       )}
 
       <div className="space-y-2.5">
-        {missions.map((mission) => (
-          <MissionCard
+        {missions.map((mission, i) => (
+          <motion.div
             key={mission.id}
-            mission={mission}
-            matchHint={fromPath ? "จาก Path ของคุณ" : undefined}
-          />
+            className="w-full"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.28,
+              delay: 0.06 + 0.05 * i,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+          >
+            <MissionCard
+              mission={mission}
+              matchHint={fromPath ? "จาก Path ของคุณ" : undefined}
+            />
+          </motion.div>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -195,7 +221,7 @@ function ExploreMissionTile({
   return (
     <Link
       to={`/arena/mission/${mission.id}`}
-      className={`group relative flex min-h-[168px] flex-col overflow-hidden rounded-2xl border p-5 no-underline backdrop-blur-md transition ${
+      className={`group relative flex min-h-[168px] w-full flex-col overflow-hidden rounded-2xl border p-5 no-underline backdrop-blur-md transition ${
         playable
           ? "border-white/[0.12] hover:border-white/25"
           : "border-white/[0.08] opacity-90"
@@ -328,65 +354,104 @@ function ExplorePanel() {
   const branch = ARENA_BRANCHES.find((b) => b.id === branchId) ?? null;
   const accent = branch ? BRANCH_ACCENT[branch.id] : "#00e5ff";
   const missions = branch ? missionsForBranch(branch.id) : [];
+  const viewKey = branchId ?? "root";
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col">
-      <header className="shrink-0 border-b border-white/[0.06] pb-4">
-        {branch ? (
-          <button
-            type="button"
-            onClick={() => setBranchId(null)}
-            className="font-mono mb-2 cursor-pointer text-[0.62rem] tracking-wider text-text/40 transition hover:text-cyan"
-          >
-            ← สำรวจทั้งหมด
-          </button>
-        ) : null}
-        <h2
-          className="font-thai text-[clamp(1.25rem,3vw,1.75rem)] font-semibold tracking-wide text-text"
-          style={branch ? { color: accent } : undefined}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={`header-${viewKey}`}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="shrink-0 border-b border-white/[0.06] pb-4"
         >
-          {branch ? branch.en : "สำรวจด่าน"}
-        </h2>
-        {branch ? (
-          <p className="font-thai mt-1 text-[1.05rem] font-medium text-text/65">
-            {branch.th}
-          </p>
-        ) : (
-          <p className="font-section-thai mt-1 max-w-xl text-[0.9rem] text-text/55">
-            เลือกสายภารกิจ จากวงโคจร ขึ้นฟ้า ของบิน ภาคพื้น ใช้บนโลก หรือออกแบบภารกิจ
-          </p>
-        )}
-      </header>
+          {branch ? (
+            <button
+              type="button"
+              onClick={() => setBranchId(null)}
+              className="font-mono mb-2 cursor-pointer text-[0.62rem] tracking-wider text-text/40 transition hover:text-cyan"
+            >
+              ← สำรวจทั้งหมด
+            </button>
+          ) : null}
+          <h2
+            className="font-thai text-[clamp(1.25rem,3vw,1.75rem)] font-semibold tracking-wide text-text"
+            style={branch ? { color: accent } : undefined}
+          >
+            {branch ? branch.en : "สำรวจด่าน"}
+          </h2>
+          {branch ? (
+            <p className="font-thai mt-1 text-[1.05rem] font-medium text-text/65">
+              {branch.th}
+            </p>
+          ) : (
+            <p className="font-section-thai mt-1 max-w-xl text-[0.9rem] text-text/55">
+              เลือกสายภารกิจ จากวงโคจร ขึ้นฟ้า ของบิน ภาคพื้น ใช้บนโลก หรือออกแบบภารกิจ
+            </p>
+          )}
+        </motion.div>
+      </AnimatePresence>
 
       <div className="py-6 pb-10">
-        {!branch ? (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {ARENA_BRANCHES.map((b, i) => {
-              const list = missionsForBranch(b.id);
-              if (list.length === 0) return null;
-              return (
-                <ExploreBranchTile
-                  key={b.id}
-                  branch={b}
-                  index={i}
-                  missionCount={list.length}
-                  playableCount={list.filter((m) => m.status === "playable").length}
-                  onOpen={() => setBranchId(b.id)}
-                />
-              );
-            })}
-          </div>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {missions.map((mission) => (
-              <ExploreMissionTile
-                key={mission.id}
-                mission={mission}
-                accent={accent}
-              />
-            ))}
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={viewKey}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {!branch ? (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {ARENA_BRANCHES.map((b, i) => {
+                  const list = missionsForBranch(b.id);
+                  if (list.length === 0) return null;
+                  return (
+                    <motion.div
+                      key={b.id}
+                      className="min-h-0 w-full"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.28,
+                        delay: 0.04 * i,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
+                    >
+                      <ExploreBranchTile
+                        branch={b}
+                        index={i}
+                        missionCount={list.length}
+                        playableCount={list.filter((m) => m.status === "playable").length}
+                        onOpen={() => setBranchId(b.id)}
+                      />
+                    </motion.div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {missions.map((mission, i) => (
+                  <motion.div
+                    key={mission.id}
+                    className="min-h-0 w-full"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.28,
+                      delay: 0.05 * i,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                  >
+                    <ExploreMissionTile mission={mission} accent={accent} />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

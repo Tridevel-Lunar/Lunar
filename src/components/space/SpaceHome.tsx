@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { IoPlanetOutline } from "react-icons/io5";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
@@ -148,22 +149,53 @@ export default function SpaceHome({ user }: { user: User }) {
               <SpaceLoadingState
                 label={replanning ? "กำลังเปิดเซสชันใหม่…" : "กำลังโหลด…"}
               />
-            ) : tab === "home" ? (
-              <HomeView
-                onGoToExplore={() => goTab("explore")}
-                onGoToPath={() => goTab("path")}
-                path={path}
-                onAskLaika={() => navigate(spacePathSessionPath())}
-              />
-            ) : tab === "path" ? (
-              <PathTab
-                path={path}
-                catalog={catalog}
-                onReplan={() => void handleReplan()}
-                onExplore={() => goTab("explore")}
-              />
             ) : (
-              <CatalogBrowser />
+              <AnimatePresence mode="wait">
+                {tab === "home" ? (
+                  <motion.div
+                    key="home"
+                    className="h-full min-h-0"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <HomeView
+                      onGoToExplore={() => goTab("explore")}
+                      onGoToPath={() => goTab("path")}
+                      path={path}
+                      onAskLaika={() => navigate(spacePathSessionPath())}
+                    />
+                  </motion.div>
+                ) : tab === "path" ? (
+                  <motion.div
+                    key="path"
+                    className="h-full min-h-0"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <PathTab
+                      path={path}
+                      catalog={catalog}
+                      onReplan={() => void handleReplan()}
+                      onExplore={() => goTab("explore")}
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="explore"
+                    className="h-full min-h-0"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <CatalogBrowser />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             )}
           </div>
           <Outlet />
@@ -189,17 +221,37 @@ function HomeView({
 
   return (
     <div className="flex h-full max-w-xl flex-col justify-center px-8 py-10">
-      <p className="font-mono mb-3 text-[0.7rem] tracking-[0.3em] text-cyan/70 uppercase">
+      <motion.p
+        className="font-mono mb-3 text-[0.7rem] tracking-[0.3em] text-cyan/70 uppercase"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+      >
         SPACE MODULE
-      </p>
-      <h2 className="font-thai mb-4 text-[clamp(1.8rem,4vw,2.8rem)] font-semibold tracking-wide text-text">
+      </motion.p>
+      <motion.h2
+        className="font-thai mb-4 text-[clamp(1.8rem,4vw,2.8rem)] font-semibold tracking-wide text-text"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.24, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
+      >
         เรียนรู้เทคโนโลยีอวกาศ
-      </h2>
-      <p className="font-section-thai mb-6 max-w-[480px] text-[0.92rem] leading-relaxed text-text/65">
+      </motion.h2>
+      <motion.p
+        className="font-section-thai mb-6 max-w-[480px] text-[0.92rem] leading-relaxed text-text/65"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.24, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+      >
         สำรวจคลังหัวข้อ Space Technology จากอวกาศรอบตัว การใช้บนโลก ไปจนถึงคอร์ส
         CubeSat ที่เรียนได้จริงวันนี้
-      </p>
-      <div className="mb-8 flex flex-wrap gap-3">
+      </motion.p>
+      <motion.div
+        className="mb-8 flex flex-wrap gap-3"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.24, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+      >
         <button
           type="button"
           onClick={path?.status === "active" ? onGoToPath : onAskLaika}
@@ -214,47 +266,64 @@ function HomeView({
         >
           สำรวจคลัง
         </button>
-      </div>
+      </motion.div>
 
       {courses.length > 0 ? (
         <div className="space-y-3">
-          <p className="font-mono text-[0.58rem] tracking-[0.14em] text-muted">CONTINUE</p>
-          {courses.map((course) => {
+          <motion.p
+            className="font-mono text-[0.58rem] tracking-[0.14em] text-muted"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, delay: 0.16 }}
+          >
+            CONTINUE
+          </motion.p>
+          {courses.map((course, i) => {
             const progress = courseProgressPercent(
               course.id,
               course.modules.map((m) => m.id),
             );
             return (
-              <Link
+              <motion.div
                 key={course.id}
-                to={spaceCoursePath(course.id)}
-                state={spaceCourseLinkState(spaceHomePath())}
-                className="group flex items-center gap-4 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 no-underline backdrop-blur-2xl transition hover:border-cyan/25 hover:bg-white/[0.05]"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.28,
+                  delay: 0.18 + 0.05 * i,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
               >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-cyan/25 bg-cyan/5">
-                  <IoPlanetOutline className="text-xl text-cyan" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-display text-[0.9rem] font-semibold tracking-wide text-text">
-                    {course.title}
-                  </p>
-                  <p className="font-section-thai mt-0.5 text-[0.78rem] text-text/50">
-                    {course.description}
-                  </p>
-                  <div className="mt-2 flex items-center gap-3">
-                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-cyan to-teal"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    <span className="font-mono shrink-0 text-[0.6rem] tracking-wider text-cyan">
-                      {progress}%
-                    </span>
+                <Link
+                  to={spaceCoursePath(course.id)}
+                  state={spaceCourseLinkState(spaceHomePath())}
+                  className="group flex items-center gap-4 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 no-underline backdrop-blur-2xl transition hover:border-cyan/25 hover:bg-white/[0.05]"
+                >
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-cyan/25 bg-cyan/5">
+                    <IoPlanetOutline className="text-xl text-cyan" />
                   </div>
-                </div>
-                <span className="text-xl text-text/25 transition group-hover:text-cyan/70">→</span>
-              </Link>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-display text-[0.9rem] font-semibold tracking-wide text-text">
+                      {course.title}
+                    </p>
+                    <p className="font-section-thai mt-0.5 text-[0.78rem] text-text/50">
+                      {course.description}
+                    </p>
+                    <div className="mt-2 flex items-center gap-3">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-cyan to-teal"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <span className="font-mono shrink-0 text-[0.6rem] tracking-wider text-cyan">
+                        {progress}%
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xl text-text/25 transition group-hover:text-cyan/70">→</span>
+                </Link>
+              </motion.div>
             );
           })}
         </div>

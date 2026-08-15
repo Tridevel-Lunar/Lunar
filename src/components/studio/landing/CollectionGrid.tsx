@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { HiOutlinePlus } from "react-icons/hi2";
 
 import type { CollectionEntry } from "@/components/studio/data/studio-data";
@@ -10,6 +11,8 @@ import { collectionHasLaika } from "@/lib/studio-storage";
 
 /** Grid of saved collections on the Studio landing page. */
 
+const ease = [0.16, 1, 0.3, 1] as const;
+
 function CollectionCard({ entry }: { entry: CollectionEntry }) {
   const navigate = useNavigate();
 
@@ -17,7 +20,7 @@ function CollectionCard({ entry }: { entry: CollectionEntry }) {
     <button
       type="button"
       onClick={() => navigate(`/studio/chat/${entry.id}`)}
-      className="flex h-full min-h-[120px] cursor-pointer flex-col rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 text-left transition hover:border-amber/35 hover:bg-amber/[0.04]"
+      className="flex h-full min-h-[120px] w-full cursor-pointer flex-col rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 text-left transition hover:border-amber/35 hover:bg-amber/[0.04]"
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <TypeBadge type={entry.type} />
@@ -49,7 +52,7 @@ function NewCollectionCard() {
     <button
       type="button"
       onClick={() => navigate("/studio/new")}
-      className="flex min-h-[120px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-amber/30 bg-amber/[0.03] p-4 text-center transition hover:border-amber/50 hover:bg-amber/[0.06]"
+      className="flex h-full min-h-[120px] w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-amber/30 bg-amber/[0.03] p-4 text-center transition hover:border-amber/50 hover:bg-amber/[0.06]"
     >
       <HiOutlinePlus className="mb-2 text-2xl text-amber" />
       <p className="font-mono text-[0.62rem] tracking-[0.14em] text-amber">NEW</p>
@@ -65,10 +68,29 @@ type CollectionGridProps = {
 export default function CollectionGrid({ collections }: CollectionGridProps) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {collections.map((entry) => (
-        <CollectionCard key={entry.id} entry={entry} />
+      {collections.map((entry, i) => (
+        <motion.div
+          key={entry.id}
+          className="min-h-0 w-full"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28, delay: 0.04 * i, ease }}
+        >
+          <CollectionCard entry={entry} />
+        </motion.div>
       ))}
-      <NewCollectionCard />
+      <motion.div
+        className="min-h-0 w-full"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.28,
+          delay: 0.04 * collections.length,
+          ease,
+        }}
+      >
+        <NewCollectionCard />
+      </motion.div>
     </div>
   );
 }
