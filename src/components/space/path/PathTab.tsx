@@ -61,24 +61,27 @@ function EmptyPath({
   onExplore: () => void;
 }) {
   const skipped = path?.status === "skipped";
+  const draft = path?.status === "draft";
   return (
     <div className="flex h-full items-center justify-center px-8">
       <div className="max-w-md text-center">
         <p className="font-mono mb-3 text-[0.62rem] tracking-[0.18em] text-cyan/70">YOUR PATH</p>
         <h2 className="font-thai mb-3 text-[1.35rem] font-semibold tracking-wide text-text">
-          {skipped ? "ยังไม่มีผังส่วนตัว" : "ยังไม่มีเส้นทาง"}
+          {draft ? "คุยกับ LAIKA ค้างไว้" : skipped ? "ยังไม่มีผังส่วนตัว" : "ยังไม่มีเส้นทาง"}
         </h2>
         <p className="font-section-thai mb-6 text-[0.9rem] leading-relaxed text-text/55">
-          {skipped
-            ? "ตอนนี้เลือกสำรวจคลังเองอยู่ ให้ LAIKA ช่วยวางผังได้ทุกเมื่อ"
-            : "คุยกับ LAIKA สักหน่อย แล้วผังการเรียนรู้จะโผล่ที่นี่"}
+          {draft
+            ? "เปิดเซสชันต่อได้เลย ประวัติคุยถูกเก็บไว้แล้ว"
+            : skipped
+              ? "ตอนนี้เลือกสำรวจคลังเองอยู่ ให้ LAIKA ช่วยวางผังได้ทุกเมื่อ"
+              : "คุยกับ LAIKA สักหน่อย แล้วผังการเรียนรู้จะโผล่ที่นี่"}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
             to={spacePathSessionPath()}
             className="btn-clip cursor-pointer border border-cyan/50 bg-cyan/10 px-6 py-2.5 font-section-thai text-[0.95rem] font-medium text-cyan no-underline transition hover:bg-cyan hover:text-bg"
           >
-            ให้ LAIKA ช่วยวางแผน
+            {draft ? "คุยต่อกับ LAIKA" : "ให้ LAIKA ช่วยวางแผน"}
           </Link>
           <button
             type="button"

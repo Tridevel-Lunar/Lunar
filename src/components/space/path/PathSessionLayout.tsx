@@ -3,28 +3,52 @@ import { useNavigate } from "react-router-dom";
 import { IoPlanetOutline } from "react-icons/io5";
 
 import ModuleSidebar from "@/components/app/ModuleSidebar";
-import { getSpaceCatalog, type PathProposal, type SpaceCatalog, type User } from "@/lib/api";
+import {
+  getLearningPath,
+  getSpaceCatalog,
+  type LearningPathChatMessage,
+  type PathProposal,
+  type SpaceCatalog,
+  type User,
+} from "@/lib/api";
 import { spacePathTabPath } from "@/components/space/core/routes";
 
 import PathGraph from "./PathGraph";
 import PathOnboardingChat from "./PathOnboardingChat";
+import { SPACE_PATH_OPENING } from "./copy";
 
 export default function PathSessionLayout({ user }: { user: User }) {
   const navigate = useNavigate();
   const [catalog, setCatalog] = useState<SpaceCatalog | null>(null);
   const [draft, setDraft] = useState<PathProposal | null>(null);
+  const [initialMessages, setInitialMessages] = useState<LearningPathChatMessage[] | null>(null);
   const [started, setStarted] = useState(false);
   const handleStarted = useCallback(() => setStarted(true), []);
 
   useEffect(() => {
     let cancelled = false;
-    void getSpaceCatalog()
-      .then((data) => {
-        if (!cancelled) setCatalog(data);
-      })
-      .catch(() => {
-        if (!cancelled) setCatalog(null);
-      });
+    void Promise.all([getSpaceCatalog().catch(() => null), getLearningPath().catch(() => null)]).then(
+      ([cat, path]) => {
+        if (cancelled) return;
+        setCatalog(cat);
+        if (path?.chatTranscript && path.chatTranscript.length > 0) {
+          setInitialMessages(path.chatTranscript);
+          if (path.chatTranscript.some((m) => m.role === "user")) {
+            setStarted(true);
+          }
+        } else {
+          setInitialMessages([{ role: "assistant", content: SPACE_PATH_OPENING }]);
+        }
+        if (path?.status === "active" && path.steps.length > 0) {
+          setDraft({
+            intentTags: path.intentTags,
+            steps: path.steps,
+            edges: path.edges ?? [],
+            final: true,
+          });
+        }
+      },
+    );
     return () => {
       cancelled = true;
     };
@@ -83,12 +107,19 @@ export default function PathSessionLayout({ user }: { user: User }) {
               </button>
             ) : null}
             <div className="relative z-[1] flex h-full min-h-0 flex-col">
-              <PathOnboardingChat
-                draft={draft}
-                onPlan={setDraft}
-                onStarted={handleStarted}
-                fullBleed={!started}
-              />
+              {initialMessages ? (
+                <PathOnboardingChat
+                  draft={draft}
+                  onPlan={setDraft}
+                  onStarted={handleStarted}
+                  fullBleed={!started}
+                  initialMessages={initialMessages}
+                />
+              ) : (
+                <div className="flex flex-1 items-center justify-center font-section-thai text-text/40">
+                  กำลังโหลดบทสนทนา…
+                </div>
+              )}
             </div>
           </section>
         </div>

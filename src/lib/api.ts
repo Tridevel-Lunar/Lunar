@@ -828,7 +828,7 @@ export function getSpaceCatalog(): Promise<SpaceCatalog> {
   return apiFetch<SpaceCatalog>("/space/catalog");
 }
 
-export type LearningPathStatus = "none" | "skipped" | "active";
+export type LearningPathStatus = "none" | "skipped" | "active" | "draft";
 
 export type LearningPathStep = {
   courseId: string;
@@ -869,7 +869,7 @@ export function getLearningPath(): Promise<LearningPath> {
 }
 
 export function putLearningPath(body: {
-  status: "skipped" | "active";
+  status: "skipped" | "active" | "draft";
   intentText?: string | null;
   intentTags?: string[];
   steps?: LearningPathStep[];

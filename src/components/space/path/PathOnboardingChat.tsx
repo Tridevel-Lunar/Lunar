@@ -26,13 +26,22 @@ type Props = {
   draft: PathProposal | null;
   onStarted?: () => void;
   fullBleed?: boolean;
+  initialMessages?: LearningPathChatMessage[];
 };
 
-export default function PathOnboardingChat({ onPlan, draft, onStarted, fullBleed }: Props) {
+export default function PathOnboardingChat({
+  onPlan,
+  draft,
+  onStarted,
+  fullBleed,
+  initialMessages,
+}: Props) {
   const navigate = useNavigate();
-  const [items, setItems] = useState<ChatItem[]>([
-    { role: "assistant", content: SPACE_PATH_OPENING },
-  ]);
+  const [items, setItems] = useState<ChatItem[]>(() =>
+    initialMessages && initialMessages.length > 0
+      ? initialMessages.map((m) => ({ role: m.role, content: m.content }))
+      : [{ role: "assistant", content: SPACE_PATH_OPENING }],
+  );
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,11 +50,12 @@ export default function PathOnboardingChat({ onPlan, draft, onStarted, fullBleed
   const abortRef = useRef<AbortController | null>(null);
   const started = items.some((item) => item.role === "user");
   const [reduceMotion, setReduceMotion] = useState(false);
+  const showTypewriter = !started && items.length === 1 && items[0]?.content === SPACE_PATH_OPENING;
   const { display: introDisplay } = useQueuedTypewriter(
-    started || reduceMotion ? null : SPACE_PATH_OPENING,
+    showTypewriter && !reduceMotion ? SPACE_PATH_OPENING : null,
     { typeMs: 28 },
   );
-  const introDone = reduceMotion || introDisplay === SPACE_PATH_OPENING;
+  const introDone = !showTypewriter || reduceMotion || introDisplay === SPACE_PATH_OPENING;
 
   useEffect(() => {
     setReduceMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -177,7 +187,11 @@ export default function PathOnboardingChat({ onPlan, draft, onStarted, fullBleed
   );
 
   if (!started) {
-    const shownIntro = reduceMotion ? SPACE_PATH_OPENING : introDisplay;
+    const shownIntro = showTypewriter
+      ? reduceMotion
+        ? SPACE_PATH_OPENING
+        : introDisplay
+      : (items[0]?.content ?? SPACE_PATH_OPENING);
     return (
       <div
         className={`flex h-full min-h-0 flex-col ${
