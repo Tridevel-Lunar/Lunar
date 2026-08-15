@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
+import SpaceLoadingState from "@/components/space/SpaceLoadingState";
 import { getCurrentUser } from "@/lib/auth";
 import type { User } from "@/lib/api";
 
@@ -19,7 +20,11 @@ export default function ProtectedRoute() {
   }, []);
 
   if (user === undefined) {
-    return <div className="min-h-screen bg-bg p-16 text-text">กำลังโหลด...</div>;
+    return (
+      <div className="flex h-screen w-full flex-col bg-bg text-text">
+        <SpaceLoadingState label="กำลังโหลด…" />
+      </div>
+    );
   }
 
   if (!user) {

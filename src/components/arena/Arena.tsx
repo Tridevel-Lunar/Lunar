@@ -23,6 +23,8 @@ import {
 } from "./arena-data";
 import { recommendArenaMissions } from "./recommend";
 import {
+  arenaMissionLinkState,
+  arenaMissionPath,
   arenaPathForTab,
   arenaTabFromPath,
   type ArenaShellTab,
@@ -53,14 +55,17 @@ function MissionCard({
   mission: ArenaMission;
   matchHint?: string;
 }) {
+  const location = useLocation();
   const playable = mission.status === "playable";
 
   return (
-    <article
-      className={`group flex w-full flex-col gap-3 rounded-xl border p-4 backdrop-blur-md transition sm:flex-row sm:items-start sm:gap-4 ${
+    <Link
+      to={arenaMissionPath(mission.id)}
+      state={arenaMissionLinkState(location.pathname)}
+      className={`group flex w-full flex-col gap-3 rounded-xl border p-4 no-underline backdrop-blur-md transition sm:flex-row sm:items-start sm:gap-4 ${
         playable
-          ? "border-white/[0.1] bg-bg/45 hover:border-cyan/30 hover:bg-cyan/[0.06]"
-          : "border-white/[0.1] bg-bg/45 opacity-85"
+          ? "cursor-pointer border-white/[0.1] bg-bg/45 hover:border-cyan/30 hover:bg-cyan/[0.06]"
+          : "cursor-pointer border-white/[0.1] bg-bg/45 opacity-85 hover:border-cyan/25 hover:opacity-100"
       }`}
     >
       <div
@@ -100,19 +105,18 @@ function MissionCard({
         <p className="font-section-thai text-[0.72rem] text-text/55 sm:max-w-[11rem] sm:text-right">
           {mission.ctaPrompt}
         </p>
-        <Link
-          to={`/arena/mission/${mission.id}`}
-          className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-4 py-2 font-section-thai text-[0.82rem] font-medium no-underline transition ${
+        <span
+          className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-4 py-2 font-section-thai text-[0.82rem] font-medium transition ${
             playable
-              ? "border-cyan/50 bg-cyan/10 text-cyan hover:bg-cyan hover:text-bg"
-              : "border-white/15 bg-white/[0.04] text-text/70 hover:border-cyan/30 hover:text-cyan"
+              ? "border-cyan/50 bg-cyan/10 text-cyan group-hover:bg-cyan group-hover:text-bg"
+              : "border-white/15 bg-white/[0.04] text-text/70 group-hover:border-cyan/30 group-hover:text-cyan"
           }`}
         >
           {mission.ctaLabel}
           <IoArrowForward className="text-sm transition group-hover:translate-x-0.5" />
-        </Link>
+        </span>
       </div>
-    </article>
+    </Link>
   );
 }
 
@@ -216,11 +220,13 @@ function ExploreMissionTile({
   mission: ArenaMission;
   accent: string;
 }) {
+  const location = useLocation();
   const playable = mission.status === "playable";
 
   return (
     <Link
-      to={`/arena/mission/${mission.id}`}
+      to={arenaMissionPath(mission.id)}
+      state={arenaMissionLinkState(location.pathname)}
       className={`group relative flex min-h-[168px] w-full flex-col overflow-hidden rounded-2xl border p-5 no-underline backdrop-blur-md transition ${
         playable
           ? "border-white/[0.12] hover:border-white/25"

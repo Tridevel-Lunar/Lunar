@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { HiOutlineClock } from "react-icons/hi2";
 import { IoArrowBack, IoGameControllerOutline } from "react-icons/io5";
 
@@ -10,6 +10,12 @@ import {
   type ArenaMission,
 } from "@/components/arena/arena-data";
 import MissionActivity from "@/components/arena/mission/MissionActivity";
+import {
+  arenaHomePath,
+  rememberArenaMissionBack,
+  resolveArenaMissionBack,
+  type ArenaMissionLocationState,
+} from "@/components/arena/routes";
 
 const TIMER_START_SEC = 30 * 60;
 
@@ -19,7 +25,13 @@ function formatTimer(totalSec: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-function ComingSoonOverview({ mission }: { mission: ArenaMission }) {
+function ComingSoonOverview({
+  mission,
+  backTo,
+}: {
+  mission: ArenaMission;
+  backTo: string;
+}) {
   const branch = getArenaBranch(mission.spaceBranch);
 
   return (
@@ -88,7 +100,7 @@ function ComingSoonOverview({ mission }: { mission: ArenaMission }) {
         </p>
 
         <Link
-          to="/arena"
+          to={backTo}
           className="font-section-thai inline-flex text-[0.9rem] text-cyan no-underline hover:underline"
         >
           กลับไป Arena
@@ -100,9 +112,15 @@ function ComingSoonOverview({ mission }: { mission: ArenaMission }) {
 
 export default function ArenaMission() {
   const { missionId } = useParams<{ missionId: string }>();
+  const location = useLocation();
   const mission = ARENA_MISSIONS.find((m) => m.id === missionId);
   const playable = mission?.status === "playable";
   const [timerSec, setTimerSec] = useState(TIMER_START_SEC);
+  const from = (location.state as ArenaMissionLocationState | null)?.from;
+  if (missionId) rememberArenaMissionBack(missionId, from);
+  const backTo = missionId
+    ? resolveArenaMissionBack(missionId, arenaHomePath())
+    : arenaHomePath();
 
   useEffect(() => {
     document.title = mission ? `${mission.title} | Arena` : "Arena Mission";
@@ -122,7 +140,7 @@ export default function ArenaMission() {
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-3">
           <div className="flex min-w-0 items-center gap-3">
             <Link
-              to="/arena"
+              to={backTo}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-text/50 no-underline transition hover:border-cyan/30 hover:text-cyan"
               aria-label="กลับ Arena"
             >
@@ -158,14 +176,14 @@ export default function ArenaMission() {
         {mission && playable ? (
           <MissionActivity mission={mission} />
         ) : mission ? (
-          <ComingSoonOverview mission={mission} />
+          <ComingSoonOverview mission={mission} backTo={backTo} />
         ) : (
           <main className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
             <p className="font-section-thai text-[1rem] text-text/70">
               ไม่พบภารกิจที่ระบุ
             </p>
             <Link
-              to="/arena"
+              to={backTo}
               className="font-section-thai text-[0.9rem] text-cyan no-underline hover:underline"
             >
               กลับไป Arena
