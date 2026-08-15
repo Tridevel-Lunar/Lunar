@@ -17,8 +17,7 @@ import { getMissionOrbitTimelineConfig } from "@/components/arena/timeline/missi
 
 const PLAYBACK_MS = 120;
 
-/** Mission Feedback panel for one-orbit run results. */
-export default function MissionFeedbackMock({
+export default function MissionFeedback({
   missionId,
   runResult,
 }: {
@@ -47,7 +46,6 @@ export default function MissionFeedbackMock({
 
     let step = 0;
     const samples = runResult.trace;
-    // Step through a subset for snappy replay (~40 frames max)
     const stride = Math.max(1, Math.floor(samples.length / 40));
 
     const advance = () => {
@@ -177,47 +175,59 @@ export default function MissionFeedbackMock({
                 : "ยังไม่มีผลลัพธ์ภารกิจ"}
             </p>
             {runResult ? (
-              <ul className="font-section-thai space-y-1 text-[0.82rem] leading-relaxed text-text/70">
-                <li>
-                  ดาวเทียมอยู่รอด:{" "}
-                  <span
-                    className={
-                      runResult.result.satellite_survived
-                        ? "font-medium text-emerald-400"
-                        : "font-medium text-red-400"
-                    }
-                  >
-                    {runResult.result.satellite_survived ? "ใช่" : "ไม่ใช่"}
-                  </span>
-                </li>
-                <li>
-                  ส่งข้อมูลกลับโลกได้:{" "}
-                  <span
-                    className={
-                      runResult.result.sent_to_earth
-                        ? "font-medium text-emerald-400"
-                        : "font-medium text-red-400"
-                    }
-                  >
-                    {runResult.result.sent_to_earth ? "ใช่" : "ไม่ใช่"}
-                  </span>
-                </li>
-                <li>
-                  Payload data:{" "}
-                  <span className="text-text/90">{runResult.result.payload_data}</span>
-                </li>
-                <li>
-                  แบตต่ำสุดตอน eclipse:{" "}
-                  <span className="text-text/90">
-                    {runResult.orbitSummary.minBatteryDuringEclipse}%
-                  </span>
-                </li>
+              <>
+                <table className="w-full table-fixed border-collapse overflow-hidden rounded-md border border-white/[0.08] font-section-thai text-[0.78rem]">
+                  <tbody>
+                    <tr>
+                      <td className="border-b border-r border-white/[0.08] bg-white/[0.02] px-2.5 py-2 align-top">
+                        <p className="text-[0.7rem] leading-snug text-text/55">ดาวเทียมอยู่รอด</p>
+                        <p
+                          className={`mt-0.5 font-medium ${
+                            runResult.result.satellite_survived
+                              ? "text-emerald-400"
+                              : "text-red-400"
+                          }`}
+                        >
+                          {runResult.result.satellite_survived ? "ใช่" : "ไม่ใช่"}
+                        </p>
+                      </td>
+                      <td className="border-b border-white/[0.08] bg-white/[0.02] px-2.5 py-2 align-top">
+                        <p className="text-[0.7rem] leading-snug text-text/55">ส่งข้อมูลกลับโลกได้</p>
+                        <p
+                          className={`mt-0.5 font-medium ${
+                            runResult.result.sent_to_earth
+                              ? "text-emerald-400"
+                              : "text-red-400"
+                          }`}
+                        >
+                          {runResult.result.sent_to_earth ? "ใช่" : "ไม่ใช่"}
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="border-r border-white/[0.08] bg-white/[0.02] px-2.5 py-2 align-top">
+                        <p className="text-[0.7rem] leading-snug text-text/55">Payload data</p>
+                        <p className="mt-0.5 font-medium text-text/90">
+                          {runResult.result.payload_data}
+                        </p>
+                      </td>
+                      <td className="bg-white/[0.02] px-2.5 py-2 align-top">
+                        <p className="text-[0.7rem] leading-snug text-text/55">
+                          แบตต่ำสุดตอน eclipse
+                        </p>
+                        <p className="mt-0.5 font-medium text-text/90">
+                          {runResult.orbitSummary.minBatteryDuringEclipse}%
+                        </p>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
                 {overrun > 0 ? (
-                  <li className="text-amber-200/80">
+                  <p className="font-section-thai text-[0.75rem] text-amber-200/80">
                     CPU overrun: {overrun} วินาที (ไม่ทำให้ Fail ใน M01)
-                  </li>
+                  </p>
                 ) : null}
-              </ul>
+              </>
             ) : (
               <p className="font-section-thai text-[0.82rem] leading-relaxed text-text/55">
                 กดปุ่มส่งภารกิจเพื่อดูผลลัพธ์หลังครบ 1 วงโคจร
@@ -226,12 +236,6 @@ export default function MissionFeedbackMock({
           </div>
         </div>
       </section>
-
-      {/* Absorbs leftover height so outcome stays content-sized */}
-      <div
-        className="min-h-0 flex-1 rounded-lg border border-dashed border-white/[0.06] bg-white/[0.01]"
-        aria-hidden
-      />
     </div>
   );
 }

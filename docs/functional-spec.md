@@ -15,7 +15,7 @@
 | Module | Tagline | บทบาทหลัก |
 |--------|---------|-----------|
 | **Space** | Learn | เรียนรู้ทฤษฎีพื้นฐานวิศวกรรมอวกาศแบบ Interactive · **Courses** ประกอบด้วย **Modules** (ปัจจุบัน 4 โมดูลใน CubeSat course) |
-| **Arena** | Build & Mission Simulation | สร้างตรรกะ Blockly + จำลองภารกิจในสภาพแวดล้อมอวกาศ |
+| **Arena** | Build & Mission Simulation | ด่านลงมือตามกิ่ง Space — Blockly + ซิมสำหรับด่านที่เปิดแล้ว |
 | **Studio** | Launch, Tech-Transfer & Venture | เก็บผลงาน · LAIKA ช่วยต่อยอดไอเดีย · (อนาคต) แผนธุรกิจ / tech transfer |
 
 ---
@@ -91,7 +91,9 @@ Progress ใน UI ปัจจุบันเป็น metadata ชั่วค
 
 ## ฟีเจอร์ที่ 2: Arena (Build & Mission Simulation)
 
-ห้องจำลองสถานการณ์ทางอวกาศ — ผู้เรียนสร้างตรรกะการทำงานของดาวเทียมด้วย Blockly แล้วนำเข้าสภาพแวดล้อมจำลองเพื่อให้ภารกิจสำเร็จ
+ห้องแล็บของเนื้อหา **Space** — ไม่จำกัดแค่ดาวเทียม Hub (`/arena`) จัดด่านตามกิ่ง Space Technology (AROUND US → ACCESS → FLIGHT → GROUND → FOR EARTH → MISSION) ด่านที่เปิดเล่นได้วันนี้คือ **ONE LAP AROUND EARTH** (CubeSat / orbit-bus) ที่เหลือเป็นภาพรวม coming soon จนกว่าจะมี runner
+
+ผู้เรียนด่าน FLIGHT สร้างตรรกะ OBC ด้วย Blockly แล้วนำเข้าสภาพแวดล้อมจำลองฝั่ง backend เพื่อให้ภารกิจสำเร็จ
 
 ### Blockly Code Editor
 
@@ -109,9 +111,9 @@ Progress ใน UI ปัจจุบันเป็น metadata ชั่วค
 
 | รายการ | รายละเอียด |
 |--------|------------|
-| **3D preview** | พื้นที่ผลจำลอง (M01: placeholder; R3F replay ถัดไป) |
+| **3D preview** | R3F Earth + craft ในกล่องผลภารกิจ — ขับด้วย `trace[].phase` / `isSunlit` (`frameloop="demand"`) ไม่ใช้ Space `RealisticEarth` และไม่คำนวณ physics ฝั่ง UI |
 | **Simulation Engine** | Backend deterministic tick sim — sync กับ AST จากบล็อก |
-| **สำเร็จ** | grade `perfect` / `risky` + battery/temp / comms จาก `POST .../runs` |
+| **สำเร็จ** | grade `perfect` / `risky` + battery/temp / comms จาก `POST .../runs` — ตาราง 2×2 ใน MISSION OUTCOME |
 | **ไม่สำเร็จ** | grade `fail` หรือ modal แสดง validation error (AST โครงสร้างผิด) |
 
 ```

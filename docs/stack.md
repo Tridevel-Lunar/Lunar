@@ -53,8 +53,8 @@ Access token หมดอายุ → `apiFetch` / `getCurrentUser` เรี�
 | เครื่องมือ | บทบาท |
 |-----------|--------|
 | **Blender** | สร้าง 3D assets นอก repo — Chassis, OBC, Solar Panel, Camera Payload |
-| **Three.js / React Three Fiber (R3F)** | ใช้อยู่ — โหลด `.gltf` / `.glb` จาก Blender แสดง 360° บนเบราว์เซอร์ |
-| **WebGPUCanvas + TSL materials** | ใช้อยู่ใน Space Physics — realistic Earth/Sun (`modules/physics/scene/`) |
+| **Three.js / React Three Fiber (R3F)** | ใช้อยู่ — Space lessons (GLB / WebGPU Earth) และ Arena orbit preview (`components/arena/orbit/`, WebGL `Canvas` + `frameloop="demand"`) |
+| **WebGPUCanvas + TSL materials** | ใช้อยู่ใน Space Physics เท่านั้น — **อย่า**ใส่ `RealisticEarth` ในกล่องผล Arena (4K + spin loop หนักเกิน sidebar) |
 | **KiCad** | ออกแบบอุปกรณ์อิเล็กทรอนิกส์ (นอก repo) — อ้างอิงใน Embedded System module |
 
 Export จาก Blender → `public/models/` หรือ CDN (เมื่อมี)
@@ -79,8 +79,9 @@ Export จาก Blender → `public/models/` หรือ CDN (เมื่อ�
 
 - **Draft save:** Blockly → program **AST** (semantic) + Blockly **workspace JSON** (layout) → `PUT /arena/missions/:id/attempt` (PostgreSQL)
 - **Restore:** prefer `workspace` (keeps block positions); fall back to AST auto-layout; else seed `obc_on_start` + `obc_repeat_orbit`
-- **Run:** `compileProgram` → `POST /arena/missions/:id/runs` with `{ ast, epsSetup, payloadSetup, commSetup }` (BE grades; FE shows orbit trace + validation modal on 422)
+- **Run:** `compileProgram` → `POST /arena/missions/:id/runs` with `{ ast, epsSetup, payloadSetup, commSetup }` (BE grades; FE shows orbit trace, R3F preview, 2×2 outcome, validation modal on 422)
 - Custom blocks: `components/arena/blockly/libs/{obc,eps,payload,comm}/` · registry: `registry.ts` · compile: `compileProgram.ts`
+- Orbit preview: `components/arena/orbit/` — sample `{ phase, isSunlit, … }` ใช้ได้กับด่านที่มี orbit timeline ไม่ผูกเกณฑ์ M01
 - Toolbox CSS: `blockly-toolbox.css` — class **`.blocklyToolbox`** (Blockly 13; not `.blocklyToolboxDiv`)
 - ไม่ execute physics หนักฝั่ง browser — simulation อยู่ที่ backend
 ## Studio — LAIKA
@@ -105,7 +106,7 @@ Frontend เรียก API เท่านั้น — ไม่ฝัง API
 | Blockly editor | ✓ (M01 toolbox + AST/workspace save/load) | pack metadata + grading |
 | Attempt save/load | ✓ `PUT/GET .../attempt` (`ast` + `workspace`) | ✓ PostgreSQL `arena_attempts` |
 | Orbital / physics calc | | ✓ (sim ticks in arena runner; Poliastro planned elsewhere) |
-| Run block code / simulation | ✓ `POST .../runs` + result UI | ✓ deterministic M01 runner |
+| Run block code / simulation | ✓ `POST .../runs` + 3D replay + outcome UI | ✓ deterministic M01 runner (only playable pack) |
 | LAIKA LLM + RAG | แสดงผล | ✓ |
 | Satellite imagery API | แสดงผล | ✓ |
 | PostgreSQL (users, progress) | | ✓ |
