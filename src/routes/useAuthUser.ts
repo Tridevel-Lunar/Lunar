@@ -1,8 +1,7 @@
-import { useOutletContext } from "react-router-dom";
-
+import { useAuthSession } from "@/routes/AuthUserContext";
 import type { User } from "@/lib/api";
-import type { AuthOutletContext } from "@/routes/ProtectedRoute";
 
+/** Current authenticated user from AuthUserProvider. */
 export function useAuthUser(): User {
-  return useOutletContext<AuthOutletContext>().user;
+  return useAuthSession().user;
 }

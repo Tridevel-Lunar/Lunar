@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { ReactNode } from "react";
 import {
   HiOutlineBell,
@@ -19,8 +19,6 @@ import { getUserDisplayName } from "@/lib/user";
 import { isAdmin } from "@/lib/rbac";
 
 export type AppModule = "space" | "arena" | "studio";
-
-const DEFAULT_LEVEL = 1;
 
 function SidebarNavItem({
   active,
@@ -55,8 +53,11 @@ type ModuleSidebarProps = {
 
 export default function ModuleSidebar({ user, activeModule }: ModuleSidebarProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const displayName = getUserDisplayName(user);
   const backofficeAllowed = isAdmin(user);
+  const settingsActive = location.pathname.startsWith("/settings");
+  const pictureSrc = user.picture || DEFAULT_AVATAR_URL;
 
   async function handleLogout() {
     await clearSession();
@@ -77,7 +78,7 @@ export default function ModuleSidebar({ user, activeModule }: ModuleSidebarProps
       <div className="mb-5 flex shrink-0 items-center gap-2.5">
         <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-cyan/30">
           <img
-            src={user.picture || DEFAULT_AVATAR_URL}
+            src={pictureSrc}
             alt=""
             className="absolute inset-0 h-full w-full object-cover object-top"
           />
@@ -85,26 +86,26 @@ export default function ModuleSidebar({ user, activeModule }: ModuleSidebarProps
         <div>
           <p className="text-[0.75rem] text-text/90">Hello, {displayName}</p>
           <span className="font-mono mt-0.5 inline-block rounded-full border border-teal/30 bg-teal/10 px-1.5 py-px text-[0.58rem] tracking-wider text-teal">
-            Level {DEFAULT_LEVEL}
+            Adventurer
           </span>
         </div>
       </div>
 
       <nav className="flex shrink-0 flex-col gap-1.5">
         <SidebarNavItem
-          active={activeModule === "space"}
+          active={activeModule === "space" && !settingsActive}
           icon={<IoPlanetOutline />}
           label="SPACE"
           href="/space"
         />
         <SidebarNavItem
-          active={activeModule === "arena"}
+          active={activeModule === "arena" && !settingsActive}
           icon={<IoGameControllerOutline />}
           label="ARENA"
           href="/arena"
         />
         <SidebarNavItem
-          active={activeModule === "studio"}
+          active={activeModule === "studio" && !settingsActive}
           icon={<IoRocketOutline />}
           label="STUDIO"
           href="/studio"
@@ -123,32 +124,38 @@ export default function ModuleSidebar({ user, activeModule }: ModuleSidebarProps
             BACKOFFICE
           </Link>
         )}
-        {[
-          { icon: <HiOutlineBell />, label: "NOTIFICATIONS" },
-          { icon: <HiOutlineCog6Tooth />, label: "SETTINGS" },
-          { icon: <IoLogOutOutline />, label: "LOG OUT", onClick: handleLogout },
-        ].map((item) =>
-          "onClick" in item ? (
-            <button
-              key={item.label}
-              type="button"
-              onClick={item.onClick}
-              className="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.62rem] tracking-[0.1em] text-text/45 transition-colors hover:bg-white/[0.03] hover:text-text/75"
-            >
-              <span className="text-sm">{item.icon}</span>
-              {item.label}
-            </button>
-          ) : (
-            <Link
-              key={item.label}
-              to="#"
-              className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.62rem] tracking-[0.1em] text-text/45 no-underline transition-colors hover:bg-white/[0.03] hover:text-text/75"
-            >
-              <span className="text-sm">{item.icon}</span>
-              {item.label}
-            </Link>
-          ),
-        )}
+        <Link
+          to="#"
+          className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.62rem] tracking-[0.1em] text-text/45 no-underline transition-colors hover:bg-white/[0.03] hover:text-text/75"
+        >
+          <span className="text-sm">
+            <HiOutlineBell />
+          </span>
+          NOTIFICATIONS
+        </Link>
+        <Link
+          to="/settings"
+          className={`flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.62rem] tracking-[0.1em] no-underline transition-colors ${
+            settingsActive
+              ? "bg-white/[0.06] text-cyan"
+              : "text-text/45 hover:bg-white/[0.03] hover:text-text/75"
+          }`}
+        >
+          <span className="text-sm">
+            <HiOutlineCog6Tooth />
+          </span>
+          SETTINGS
+        </Link>
+        <button
+          type="button"
+          onClick={() => void handleLogout()}
+          className="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.62rem] tracking-[0.1em] text-text/45 transition-colors hover:bg-white/[0.03] hover:text-text/75"
+        >
+          <span className="text-sm">
+            <IoLogOutOutline />
+          </span>
+          LOG OUT
+        </button>
       </div>
     </aside>
   );

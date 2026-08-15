@@ -11,6 +11,7 @@ import Space from "@/pages/Space";
 import Studio from "@/pages/Studio";
 import StudioChat from "@/pages/StudioChat";
 import StudioNew from "@/pages/StudioNew";
+import Settings from "@/pages/Settings";
 import Exp from "@/pages/Exp";
 import BackofficeKnowledge from "@/pages/BackofficeKnowledge";
 import BackofficeUsers from "@/pages/BackofficeUsers";
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/studio" element={<Studio />} />
         <Route path="/studio/new" element={<StudioNew />} />
         <Route path="/studio/chat/:collectionId" element={<StudioChat />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/backoffice/users" element={<BackofficeUsers />} />
         <Route path="/backoffice/knowledge" element={<BackofficeKnowledge />} />
       </Route>

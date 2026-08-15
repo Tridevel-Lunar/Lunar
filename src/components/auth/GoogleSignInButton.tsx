@@ -14,17 +14,30 @@ type GoogleSignInButtonProps = {
   onError?: (message: string) => void;
   /** Google-rendered button label variant */
   buttonText?: GoogleSignInButtonText;
+  /**
+   * Custom credential handler (e.g. link account).
+   * When set, skips default sign-in + navigate.
+   */
+  onCredential?: (credential: string) => Promise<void>;
 };
 
 export default function GoogleSignInButton({
   redirectTo = "/space",
   onError,
   buttonText = "signin_with",
+  onCredential,
 }: GoogleSignInButtonProps) {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
+  const onCredentialRef = useRef(onCredential);
+  const onErrorRef = useRef(onError);
+  const redirectToRef = useRef(redirectTo);
   const [loading, setLoading] = useState(false);
   const [initFailed, setInitFailed] = useState(false);
+
+  onCredentialRef.current = onCredential;
+  onErrorRef.current = onError;
+  redirectToRef.current = redirectTo;
 
   useEffect(() => {
     if (!isGoogleSignInConfigured() || !containerRef.current) {
@@ -43,10 +56,17 @@ export default function GoogleSignInButton({
 
           setLoading(true);
           try {
-            await signInWithGoogleCredential(response.credential);
-            navigate(redirectTo);
+            const custom = onCredentialRef.current;
+            if (custom) {
+              await custom(response.credential);
+            } else {
+              await signInWithGoogleCredential(response.credential);
+              navigate(redirectToRef.current);
+            }
           } catch (err) {
-            onError?.(err instanceof Error ? err.message : "เข้าสู่ระบบด้วย Google ไม่สำเร็จ");
+            onErrorRef.current?.(
+              err instanceof Error ? err.message : "เข้าสู่ระบบด้วย Google ไม่สำเร็จ",
+            );
           } finally {
             setLoading(false);
           }
@@ -65,7 +85,7 @@ export default function GoogleSignInButton({
         const message =
           err instanceof Error ? err.message : "ไม่สามารถโหลดปุ่ม Google Sign-In ได้";
         setInitFailed(true);
-        onError?.(message);
+        onErrorRef.current?.(message);
       }
     }
 
@@ -75,7 +95,7 @@ export default function GoogleSignInButton({
       cancelled = true;
       parent.replaceChildren();
     };
-  }, [buttonText, navigate, onError, redirectTo]);
+  }, [buttonText, navigate]);
 
   if (!isGoogleSignInConfigured()) {
     return null;

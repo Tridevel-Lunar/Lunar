@@ -4,7 +4,9 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import SpaceLoadingState from "@/components/space/SpaceLoadingState";
 import { getCurrentUser } from "@/lib/auth";
 import type { User } from "@/lib/api";
+import { AuthUserProvider } from "@/routes/AuthUserContext";
 
+/** @deprecated Prefer useAuthSession / useAuthUser from AuthUserContext */
 export type AuthOutletContext = {
   user: User;
 };
@@ -32,5 +34,17 @@ export default function ProtectedRoute() {
     return <Navigate to={`/login?next=${next}`} replace />;
   }
 
-  return <Outlet context={{ user } satisfies AuthOutletContext} />;
+  return (
+    <AuthUserProvider
+      user={user}
+      setUser={(update) => {
+        setUser((prev) => {
+          if (prev == null) return prev;
+          return typeof update === "function" ? update(prev) : update;
+        });
+      }}
+    >
+      <Outlet context={{ user } satisfies AuthOutletContext} />
+    </AuthUserProvider>
+  );
 }

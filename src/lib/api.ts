@@ -108,7 +108,56 @@ export type User = {
   picture: string | null;
   role: string;
   created_at: string;
+  google_linked?: boolean;
+  has_password?: boolean;
 };
+
+export async function updateMe(body: { display_name?: string | null }): Promise<User> {
+  return apiFetch<User>("/auth/me", {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function uploadMyPicture(file: File): Promise<User> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await fetchWithAuthRetry("/auth/me/picture", {
+    method: "POST",
+    body: form,
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const detail = typeof data.detail === "string" ? data.detail : "Upload failed";
+    throw new ApiError(response.status, detail);
+  }
+  return data as User;
+}
+
+export async function deleteMyPicture(): Promise<User> {
+  return apiFetch<User>("/auth/me/picture", { method: "DELETE" });
+}
+
+export async function linkGoogleAccount(credential: string): Promise<User> {
+  return apiFetch<User>("/auth/google/link", {
+    method: "POST",
+    body: JSON.stringify({ credential }),
+  });
+}
+
+export async function unlinkGoogleAccount(): Promise<User> {
+  return apiFetch<User>("/auth/google/unlink", { method: "POST" });
+}
+
+export async function changeMyPassword(body: {
+  current_password?: string | null;
+  new_password: string;
+}): Promise<User> {
+  return apiFetch<User>("/auth/me/password", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
 
 export type StudioCollectionSummary = {
   id: string;
