@@ -108,12 +108,12 @@ export default function SpaceHome({ user }: { user: User }) {
       <ModuleSidebar user={user} activeModule="space" />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex shrink-0 items-center gap-2.5 border-b border-white/[0.06] px-5 py-3">
+        <header className="flex shrink-0 items-center gap-2.5 border-b border-white/[0.06] px-5 py-3 backdrop-blur-md">
           <IoPlanetOutline className="text-xl text-cyan" />
           <h1 className="font-display text-[1.35rem] font-bold tracking-[0.18em] text-text">SPACE</h1>
         </header>
 
-        <div className="flex gap-6 border-b border-white/[0.06] px-5">
+        <div className="flex gap-6 border-b border-white/[0.06] px-5 backdrop-blur-md">
           {(
             [
               { id: "home" as const, label: "Home" },

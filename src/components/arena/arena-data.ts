@@ -38,6 +38,8 @@ export interface ArenaMission {
   spaceBranch: ArenaSpaceBranchId;
   spaceAnchor: string;
   missionFamily: ArenaMissionFamily;
+  /** Space catalog course ids that should surface this mission on Recommend. */
+  relatedCourseIds: string[];
   reusesOrbitEngine: boolean;
   playerOneLiner: string;
   teachingGoal: string;
@@ -100,6 +102,7 @@ export const ORBIT_SENSE_MISSION: ArenaMission = {
   spaceBranch: "AROUND_US",
   spaceAnchor: "ORBIT SENSE",
   missionFamily: "other",
+  relatedCourseIds: ["orbit-sense"],
   reusesOrbitEngine: false,
   playerOneLiner: "เลือก LEO / MEO / GEO ให้ตรงกับงานที่กำหนด",
   teachingGoal: "เห็นว่าความสูงต่างกัน งานต่างกัน และหน้าต่างผ่านไม่เท่ากัน",
@@ -130,6 +133,7 @@ export const TICKET_TO_FLY_MISSION: ArenaMission = {
   spaceBranch: "ACCESS",
   spaceAnchor: "TICKET TO FLY",
   missionFamily: "access",
+  relatedCourseIds: ["ticket-to-fly"],
   reusesOrbitEngine: false,
   playerOneLiner: "จัดมวล ปริมาตร และความปลอดภัยให้เข้า deployer ได้",
   teachingGoal: "เข้าใจว่าขึ้นวงโคจรไม่ได้แปลว่ามีจรวดเป็นของตัวเอง",
@@ -160,6 +164,14 @@ export const LEO_ORBIT_ONE_LAP_MISSION: ArenaMission = {
   spaceBranch: "FLIGHT",
   spaceAnchor: "CUBESAT FOR BEGINNER",
   missionFamily: "orbit-bus",
+  relatedCourseIds: [
+    "cubesat-for-beginner",
+    "why-ten-centimeters",
+    "whats-inside-the-box",
+    "how-it-stays-alive",
+    "who-talks-to-earth",
+    "how-it-thinks",
+  ],
   reusesOrbitEngine: true,
   playerOneLiner: "ให้ CubeSat รอดครบ 1 วงโคจร LEO",
   teachingGoal: "โปรแกรม OBC ให้ตอบสนองแดดกับ eclipse",
@@ -221,6 +233,7 @@ export const CATCH_THE_PASS_MISSION: ArenaMission = {
   spaceBranch: "GROUND",
   spaceAnchor: "CATCH THE PASS",
   missionFamily: "ground-ops",
+  relatedCourseIds: ["catch-the-pass"],
   reusesOrbitEngine: false,
   playerOneLiner: "จับ pass จากพื้น แล้วเริ่ม–จบการคุยให้ทัน",
   teachingGoal: "เข้าใจว่า LEO คุยกับพื้นได้เป็นช่วง ๆ ไม่ใช่ตลอดเวลา",
@@ -251,6 +264,7 @@ export const SPACE_FOR_THAILAND_MISSION: ArenaMission = {
   spaceBranch: "FOR_EARTH",
   spaceAnchor: "SPACE FOR THAILAND",
   missionFamily: "earth-data",
+  relatedCourseIds: ["space-for-thailand"],
   reusesOrbitEngine: false,
   playerOneLiner: "เลือกข้อมูลจากวงโคจรให้ตรงเคสน้ำท่วม นา หรือป่า",
   teachingGoal: "เห็นว่าอวกาศเป็นเครื่องมือบนโลก ไม่ใช่แค่ของที่บิน",
@@ -281,6 +295,7 @@ export const MISSION_CANVAS_MISSION: ArenaMission = {
   spaceBranch: "MISSION",
   spaceAnchor: "MISSION CANVAS",
   missionFamily: "mission-design",
+  relatedCourseIds: ["mission-canvas"],
   reusesOrbitEngine: false,
   playerOneLiner: "วาดภารกิจหนึ่งหน้า: ปัญหา วงโคจร เพย์โหลด ของเลี้ยง ภาคพื้น",
   teachingGoal: "ฝึกเลือกข้อจำกัดก่อนคิดของบินสวย",
