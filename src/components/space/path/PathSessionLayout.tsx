@@ -12,7 +12,7 @@ import {
   type SpaceCatalog,
   type User,
 } from "@/lib/api";
-import { spacePathTabPath } from "@/components/space/core/routes";
+import { spacePathSessionPath, spacePathTabPath } from "@/components/space/core/routes";
 
 import PathGraph from "./PathGraph";
 import PathOnboardingChat from "./PathOnboardingChat";
@@ -102,6 +102,7 @@ export default function PathSessionLayout({ user }: { user: User }) {
                     edges={draft?.edges ?? []}
                     catalog={catalog}
                     saved={false}
+                    fromPath={spacePathSessionPath()}
                   />
                 </div>
               </section>

@@ -8,7 +8,9 @@ import PathTab from "@/components/space/path/PathTab";
 import SpaceLoadingState from "@/components/space/SpaceLoadingState";
 import { listCourses } from "@/components/space/core/registry";
 import {
+  spaceCourseLinkState,
   spaceCoursePath,
+  spaceHomePath,
   spacePathForTab,
   spacePathSessionPath,
   spaceTabFromPath,
@@ -226,6 +228,7 @@ function HomeView({
               <Link
                 key={course.id}
                 to={spaceCoursePath(course.id)}
+                state={spaceCourseLinkState(spaceHomePath())}
                 className="group flex items-center gap-4 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 no-underline backdrop-blur-2xl transition hover:border-cyan/25 hover:bg-white/[0.05]"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-cyan/25 bg-cyan/5">

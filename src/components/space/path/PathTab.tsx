@@ -4,7 +4,7 @@ import { HiOutlineEllipsisVertical } from "react-icons/hi2";
 
 import { findCourse, type SpaceCatalog } from "@/components/space/catalog/types";
 import { getCourse } from "@/components/space/core/registry";
-import { spaceCoursePath, spacePathSessionPath } from "@/components/space/core/routes";
+import { spaceCourseLinkState, spaceCoursePath, spacePathSessionPath, spacePathTabPath } from "@/components/space/core/routes";
 import { useSpaceProgress } from "@/components/space/hooks/useSpaceProgress";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { LearningPath, LearningPathStep } from "@/lib/api";
@@ -41,7 +41,13 @@ export default function PathTab({ path, catalog, onReplan, onExplore }: Props) {
     <div className="relative flex h-full min-h-0">
       <section className="min-h-0 min-w-0 flex-1">
         {saved ? (
-          <PathGraph steps={saved.steps} edges={saved.edges ?? []} catalog={catalog} saved />
+          <PathGraph
+            steps={saved.steps}
+            edges={saved.edges ?? []}
+            catalog={catalog}
+            saved
+            fromPath={spacePathTabPath()}
+          />
         ) : (
           <EmptyPath path={path} onExplore={onExplore} />
         )}
@@ -249,6 +255,7 @@ function CourseInfoCard({
     <li>
       <Link
         to={spaceCoursePath(step.courseId)}
+        state={spaceCourseLinkState(spacePathTabPath())}
         className="relative block overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-3 no-underline transition hover:border-cyan/30"
       >
         {body}

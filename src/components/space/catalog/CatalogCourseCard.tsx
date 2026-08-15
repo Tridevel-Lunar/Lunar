@@ -1,7 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { IoPlanetOutline } from "react-icons/io5";
 
-import { spaceCoursePath } from "@/components/space/core/routes";
+import { spaceCourseLinkState, spaceCoursePath, spaceExplorePath } from "@/components/space/core/routes";
 
 import type { CatalogCourse } from "./types";
 import { isEnterable, statusLabel } from "./types";
@@ -12,7 +12,9 @@ type Props = {
 };
 
 export default function CatalogCourseCard({ course, progressPercent }: Props) {
+  const location = useLocation();
   const enterable = isEnterable(course);
+  const from = location.pathname.startsWith("/space") ? location.pathname : spaceExplorePath();
 
   const body = (
     <>
@@ -83,6 +85,7 @@ export default function CatalogCourseCard({ course, progressPercent }: Props) {
     return (
       <Link
         to={spaceCoursePath(course.id)}
+        state={spaceCourseLinkState(from)}
         className={`${className} no-underline hover:border-cyan/30 hover:bg-cyan/[0.06]`}
       >
         {body}
