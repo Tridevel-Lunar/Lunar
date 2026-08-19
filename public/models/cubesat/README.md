@@ -1,13 +1,11 @@
 # CubeSat 3D assets
 
-## Overview (shipped)
-- `nasa-1u-generic.glb` — NASA CubeSat 1 RU Generic  
-  Source: https://science.nasa.gov/3d-resources/cubesat-1-ru-generic/  
+## Anatomy (shipped)
+- `cubesat-1u-base.stl` + `cubesat-1u-top.stl` — 1U structure (rails + top plate)
+  Source: GrabCAD 1U CubeSat snapshot (`cubesat-1u-5`)
+  Parts exported as STL; the lesson mates Top onto Base in scene space.
+
+## Overview (unused by anatomy, kept as reference)
+- `nasa-1u-generic.glb` — NASA CubeSat 1 RU Generic
+  Source: https://science.nasa.gov/3d-resources/cubesat-1-ru-generic/
   Credit: NASA / Christopher R. Meaney
-
-## Structure (optional)
-1. Download [1U CubeSat model on GrabCAD](https://grabcad.com/library/1u-cubesat-model-1)
-2. Export / convert to **glTF Binary (.glb)**
-3. Save as `structure-1u.glb` in this folder
-
-Until the GrabCAD GLB is present, the lesson uses a procedural 1U structure frame.

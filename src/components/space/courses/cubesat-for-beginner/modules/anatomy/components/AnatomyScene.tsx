@@ -10,7 +10,6 @@ import {
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 import CubeSatOverviewModel from "./CubeSatOverviewModel";
-import StructureFrame from "./StructureFrame";
 import SubsystemStack from "./SubsystemStack";
 import DataFlowLinks from "./DataFlowLinks";
 import PartCallouts from "./PartCallouts";
@@ -103,7 +102,6 @@ function SceneRig({
     }
   });
 
-  const showStructureGhost = !flat && activePart === "structure";
   const showLinks = showDataFlowLinks(step);
   const showCallouts = step === "meet";
 
@@ -149,13 +147,9 @@ function SceneRig({
           {!flat && (
             <CubeSatOverviewModel
               highlighted={activePart === "overview"}
+              structureHighlight={activePart === "structure"}
               opacityRef={shellOpacity}
             />
-          )}
-          {showStructureGhost && (
-            <group scale={1.18}>
-              <StructureFrame activePart={activePart} />
-            </group>
           )}
           <SubsystemStack
             unfold={unfold}

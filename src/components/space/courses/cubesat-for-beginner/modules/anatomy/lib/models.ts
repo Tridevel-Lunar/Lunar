@@ -1,22 +1,28 @@
 /**
  * CubeSat anatomy models.
- * Overview: NASA Science 3D Resources — CubeSat 1 RU Generic
- * https://science.nasa.gov/3d-resources/cubesat-1-ru-generic/
- *
- * Structure (optional drop-in): export GrabCAD 1U CubeSat as GLB →
- * public/models/cubesat/structure-1u.glb
- * https://grabcad.com/library/1u-cubesat-model-1
+ * Structure CAD: GrabCAD 1U CubeSat snapshot (SolidWorks → STL).
+ * Overview previously used NASA CubeSat 1 RU Generic (kept at nasa-1u-generic.glb).
  */
+
+/** Mate top plate onto the 1U rails — STLs were exported in part space, not assembly. */
+export const CUBESAT_1U_TOP_OFFSET: [number, number, number] = [
+  -141.38646, 105.25306, -2.4488,
+];
 
 export const ANATOMY_MODELS = {
   overview: {
-    path: "/models/cubesat/nasa-1u-generic.glb",
-    credit: "NASA / Christopher R. Meaney — CubeSat 1 RU Generic",
-    source: "https://science.nasa.gov/3d-resources/cubesat-1-ru-generic/",
+    path: "/models/cubesat/cubesat-1u-base.stl",
+    credit: "GrabCAD — 1U CubeSat structure (Base + Top)",
+    source: "https://grabcad.com/library/1u-cubesat-model-1",
   },
-  structure: {
-    path: "/models/cubesat/structure-1u.glb",
-    credit: "GrabCAD 1U CubeSat structure (optional local GLB)",
+  structureBase: {
+    path: "/models/cubesat/cubesat-1u-base.stl",
+    credit: "GrabCAD 1U CubeSat — Base",
+    source: "https://grabcad.com/library/1u-cubesat-model-1",
+  },
+  structureTop: {
+    path: "/models/cubesat/cubesat-1u-top.stl",
+    credit: "GrabCAD 1U CubeSat — Top",
     source: "https://grabcad.com/library/1u-cubesat-model-1",
   },
 } as const;

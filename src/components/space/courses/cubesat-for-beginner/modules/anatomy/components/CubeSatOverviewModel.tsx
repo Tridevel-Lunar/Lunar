@@ -1,59 +1,81 @@
 import { useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
-import { useGLTF } from "@react-three/drei";
+import { useFrame, useLoader } from "@react-three/fiber";
+import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 import * as THREE from "three";
 import {
   ANATOMY_MODELS,
+  CUBESAT_1U_TOP_OFFSET,
   OVERVIEW_TARGET_SIZE,
 } from "../lib/models";
 
-useGLTF.preload(ANATOMY_MODELS.overview.path);
+const STL_PATHS = [
+  ANATOMY_MODELS.structureBase.path,
+  ANATOMY_MODELS.structureTop.path,
+] as const;
 
-function prepareOverview(scene: THREE.Object3D): THREE.Object3D {
-  const clone = scene.clone(true);
-  clone.traverse((obj) => {
-    if (!(obj as THREE.Mesh).isMesh) return;
-    const mesh = obj as THREE.Mesh;
-    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-    mats.forEach((m) => {
-      if (!m || !(m as THREE.MeshStandardMaterial).isMeshStandardMaterial) return;
-      const std = m as THREE.MeshStandardMaterial;
-      std.transparent = true;
-      std.metalness = Math.min(0.85, (std.metalness ?? 0.4) + 0.15);
-      std.roughness = Math.max(0.25, (std.roughness ?? 0.45) - 0.05);
-      std.envMapIntensity = 1.1;
-      std.needsUpdate = true;
-    });
+useLoader.preload(STLLoader, [...STL_PATHS]);
+
+function aluminumMaterial(highlight: boolean) {
+  return new THREE.MeshStandardMaterial({
+    color: highlight ? "#e2e8f0" : "#8b9aab",
+    metalness: highlight ? 0.82 : 0.72,
+    roughness: highlight ? 0.22 : 0.32,
+    envMapIntensity: 1.15,
+    transparent: true,
+    opacity: 1,
+  });
+}
+
+function assembleCad(
+  baseGeo: THREE.BufferGeometry,
+  topGeo: THREE.BufferGeometry,
+  highlight: boolean,
+): THREE.Group {
+  const group = new THREE.Group();
+  const mat = aluminumMaterial(highlight);
+
+  const baseMesh = new THREE.Mesh(baseGeo.clone(), mat);
+  const topMesh = new THREE.Mesh(topGeo.clone(), mat.clone());
+  for (const mesh of [baseMesh, topMesh]) {
+    mesh.geometry.computeVertexNormals();
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-  });
+  }
+  topMesh.position.set(...CUBESAT_1U_TOP_OFFSET);
+  group.add(baseMesh, topMesh);
 
-  clone.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(clone);
+  group.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(group);
   const size = box.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z) || 1;
-  clone.scale.setScalar(OVERVIEW_TARGET_SIZE / maxDim);
-  clone.updateMatrixWorld(true);
-  box.setFromObject(clone);
+  group.scale.setScalar(OVERVIEW_TARGET_SIZE / maxDim);
+  group.updateMatrixWorld(true);
+  box.setFromObject(group);
   const center = box.getCenter(new THREE.Vector3());
-  clone.position.sub(center);
-  return clone;
+  group.position.sub(center);
+  return group;
 }
 
 export default function CubeSatOverviewModel({
   highlighted = false,
+  structureHighlight = false,
   opacityRef,
 }: {
   highlighted?: boolean;
-  /** 0–1 shell visibility while unfolding */
+  structureHighlight?: boolean;
   opacityRef: React.MutableRefObject<number>;
 }) {
-  const { scene } = useGLTF(ANATOMY_MODELS.overview.path);
-  const prepared = useMemo(() => prepareOverview(scene), [scene]);
+  const [baseGeo, topGeo] = useLoader(STLLoader, [...STL_PATHS]);
+  const prepared = useMemo(
+    () => assembleCad(baseGeo, topGeo, highlighted || structureHighlight),
+    [baseGeo, topGeo, highlighted, structureHighlight],
+  );
   const root = useRef<THREE.Group>(null);
 
   useFrame(() => {
-    const opacity = opacityRef.current;
+    const opacity = structureHighlight
+      ? Math.max(opacityRef.current, 0.88)
+      : opacityRef.current;
     if (root.current) root.current.visible = opacity > 0.02;
     prepared.traverse((obj) => {
       if (!(obj as THREE.Mesh).isMesh) return;
@@ -74,7 +96,7 @@ export default function CubeSatOverviewModel({
       <primitive object={prepared} />
       {highlighted && (
         <mesh>
-          <boxGeometry args={[1.55, 1.55, 1.7]} />
+          <boxGeometry args={[1.55, 1.7, 1.55]} />
           <meshBasicMaterial
             color="#00e5ff"
             transparent
