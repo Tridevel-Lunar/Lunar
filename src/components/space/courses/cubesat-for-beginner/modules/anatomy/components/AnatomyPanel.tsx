@@ -19,6 +19,7 @@ import {
   type CheckpointState,
 } from "../lib/lesson";
 import { FLOW_SCENARIOS, type ScenarioId } from "../lib/scenarios";
+import GroundStationPhotoActivity from "./GroundStationPhotoActivity";
 import TraceSequencePanel from "./TraceSequencePanel";
 
 type AnatomyPanelProps = {
@@ -374,42 +375,46 @@ export default function AnatomyPanel({
           )}
 
           {step === "flow" && (
-            <div className="space-y-2">
-              {FLOW_SCENARIOS.map((sc) => {
-                const on = activeScenarioId === sc.id;
-                const played = checkpoint.playedScenarios.has(sc.id);
-                return (
-                  <button
-                    key={sc.id}
-                    type="button"
-                    onClick={() => onPlayScenario(sc.id)}
-                    className={`w-full rounded-xl border px-3 py-3 text-left transition ${
-                      on
-                        ? "border-cyan/40 bg-cyan/10"
-                        : "border-white/10 bg-white/[0.03] hover:border-white/20"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-section-thai text-[0.88rem] text-text/90">
-                        {sc.title}
-                      </span>
-                      {played && (
-                        <span className="font-mono text-[0.55rem] text-emerald-300/80">
-                          ✓
+            <div className="space-y-4">
+              <div className="space-y-2">
+                {FLOW_SCENARIOS.map((sc) => {
+                  const on = activeScenarioId === sc.id;
+                  const played = checkpoint.playedScenarios.has(sc.id);
+                  return (
+                    <button
+                      key={sc.id}
+                      type="button"
+                      onClick={() => onPlayScenario(sc.id)}
+                      className={`w-full rounded-xl border px-3 py-3 text-left transition ${
+                        on
+                          ? "border-cyan/40 bg-cyan/10"
+                          : "border-white/10 bg-white/[0.03] hover:border-white/20"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-section-thai text-[0.88rem] text-text/90">
+                          {sc.title}
                         </span>
+                        {played && (
+                          <span className="font-mono text-[0.55rem] text-emerald-300/80">
+                            ✓
+                          </span>
+                        )}
+                      </div>
+                      {on && (
+                        <p className="font-section-thai mt-2 text-[0.78rem] leading-relaxed text-text/60">
+                          <KnowledgeText text={sc.caption} />
+                        </p>
                       )}
-                    </div>
-                    {on && (
-                      <p className="font-section-thai mt-2 text-[0.78rem] leading-relaxed text-text/60">
-                        <KnowledgeText text={sc.caption} />
-                      </p>
-                    )}
-                  </button>
-                );
-              })}
-              <p className="font-section-thai text-[0.72rem] text-text/40">
-                เส้นเหลืองคือพลังงาน เส้นฟ้าหรือเขียวคือข้อมูล ทุกอย่างผ่าน OBC
-              </p>
+                    </button>
+                  );
+                })}
+                <p className="font-section-thai text-[0.72rem] text-text/40">
+                  เส้นเหลืองคือพลังงาน เส้นฟ้าหรือเขียวคือข้อมูล ทุกอย่างผ่าน OBC
+                </p>
+              </div>
+
+              <GroundStationPhotoActivity onPlayScenario={onPlayScenario} />
             </div>
           )}
 
