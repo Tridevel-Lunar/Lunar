@@ -21,7 +21,7 @@ export default function ResearchSection() {
             หัวข้อวิจัย
           </h2>
           <p className="mx-auto max-w-[560px] text-[1.05rem] leading-relaxed font-light text-text/50">
-            สำรวจเทคโนโลยีอวกาศเชิงลึกที่กำลังพัฒนาในโปรแกรม LUNAR
+            ตัวอย่างงานหัวข้อวิจัยที่น่าสนใจ 
           </p>
         </div>
 

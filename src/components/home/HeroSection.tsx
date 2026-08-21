@@ -36,7 +36,7 @@ export default function HeroSection() {
         </h1>
 
         <p className="mt-8 max-w-[640px] text-[1.05rem] leading-relaxed text-text/70">
-          แพลตฟอร์มเรียนรู้เทคโนโลยีอวกาศด้วย Interactive
+          แพลตฟอร์มการเรียนรู้เทคโนโลยีอวกาศแบบ Interactive Learning
         </p>
 
         <div className="pointer-events-auto mt-12">

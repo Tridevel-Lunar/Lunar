@@ -639,10 +639,12 @@ export default function WhySpace() {
             TECHNOLOGY?
           </h1>
 
-          <p className="font-section-thai mx-auto max-w-[560px] animate-slide-up text-[clamp(14px,1.6vw,18px)] leading-[1.8] text-white/55 [animation-delay:0.35s]">
-            เทคโนโลยีอวกาศไม่ใช่แค่ความฝัน แต่มันคือโครงสร้างพื้นฐานของโลกยุคต่อไป
+          <p className="font-section-thai mx-auto max-w-[720px] animate-slide-up text-[clamp(14px,1.6vw,18px)] leading-[1.8] text-white/55 [animation-delay:0.35s]">
+            <span className="inline-block whitespace-nowrap max-[520px]:whitespace-normal">
+              เทคโนโลยีอวกาศไม่ใช่แค่เรื่องไกลตัวอีกต่อไป แต่มันคือโครงสร้างพื้นฐานของโลกยุคต่อไป
+            </span>
             <br />
-            สำรวจ 3 กรณีศึกษาที่กำลังเปลี่ยนชีวิตมนุษย์อยู่ตอนนี้
+            ตัวอย่าง 3 กรณีศึกษา เกี่ยวกับเทคโนโลยีอวกาศในปัจจุบัน
           </p>
 
           <div className="mt-12 flex animate-slide-up items-center justify-center gap-4 [animation-delay:0.5s]">
